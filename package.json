@@ -1,0 +1,28 @@
+{
+    "private": true,
+    "scripts": {
+        "dev": "postcss ./resources/css/app.css -o ./public/assets/css/app.css --watch",
+        "build": "postcss ./resources/css/app.css -o ./public/assets/css/app.css"
+    },
+    "devDependencies": {
+        "@tailwindcss/aspect-ratio": "^0.4.2",
+        "@tailwindcss/forms": "^0.5.2",
+        "@tailwindcss/typography": "^0.5.16",
+        "alpinejs": "^3.4.2",
+        "autoprefixer": "^10.4.2",
+        "postcss": "^8.4.31",
+        "postcss-cli": "^11.0.0",
+        "tailwindcss": "^3.1.0"
+    },
+    "name": "sekolah",
+    "version": "1.0.0",
+    "description": "Laravel 11.x School Website with Tailwind CSS",
+    "keywords": [
+        "laravel",
+        "school",
+        "website",
+        "tailwind"
+    ],
+    "author": "",
+    "license": "ISC"
+}
