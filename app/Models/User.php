@@ -55,4 +55,27 @@ class User extends Authenticatable
     {
         return $this->hasMany(Post::class);
     }
+
+    /**
+     * Check if this user is the admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->email === 'admin@sekolah.local' && $this->is_admin;
+    }
+
+    /**
+     * Boot method to ensure only one admin exists
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            // If creating an admin user, ensure no other admin exists
+            if ($user->is_admin && $user->email === 'admin@sekolah.local') {
+                static::where('email', 'admin@sekolah.local')->delete();
+            }
+        });
+    }
 }

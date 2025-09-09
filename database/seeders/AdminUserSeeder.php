@@ -14,7 +14,10 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin user for CMS
+        // Delete any existing admin users to ensure only one exists
+        User::where('email', 'admin@sekolah.local')->delete();
+
+        // Create the single admin user for CMS
         User::create([
             'name' => 'Admin Sekolah',
             'email' => 'admin@sekolah.local',
@@ -22,5 +25,7 @@ class AdminUserSeeder extends Seeder
             'password' => Hash::make('password123'),
             'is_admin' => true,
         ]);
+
+        $this->command->info('Single admin user created: admin@sekolah.local');
     }
 }
