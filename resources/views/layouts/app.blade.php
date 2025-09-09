@@ -15,7 +15,7 @@
   <header class="border-b bg-white/80 backdrop-blur">
     <nav class="container mx-auto px-4 py-3 flex items-center justify-between">
       <a href="/" class="flex items-center gap-2">
-        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-10">
+        <img src="{{ asset('images/logosekolah.png') }}" alt="Logo" class="h-10">
         <span class="font-semibold">Nama Sekolah</span>
       </a>
       <ul class="hidden md:flex items-center gap-6">

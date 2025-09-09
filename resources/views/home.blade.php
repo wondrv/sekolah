@@ -12,8 +12,8 @@
         <a href="/agenda" class="px-5 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">Agenda Kegiatan</a>
       </div>
     </div>
-    <div class="aspect-video bg-slate-100 rounded-lg flex items-center justify-center">
-      <span class="text-slate-500">Hero Image Placeholder</span>
+    <div class="aspect-video bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
+      <img src="{{ asset('images/sekolah.png') }}" alt="Foto Sekolah" class="object-cover w-full h-full">
     </div>
   </div>
 </section>

@@ -15,14 +15,7 @@ class PostController extends Controller
     {
         $query = Post::with(['category', 'user'])->published();
 
-        // Filter by category if provided
-        if ($request->filled('category')) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('slug', $request->category);
-            });
-        }
-
-        // Search functionality
+        // Search functionality only (no category filtering - handled by JavaScript)
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
