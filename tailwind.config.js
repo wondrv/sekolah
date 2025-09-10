@@ -37,7 +37,24 @@ export default {
                 semibold: 'var(--font-weight-semibold)',
                 bold: 'var(--font-weight-bold)',
             },
+            backdropBlur: {
+                'xs': '2px',
+            },
+            animation: {
+                'fade-in-up': 'fadeInUp 0.6s ease-out',
+            },
         },
+    },
+
+    // Enable browser compatibility features
+    future: {
+        hoverOnlyWhenSupported: true,
+    },
+
+    // Ensure core plugins that might need vendor prefixes are enabled
+    corePlugins: {
+        backdropFilter: true,
+        backdropBlur: true,
     },
 
     plugins: [

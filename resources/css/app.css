@@ -21,6 +21,31 @@
   --font-weight-bold: 700;
 }
 
+/* Browser compatibility fixes */
+@layer utilities {
+  .backdrop-blur {
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+
+  .backdrop-blur-sm {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+
+  .backdrop-blur-md {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Fix appearance property for form inputs */
+  .appearance-none {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+}
+
 /* Base styles */
 @layer base {
   body {
@@ -41,6 +66,20 @@
 
   .font-bold {
     font-weight: var(--font-weight-bold);
+  }
+
+  /* Fix form elements appearance */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
   }
 }
 
