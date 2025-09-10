@@ -22,8 +22,8 @@ class AdminMiddleware
 
         $user = Auth::user();
 
-        // Check if user is the specific admin account
-        if ($user->email !== 'admin@sekolah.local' || !$user->is_admin) {
+        // Check if user has admin privileges
+        if (!$user->isAdmin()) {
             abort(403, 'Access denied. Admin privileges required.');
         }
 

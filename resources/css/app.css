@@ -2,14 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Authentication Pages Enhancements */
+/* CSS Custom Properties (Theme Variables) */
+:root {
+  /* Default theme colors - will be overridden by Theme.php */
+  --color-primary: #1e40af;
+  --color-secondary: #64748b;
+  --color-accent: #f59e0b;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+
+  /* Default typography - will be overridden by Theme.php */
+  --font-family: 'Inter', system-ui, sans-serif;
+  --font-size-base: 16px;
+  --line-height-base: 1.6;
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+/* Base styles */
+@layer base {
+  body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    font-weight: var(--font-weight-normal);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+  }
+
+  .font-semibold {
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .font-bold {
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+/* Component styles */
 @layer components {
+    /* Theme-aware button styles */
+    .btn-primary {
+        @apply px-4 py-2 rounded-lg font-semibold transition-colors;
+        background-color: var(--color-primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        filter: brightness(110%);
+    }
+
+    .btn-secondary {
+        @apply px-4 py-2 rounded-lg font-semibold transition-colors border;
+        background-color: transparent;
+        color: var(--color-primary);
+        border-color: var(--color-primary);
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--color-primary);
+        color: white;
+    }
+
+    .btn-accent {
+        @apply px-4 py-2 rounded-lg font-semibold transition-colors;
+        background-color: var(--color-accent);
+        color: white;
+    }
+
+    .btn-accent:hover {
+        filter: brightness(110%);
+    }
+
+    /* Authentication Pages Enhancements */
     .auth-input-focus {
-        @apply focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:bg-white transition-all duration-200;
+        @apply focus:ring-2 focus:bg-white transition-all duration-200;
+        border-color: var(--color-primary);
+        --tw-ring-color: var(--color-primary);
+        --tw-ring-opacity: 0.2;
     }
 
     .auth-button-gradient {
-        @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700;
+        background: linear-gradient(to right, var(--color-primary), var(--color-accent));
+    }
+
+    .auth-button-gradient:hover {
+        filter: brightness(110%);
     }
 
     .auth-card {
@@ -18,6 +101,54 @@
 
     .auth-input-icon {
         @apply absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none;
+    }
+
+    /* Admin interface styles */
+    .admin-nav-link {
+        @apply px-3 py-2 rounded-md text-sm font-medium transition-colors;
+    }
+
+    .admin-nav-link:hover {
+        background-color: var(--color-primary);
+        color: white;
+    }
+
+    .admin-nav-link.active {
+        background-color: var(--color-primary);
+        color: white;
+    }
+
+    /* Card styles */
+    .card {
+        @apply bg-white rounded-lg shadow-md border border-gray-200;
+    }
+
+    .card-header {
+        @apply px-6 py-4 border-b border-gray-200;
+    }
+
+    .card-body {
+        @apply px-6 py-4;
+    }
+
+    /* Form styles */
+    .form-input {
+        @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1;
+        border-color: #d1d5db;
+    }
+
+    .form-input:focus {
+        border-color: var(--color-primary);
+        --tw-ring-color: var(--color-primary);
+    }
+
+    .form-label {
+        @apply block text-sm font-medium text-gray-700 mb-1;
+    }
+
+    .form-error {
+        @apply text-sm mt-1;
+        color: var(--color-error);
     }
 }
 

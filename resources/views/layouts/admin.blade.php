@@ -24,63 +24,48 @@
 
             <nav class="mt-4">
                 <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.dashboard') ? 'bg-gray-700' : '' }}">
-                    Dashboard
+                    📊 Dashboard
                 </a>
 
-                <div x-data="{ expanded: {{ request()->routeIs('admin.posts.*') ? 'true' : 'false' }} }">
-                    <button @click="expanded = !expanded" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-700 flex items-center justify-between">
-                        <span>Menu</span>
-                        <svg :class="{ 'rotate-90': expanded }" class="w-4 h-4 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                        </svg>
-                    </button>
-                    <div x-show="expanded" class="pl-4">
-                        <a href="{{ route('admin.posts.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.posts.*') ? 'bg-gray-700' : '' }}">
-                            Berita & Artikel
-                        </a>
-                        <a href="{{ route('admin.pages.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.pages.*') ? 'bg-gray-700' : '' }}">
-                            Halaman
-                        </a>
-                        <a href="{{ route('admin.events.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.events.*') ? 'bg-gray-700' : '' }}">
-                            Event & Kegiatan
-                        </a>
-                        <a href="{{ route('admin.galleries.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.galleries.*') ? 'bg-gray-700' : '' }}">
-                            Galeri
-                        </a>
-                    </div>
-                </div>
+                <!-- Working Settings Link -->
+                <a href="{{ route('admin.settings.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.settings.*') ? 'bg-gray-700' : '' }}">
+                    ⚙️ Settings
+                </a>
 
-                <div x-data="{ expanded: {{ request()->routeIs('admin.facilities.*', 'admin.programs.*') ? 'true' : 'false' }} }">
-                    <button @click="expanded = !expanded" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-700 flex items-center justify-between">
-                        <span>Akademik & Fasilitas</span>
-                        <svg :class="{ 'rotate-90': expanded }" class="w-4 h-4 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                        </svg>
-                    </button>
-                    <div x-show="expanded" class="pl-4">
-                        <a href="{{ route('admin.facilities.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.facilities.*') ? 'bg-gray-700' : '' }}">
-                            Fasilitas
-                        </a>
-                        <a href="{{ route('admin.programs.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.programs.*') ? 'bg-gray-700' : '' }}">
-                            Program Unggulan
-                        </a>
-                    </div>
-                </div>
+                <!-- View Public Site -->
+                <a href="{{ route('home') }}" target="_blank" class="block px-4 py-2 text-sm hover:bg-gray-700">
+                    🌐 View Website
+                </a>
 
-                <div x-data="{ expanded: {{ request()->routeIs('admin.achievements.*', 'admin.testimonials.*') ? 'true' : 'false' }} }">
-                    <button @click="expanded = !expanded" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-700 flex items-center justify-between">
-                        <span>Prestasi & Testimoni</span>
-                        <svg :class="{ 'rotate-90': expanded }" class="w-4 h-4 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                        </svg>
-                    </button>
-                    <div x-show="expanded" class="pl-4">
-                        <a href="{{ route('admin.achievements.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.achievements.*') ? 'bg-gray-700' : '' }}">
-                            Prestasi
-                        </a>
-                        <a href="{{ route('admin.testimonials.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.testimonials.*') ? 'bg-gray-700' : '' }}">
-                            Testimoni
-                        </a>
+                <!-- Coming Soon Section -->
+                <div class="mt-4 pt-4 border-t border-gray-700">
+                    <div class="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide">
+                        Content Management - Coming Soon
+                    </div>
+
+                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
+                        📰 Berita & Artikel
+                    </div>
+                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
+                        📄 Halaman
+                    </div>
+                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
+                        📅 Event & Kegiatan
+                    </div>
+                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
+                        🖼️ Galeri
+                    </div>
+                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
+                        🏫 Fasilitas
+                    </div>
+                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
+                        🎯 Program Unggulan
+                    </div>
+                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
+                        🏆 Prestasi
+                    </div>
+                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
+                        💬 Testimoni
                     </div>
                 </div>
 
@@ -88,7 +73,7 @@
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700">
-                            Logout
+                            🚪 Logout
                         </button>
                     </form>
                 </div>

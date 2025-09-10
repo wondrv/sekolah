@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('site_settings', function (Blueprint $table) {
+        Schema::create('widgets', function (Blueprint $table) {
             $table->id();
-            $table->string('key')->unique();
-            $table->json('value');
+            $table->string('name');
+            $table->string('location'); // header_top, sidebar, footer_col1, footer_col2, footer_col3
+            $table->json('data');
+            $table->integer('order')->default(0);
+            $table->boolean('active')->default(true);
             $table->timestamps();
         });
     }
@@ -24,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('site_settings');
+        Schema::dropIfExists('widgets');
     }
 };

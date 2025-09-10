@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
         'is_admin',
     ];
 
@@ -48,6 +49,21 @@ class User extends Authenticatable
         ];
     }
 
+    public function isEditor(): bool
+    {
+        return $this->role === 'editor';
+    }
+
+    public function canManageSettings(): bool
+    {
+        return $this->isAdmin();
+    }
+
+    public function canManageContent(): bool
+    {
+        return $this->isAdmin() || $this->isEditor();
+    }
+
     /**
      * Posts created by this user
      */
@@ -61,7 +77,7 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->email === 'admin@sekolah.local' && $this->is_admin;
+        return $this->role === 'admin' || $this->is_admin;
     }
 
     /**

@@ -31,22 +31,12 @@ Route::get('/dashboard', function () {
 })->middleware(['auth'])->name('dashboard');
 
 // Admin routes - hidden from public navigation
-Route::prefix('admin')->middleware(['admin'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+Route::prefix('admin')->group(function () {
+    require __DIR__.'/admin.php';
+});
 
-    // Admin CRUD routes
-    Route::resource('posts', Admin\PostController::class, ['as' => 'admin']);
-    Route::resource('pages', Admin\PageController::class, ['as' => 'admin']);
-    Route::resource('events', Admin\EventController::class, ['as' => 'admin']);
-    Route::resource('galleries', Admin\GalleryController::class, ['as' => 'admin']);
-    Route::resource('facilities', Admin\FacilityController::class, ['as' => 'admin']);
-    Route::resource('programs', Admin\ProgramController::class, ['as' => 'admin']);
-    Route::resource('testimonials', Admin\TestimonialController::class, ['as' => 'admin']);
-    Route::resource('achievements', Admin\AchievementController::class, ['as' => 'admin']);
-
-    // Profile management within admin
+// Profile routes (if needed for admin users)
+Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

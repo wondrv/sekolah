@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('classes', function (Blueprint $table) {
+        Schema::create('menus', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Class name like "X IPA 1"
-            $table->string('level'); // TK, SD, SMP, SMA
-            $table->foreignId('wali_id')->nullable()->constrained('staff')->onDelete('set null'); // Class teacher
-            $table->string('year'); // Academic year like "2024/2025"
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->string('location')->nullable(); // primary, footer, etc.
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('classes');
+        Schema::dropIfExists('menus');
     }
 };
