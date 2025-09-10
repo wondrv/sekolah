@@ -8,108 +8,293 @@
     <title>{{ config('app.name', 'Laravel') }} - Admin Panel</title>
 
     <!-- Tailwind CSS -->
-    <link href="{{ asset('css/tailwind.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/app.css') }}" rel="stylesheet">
 
     <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="font-sans antialiased bg-gray-100">
     <div class="min-h-screen flex">
-        <!-- Sidebar -->
-        <div class="w-64 bg-gray-800 text-white" x-data="{ open: false }">
-            <div class="p-4">
-                <h2 class="text-xl font-bold">Admin Panel</h2>
-                <p class="text-sm text-gray-300">{{ auth()->user()->name }}</p>
+        <!-- Left Sidebar -->
+        <div class="w-64 shadow-lg border-r border-gray-800 flex flex-col" style="background-color: #36454F;" x-data="{ content: false, school: false, advanced: false, communication: false }">
+            <!-- Sidebar Header -->
+            <div class="p-6 border-b border-gray-800">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold">🏫</span>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white">Admin Panel</h1>
+                        <p class="text-xs text-gray-400">{{ auth()->user()->name }}</p>
+                    </div>
+                </div>
             </div>
 
-            <nav class="mt-4">
-                <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.dashboard') ? 'bg-gray-700' : '' }}">
-                    📊 Dashboard
+            <!-- Sidebar Navigation -->
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <!-- Dashboard -->
+                <a href="{{ route('admin.dashboard') }}"
+                   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="mr-3">📊</span>
+                    Dashboard
                 </a>
 
-                <!-- Working Settings Link -->
-                <a href="{{ route('admin.settings.index') }}" class="block px-4 py-2 text-sm hover:bg-gray-700 {{ request()->routeIs('admin.settings.*') ? 'bg-gray-700' : '' }}">
-                    ⚙️ Settings
-                </a>
-
-                <!-- View Public Site -->
-                <a href="{{ route('home') }}" target="_blank" class="block px-4 py-2 text-sm hover:bg-gray-700">
-                    🌐 View Website
-                </a>
-
-                <!-- Coming Soon Section -->
-                <div class="mt-4 pt-4 border-t border-gray-700">
-                    <div class="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide">
-                        Content Management - Coming Soon
-                    </div>
-
-                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
-                        📰 Berita & Artikel
-                    </div>
-                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
-                        📄 Halaman
-                    </div>
-                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
-                        📅 Event & Kegiatan
-                    </div>
-                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
-                        🖼️ Galeri
-                    </div>
-                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
-                        🏫 Fasilitas
-                    </div>
-                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
-                        🎯 Program Unggulan
-                    </div>
-                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
-                        🏆 Prestasi
-                    </div>
-                    <div class="px-4 py-2 text-sm text-gray-500 cursor-not-allowed opacity-50">
-                        💬 Testimoni
+                <!-- Content Management Dropdown -->
+                <div class="space-y-1">
+                    <button @click="content = !content"
+                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
+                        <div class="flex items-center">
+                            <span class="mr-3">📄</span>
+                            Content Management
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="content ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div x-show="content" x-transition class="ml-6 space-y-1">
+                        <a href="{{ route('admin.posts.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.posts.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">📰</span>
+                            Berita & Artikel
+                        </a>
+                        <a href="{{ route('admin.pages.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.pages.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">📄</span>
+                            Halaman
+                        </a>
+                        <a href="{{ route('admin.events.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.events.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">📅</span>
+                            Event & Kegiatan
+                        </a>
+                        <a href="{{ route('admin.galleries.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.galleries.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🖼️</span>
+                            Galeri
+                        </a>
                     </div>
                 </div>
 
-                <div class="border-t border-gray-700 mt-4 pt-4">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700">
-                            🚪 Logout
-                        </button>
-                    </form>
+                <!-- School Features Dropdown -->
+                <div class="space-y-1">
+                    <button @click="school = !school"
+                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
+                        <div class="flex items-center">
+                            <span class="mr-3">🏫</span>
+                            School Features
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="school ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div x-show="school" x-transition class="ml-6 space-y-1">
+                        <a href="{{ route('admin.facilities.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.facilities.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🏫</span>
+                            Fasilitas
+                        </a>
+                        <a href="{{ route('admin.programs.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.programs.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🎯</span>
+                            Program Unggulan
+                        </a>
+                        <a href="{{ route('admin.achievements.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.achievements.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🏆</span>
+                            Prestasi
+                        </a>
+                        <a href="{{ route('admin.testimonials.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.testimonials.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">💬</span>
+                            Testimoni
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Advanced Features Dropdown -->
+                <div class="space-y-1">
+                    <button @click="advanced = !advanced"
+                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
+                        <div class="flex items-center">
+                            <span class="mr-3">🛠️</span>
+                            Advanced Features
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="advanced ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div x-show="advanced" x-transition class="ml-6 space-y-1">
+                        <a href="{{ route('admin.templates.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🎨</span>
+                            Template Builder
+                        </a>
+                        <a href="{{ route('admin.menus.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.menus.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🧭</span>
+                            Menu Management
+                        </a>
+                        <a href="{{ route('admin.settings.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.settings.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">⚙️</span>
+                            Settings
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Communication Dropdown -->
+                <div class="space-y-1">
+                    @php
+                        $unreadCount = \App\Models\Message::where('status', 'unread')->count();
+                        $pendingCount = \App\Models\Enrollment::where('status', 'pending')->count();
+                        $totalNotifications = $unreadCount + $pendingCount;
+                    @endphp
+                    <button @click="communication = !communication"
+                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
+                        <div class="flex items-center">
+                            <span class="mr-3">📧</span>
+                            Communication
+                            @if($totalNotifications > 0)
+                                <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-2">{{ $totalNotifications }}</span>
+                            @endif
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="communication ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div x-show="communication" x-transition class="ml-6 space-y-1">
+                        <a href="{{ route('admin.messages.index') }}" class="flex items-center justify-between px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.messages.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <div class="flex items-center">
+                                <span class="mr-2">📧</span>
+                                Inbox Messages
+                            </div>
+                            @if($unreadCount > 0)
+                                <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1">{{ $unreadCount }}</span>
+                            @endif
+                        </a>
+                        <a href="{{ route('admin.enrollments.index') }}" class="flex items-center justify-between px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.enrollments.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <div class="flex items-center">
+                                <span class="mr-2">🎓</span>
+                                Enrollments
+                            </div>
+                            @if($pendingCount > 0)
+                                <span class="bg-yellow-500 text-white text-xs rounded-full px-2 py-1">{{ $pendingCount }}</span>
+                            @endif
+                        </a>
+                    </div>
                 </div>
             </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="p-4 border-t border-gray-800">
+                <div class="text-center">
+                    <p class="text-xs text-gray-400">Admin Panel v1.0</p>
+                </div>
+            </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
-            <!-- Top Navigation -->
-            <header class="bg-white shadow-sm border-b border-gray-200">
-                <div class="px-6 py-4">
-                    <div class="flex items-center justify-between">
-                        <h1 class="text-2xl font-semibold text-gray-900">
-                            @yield('title', 'Dashboard')
-                        </h1>
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">@yield('title', 'Admin Panel')</h1>
+                        <p class="text-sm text-gray-600 mt-1">@yield('subtitle', 'Manage your school\'s content and settings')</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        @yield('header-actions')
 
-                        <div class="flex items-center space-x-4">
-                            <a href="{{ route('home') }}" target="_blank" class="text-blue-600 hover:text-blue-800">
-                                Lihat Website
-                            </a>
+                        <!-- View Website Link -->
+                        <a href="{{ route('home') }}" target="_blank"
+                           class="inline-flex items-center px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
+                            <span class="mr-1">🌐</span>
+                            View Website
+                        </a>
+
+                        <!-- Current Time -->
+                        <div class="text-sm text-gray-500 hidden md:block">
+                            {{ now()->format('M d, Y - H:i') }}
+                        </div>
+
+                        <!-- User Profile Dropdown -->
+                        <div class="relative" x-data="{ userMenu: false }" @click.away="userMenu = false">
+                            <button @click="userMenu = !userMenu"
+                                    class="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors shadow-md border-2 border-white">
+                                <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
+                            </button>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+
+                            <div x-show="userMenu"
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+
+                                <!-- User Info Header -->
+                                <div class="px-4 py-3 border-b border-gray-200">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white font-semibold">{{ substr(auth()->user()->name, 0, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">{{ auth()->user()->name }}</p>
+                                            <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
+                                            <p class="text-xs text-blue-600">Administrator</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Menu Items -->
+                                <div class="py-1">
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
+                                            <span class="mr-3">🚪</span>
+                                            Sign Out
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </header>
 
-            <!-- Page Content -->
-            <main class="flex-1 p-6">
+            <!-- Main Content -->
+            <!-- Main Content -->
+            <main class="flex-1 overflow-auto p-6 bg-gray-50">
                 @if (session('success'))
-                    <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                        {{ session('success') }}
+                    <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            {{ session('success') }}
+                        </div>
                     </div>
                 @endif
 
                 @if (session('error'))
-                    <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                        {{ session('error') }}
+                    <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            {{ session('error') }}
+                        </div>
+                    </div>
+                @endif
+
+                @if ($errors->any())
+                    <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <p class="font-medium">Please fix the following errors:</p>
+                                <ul class="mt-1 list-disc list-inside text-sm">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 @endif
 

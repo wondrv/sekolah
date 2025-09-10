@@ -10,7 +10,6 @@ use App\Models\Post;
 use App\Models\Page;
 use App\Models\Event;
 use App\Models\Gallery;
-use App\Models\Banner;
 
 class SchoolDataSeeder extends Seeder
 {
@@ -152,30 +151,6 @@ class SchoolDataSeeder extends Seeder
 
         foreach ($galleries as $gallery) {
             \App\Models\Gallery::create($gallery);
-        }
-
-        // Create sample banners
-        $banners = [
-            [
-                'title' => 'Selamat Datang di Website Sekolah Kami',
-                'subtitle' => 'Pendidikan Berkualitas untuk Masa Depan Gemilang',
-                'button_text' => 'Daftar Sekarang',
-                'button_url' => '/ppdb',
-                'sort_order' => 1,
-                'is_active' => true,
-            ],
-            [
-                'title' => 'Prestasi Membanggakan',
-                'subtitle' => 'Siswa kami meraih berbagai prestasi di tingkat nasional',
-                'button_text' => 'Lihat Prestasi',
-                'button_url' => '/berita?category=prestasi',
-                'sort_order' => 2,
-                'is_active' => true,
-            ]
-        ];
-
-        foreach ($banners as $banner) {
-            \App\Models\Banner::create($banner);
         }
 
         $this->command->info('Sample data created successfully!');

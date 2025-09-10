@@ -5,6 +5,8 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin;
 use Illuminate\Support\Facades\Route;
@@ -22,8 +24,13 @@ Route::get('/agenda/{event}', [EventController::class, 'show'])->name('events.sh
 Route::get('/galeri', [GalleryController::class, 'index'])->name('galleries.index');
 Route::get('/galeri/{gallery:slug}', [GalleryController::class, 'show'])->name('galleries.show');
 
-// Contact route
-Route::view('/kontak', 'pages.kontak')->name('contact');
+// Contact routes
+Route::get('/kontak', [ContactController::class, 'show'])->name('contact');
+Route::post('/kontak', [ContactController::class, 'store'])->name('contact.store');
+
+// Enrollment routes
+Route::get('/pendaftaran', [EnrollmentController::class, 'show'])->name('enrollment');
+Route::post('/pendaftaran', [EnrollmentController::class, 'store'])->name('enrollment.store');
 
 // Dashboard route - redirects to admin
 Route::get('/dashboard', function () {
