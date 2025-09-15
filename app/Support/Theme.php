@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Setting;
 use App\Models\Menu;
+use App\Models\MenuItem;
 use App\Models\Widget;
 use App\Models\Template;
 use Illuminate\Support\Facades\Cache;
@@ -13,88 +14,112 @@ class Theme
     public static function getSetting($key, $default = null)
     {
         return Cache::remember("setting.{$key}", 3600, function () use ($key, $default) {
-            return Setting::get($key, $default);
+            $setting = Setting::where('key', $key)->first();
+            return $setting ? $setting->value : $default;
         });
+    }
+
+    public static function getSettings($keys = [])
+    {
+        if (empty($keys)) {
+            return Cache::remember("settings.all", 3600, function () {
+                return Setting::pluck('value', 'key')->toArray();
+            });
+        }
+
+        $settings = [];
+        foreach ($keys as $key) {
+            $settings[$key] = self::getSetting($key);
+        }
+        return $settings;
+    }
+
+    public static function getSiteInfo()
+    {
+        return Cache::remember('site.info', 3600, function () {
+            $settings = Setting::pluck('value', 'key')->toArray();
+            return [
+                'name' => $settings['site_name'] ?? 'SMK Teknologi Informatika',
+                'tagline' => $settings['site_tagline'] ?? 'Mencetak Generasi Digital Unggul',
+                'description' => $settings['site_description'] ?? 'Sekolah teknologi terdepan yang mempersiapkan siswa menghadapi era digital.',
+                'keywords' => $settings['site_keywords'] ?? 'SMK, teknologi, informatika, komputer, digital',
+                'logo' => $settings['logo'] ?? '/images/logo.png',
+                'favicon' => $settings['favicon'] ?? '/favicon.ico',
+                'hero_image' => $settings['hero_image'] ?? '/images/hero.jpg',
+                'email' => $settings['contact_email'] ?? 'info@sekolah.sch.id',
+                'phone' => $settings['contact_phone'] ?? '(021) 123-4567',
+                'address' => $settings['contact_address'] ?? 'Jl. Pendidikan No. 123, Jakarta Pusat 10430',
+                'whatsapp' => $settings['contact_whatsapp'] ?? '+62812-3456-7890',
+            ];
+        });
+    }
+
+    public static function getThemeColors()
+    {
+        return Cache::remember('theme.colors', 3600, function () {
+            $settings = Setting::pluck('value', 'key')->toArray();
+            return [
+                'primary' => $settings['primary_color'] ?? '#3b82f6',
+                'secondary' => $settings['secondary_color'] ?? '#64748b',
+                'accent' => $settings['accent_color'] ?? '#f59e0b',
+                'success' => '#10b981',
+                'warning' => '#f59e0b',
+                'error' => '#ef4444',
+            ];
+        });
+    }
+
+    public static function getTypography()
+    {
+        return Cache::remember('theme.typography', 3600, function () {
+            $settings = Setting::pluck('value', 'key')->toArray();
+            return [
+                'font_family' => $settings['font_family'] ?? 'Inter',
+                'font_size_base' => '16px',
+                'line_height_base' => '1.6',
+                'font_weight_normal' => '400',
+                'font_weight_semibold' => '600',
+                'font_weight_bold' => '700',
+                'border_radius' => $settings['border_radius'] ?? '0.375rem',
+            ];
+        });
+    }
+
+    public static function clearCache()
+    {
+        $cacheKeys = ['site.info', 'theme.colors', 'theme.typography', 'settings.all', 'home.template'];
+        foreach ($cacheKeys as $key) {
+            Cache::forget($key);
+        }
+        $locations = ['header', 'footer', 'primary', 'sidebar'];
+        foreach ($locations as $location) {
+            Cache::forget("menu.{$location}");
+            Cache::forget("widgets.{$location}");
+        }
     }
 
     public static function getMenu($location)
     {
         return Cache::remember("menu.{$location}", 3600, function () use ($location) {
-            return Menu::with(['children'])
-                ->where('location', $location)
-                ->where('active', true)
-                ->whereNull('parent_id')
-                ->orderBy('sort_order')
-                ->get();
+            $menu = Menu::where('location', $location)->where('is_active', true)->first();
+            if (!$menu) {
+                return collect();
+            }
+            return MenuItem::with(['children'])->where('menu_id', $menu->id)->whereNull('parent_id')->where('is_active', true)->orderBy('sort_order')->get();
         });
     }
 
     public static function getWidgets($location)
     {
         return Cache::remember("widgets.{$location}", 3600, function () use ($location) {
-            return Widget::where('location', $location)
-                ->where('active', true)
-                ->orderBy('order')
-                ->get();
+            return Widget::where('location', $location)->where('is_active', true)->orderBy('sort_order')->get();
         });
     }
 
     public static function getHomeTemplate()
     {
         return Cache::remember('home.template', 3600, function () {
-            return Template::with(['sections.blocks'])
-                ->where('active', true)
-                ->where('slug', 'homepage')
-                ->first();
+            return Template::with(['sections.blocks'])->where('is_active', true)->where('type', 'homepage')->first();
         });
-    }
-
-    public static function getSiteInfo()
-    {
-        return [
-            'name' => self::getSetting('site_name', 'Nama Sekolah'),
-            'logo' => self::getSetting('site_logo', '/images/logosekolah.png'),
-            'favicon' => self::getSetting('site_favicon', '/favicon.ico'),
-            'description' => self::getSetting('site_description', 'Profil resmi sekolah'),
-            'contact' => self::getSetting('contact_info', [
-                'address' => 'Jl. Pendidikan No. 123, Jakarta Pusat 10430',
-                'phone' => '(021) 123-4567',
-                'email' => 'info@namasekolah.sch.id'
-            ]),
-            'social' => self::getSetting('social_links', [
-                'facebook' => '#',
-                'instagram' => '#',
-                'youtube' => '#'
-            ]),
-        ];
-    }
-
-    public static function getThemeColors()
-    {
-        return self::getSetting('theme_colors', [
-            'primary' => '#1e40af',
-            'secondary' => '#64748b',
-            'accent' => '#f59e0b',
-            'success' => '#10b981',
-            'warning' => '#f59e0b',
-            'error' => '#ef4444',
-        ]);
-    }
-
-    public static function getTypography()
-    {
-        return self::getSetting('typography', [
-            'font_family' => 'Inter, system-ui, sans-serif',
-            'font_size_base' => '16px',
-            'line_height_base' => '1.6',
-            'font_weight_normal' => '400',
-            'font_weight_semibold' => '600',
-            'font_weight_bold' => '700',
-        ]);
-    }
-
-    public static function clearCache()
-    {
-        Cache::flush();
     }
 }

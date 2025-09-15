@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\Auth;
 // Public routes (no login required)
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// CMS Test route (for development/testing)
+Route::get('/test-cms', function () {
+    return view('test-cms');
+})->name('test-cms');
+
 // Dynamic content routes
 Route::get('/profil/{slug?}', [PageController::class, 'show'])->name('pages.show');
 Route::get('/berita', [PostController::class, 'index'])->name('posts.index');

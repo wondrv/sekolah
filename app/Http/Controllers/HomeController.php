@@ -11,11 +11,7 @@ class HomeController extends Controller
     {
         $template = Theme::getHomeTemplate();
 
-        if (!$template) {
-            // Fallback to traditional home view if no template is set
-            return view('home');
-        }
-
+        // Always pass the template variable, even if null
         return view('home-template', compact('template'));
     }
 }
