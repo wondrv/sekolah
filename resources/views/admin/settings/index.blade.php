@@ -32,6 +32,14 @@
                         </div>
 
                         <div>
+                            <label for="site_tagline" class="block text-sm font-medium text-gray-700">Site Tagline</label>
+                            <input type="text" name="site_tagline" id="site_tagline"
+                                value="{{ old('site_tagline', $settings['site_tagline'] ?? '') }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                placeholder="Mencetak Generasi Digital Unggul">
+                        </div>
+
+                        <div>
                             <label for="site_keywords" class="block text-sm font-medium text-gray-700">SEO Keywords</label>
                             <input type="text" name="site_keywords" id="site_keywords"
                                 value="{{ old('site_keywords', $settings['site_keywords'] ?? '') }}"
@@ -118,6 +126,53 @@
                             @endif
                         </div>
 
+                        <!-- Header / Navbar Settings -->
+                        <h4 class="text-md font-medium text-gray-900 border-b pb-1 mt-6">Header / Navbar</h4>
+
+                        <div>
+                            <label for="header_logo_position" class="block text-sm font-medium text-gray-700">Logo Position</label>
+                            <select name="header_logo_position" id="header_logo_position"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="left" {{ ($settings['header_logo_position'] ?? 'left') === 'left' ? 'selected' : '' }}>Left</option>
+                                <option value="center" {{ ($settings['header_logo_position'] ?? 'left') === 'center' ? 'selected' : '' }}>Center</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <input type="hidden" name="header_sticky" value="0">
+                            <input type="checkbox" name="header_sticky" id="header_sticky" value="1" class="rounded"
+                                   {{ ($settings['header_sticky'] ?? '0') == '1' ? 'checked' : '' }}>
+                            <label for="header_sticky" class="text-sm">Sticky header (stays on scroll)</label>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <input type="hidden" name="header_transparent" value="0">
+                            <input type="checkbox" name="header_transparent" id="header_transparent" value="1" class="rounded"
+                                   {{ ($settings['header_transparent'] ?? '0') == '1' ? 'checked' : '' }}>
+                            <label for="header_transparent" class="text-sm">Transparent header</label>
+                        </div>
+
+                        <div>
+                            <label for="header_bg_color" class="block text-sm font-medium text-gray-700">Header Background Color</label>
+                            <input type="color" name="header_bg_color" id="header_bg_color"
+                                value="{{ old('header_bg_color', $settings['header_bg_color'] ?? '#ffffff') }}"
+                                class="mt-1 block w-20 h-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+
+                        <div>
+                            <label for="header_text_color" class="block text-sm font-medium text-gray-700">Header Text Color</label>
+                            <input type="color" name="header_text_color" id="header_text_color"
+                                value="{{ old('header_text_color', $settings['header_text_color'] ?? '#000000') }}"
+                                class="mt-1 block w-20 h-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <input type="hidden" name="social_show_in_header" value="0">
+                            <input type="checkbox" name="social_show_in_header" id="social_show_in_header" value="1" class="rounded"
+                                   {{ ($settings['social_show_in_header'] ?? '0') == '1' ? 'checked' : '' }}>
+                            <label for="social_show_in_header" class="text-sm">Show social icons in header</label>
+                        </div>
+
                         <!-- Social Media -->
                         <h4 class="text-md font-medium text-gray-900 border-b pb-1 mt-6">Social Media</h4>
 
@@ -139,6 +194,27 @@
                             <label for="youtube_url" class="block text-sm font-medium text-gray-700">YouTube URL</label>
                             <input type="url" name="youtube_url" id="youtube_url"
                                 value="{{ old('youtube_url', $settings['youtube_url'] ?? '') }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label for="twitter_url" class="block text-sm font-medium text-gray-700">Twitter URL</label>
+                            <input type="url" name="twitter_url" id="twitter_url"
+                                value="{{ old('twitter_url', $settings['twitter_url'] ?? '') }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label for="tiktok_url" class="block text-sm font-medium text-gray-700">TikTok URL</label>
+                            <input type="url" name="tiktok_url" id="tiktok_url"
+                                value="{{ old('tiktok_url', $settings['tiktok_url'] ?? '') }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label for="linkedin_url" class="block text-sm font-medium text-gray-700">LinkedIn URL</label>
+                            <input type="url" name="linkedin_url" id="linkedin_url"
+                                value="{{ old('linkedin_url', $settings['linkedin_url'] ?? '') }}"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
                     </div>

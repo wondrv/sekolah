@@ -6,7 +6,6 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ContactController;
-use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\ProgramController;
@@ -39,9 +38,7 @@ Route::get('/program/{program:slug}', [ProgramController::class, 'show'])->name(
 Route::get('/kontak', [ContactController::class, 'show'])->name('contact');
 Route::post('/kontak', [ContactController::class, 'store'])->name('contact.store');
 
-// Enrollment routes
-Route::get('/pendaftaran', [EnrollmentController::class, 'show'])->name('enrollment');
-Route::post('/pendaftaran', [EnrollmentController::class, 'store'])->name('enrollment.store');
+// Enrollment feature removed
 
 // Dashboard route - redirects to admin
 Route::get('/dashboard', function () {

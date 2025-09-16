@@ -137,11 +137,6 @@
             </a>
 
             <div class="flex items-center space-x-4">
-                <a href="{{ route('enrollment') }}"
-                   class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                    📝 Daftar Sekarang
-                </a>
-
                 <div class="text-sm text-gray-500">
                     @if($program->updated_at)
                         Diperbarui: {{ $program->updated_at->format('d M Y') }}

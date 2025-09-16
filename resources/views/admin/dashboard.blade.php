@@ -60,23 +60,7 @@
         </div>
     </div>
 
-    <!-- Enrollments Count -->
-    <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Pendaftaran</p>
-                <p class="text-2xl font-semibold text-gray-900">{{ \App\Models\Enrollment::count() }}</p>
-                <p class="text-xs text-yellow-600">{{ \App\Models\Enrollment::where('status', 'pending')->count() }} menunggu review</p>
-            </div>
-        </div>
-    </div>
+    {{-- Enrollment feature removed --}}
 </div>
 
 <!-- Quick Management Cards -->
@@ -244,41 +228,7 @@
         </div>
     </div>
 
-    <!-- Recent Enrollments -->
-    <div class="bg-white rounded-lg shadow-sm p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Pendaftaran Terbaru</h3>
-            <a href="{{ route('admin.enrollments.index') }}" class="text-blue-600 hover:text-blue-800 text-sm">Lihat Semua</a>
-        </div>
-        <div class="space-y-3">
-            @php
-                $recentEnrollments = \App\Models\Enrollment::latest()->take(5)->get();
-            @endphp
-            @forelse($recentEnrollments as $enrollment)
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-900">{{ $enrollment->student_name }}</p>
-                    <p class="text-xs text-gray-600">{{ $enrollment->program }} - {{ $enrollment->grade_level }}</p>
-                    <p class="text-xs text-gray-500">{{ $enrollment->created_at->diffForHumans() }}</p>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="px-2 py-1 text-xs rounded-full
-                        {{ $enrollment->status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                           ($enrollment->status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
-                        {{ ucfirst($enrollment->status) }}
-                    </span>
-                </div>
-            </div>
-            @empty
-            <div class="text-center py-8 text-gray-500">
-                <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                </svg>
-                <p class="text-sm">Belum ada pendaftaran</p>
-            </div>
-            @endforelse
-        </div>
-    </div>
+    {{-- Recent enrollments removed --}}
 
     <!-- Recent Posts Section -->
     <div class="bg-white rounded-lg shadow-sm">

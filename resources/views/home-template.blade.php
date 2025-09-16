@@ -49,9 +49,9 @@
                         <span class="mr-2">📰</span>
                         Berita Terkini
                     </a>
-                    <a href="/pendaftaran" class="btn-accent px-8 py-4 text-lg rounded-lg inline-flex items-center">
-                        <span class="mr-2">🎓</span>
-                        Pendaftaran
+                    <a href="/kontak" class="btn-accent px-8 py-4 text-lg rounded-lg inline-flex items-center">
+                        <span class="mr-2">📩</span>
+                        Hubungi Kami
                     </a>
                 </div>
 
@@ -98,8 +98,8 @@
                 <h2 class="text-3xl font-bold text-white mb-6">Bergabunglah dengan Kami</h2>
                 <p class="text-lg text-blue-100 mb-8">Wujudkan impian karir di bidang teknologi bersama kami</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="/pendaftaran" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                        Daftar Sekarang
+                    <a href="/kontak" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                        Hubungi Kami
                     </a>
                     <a href="/kontak" class="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
                         Hubungi Kami

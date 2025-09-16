@@ -27,7 +27,6 @@
         <select name="type" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">All Types</option>
             <option value="contact" {{ request('type') == 'contact' ? 'selected' : '' }}>Contact</option>
-            <option value="enrollment" {{ request('type') == 'enrollment' ? 'selected' : '' }}>Enrollment</option>
             <option value="complaint" {{ request('type') == 'complaint' ? 'selected' : '' }}>Complaint</option>
             <option value="suggestion" {{ request('type') == 'suggestion' ? 'selected' : '' }}>Suggestion</option>
         </select>
@@ -91,7 +90,6 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 text-xs rounded-full
                             @if($message->type === 'contact') bg-blue-100 text-blue-800
-                            @elseif($message->type === 'enrollment') bg-green-100 text-green-800
                             @elseif($message->type === 'complaint') bg-red-100 text-red-800
                             @else bg-yellow-100 text-yellow-800 @endif">
                             {{ ucfirst($message->type) }}

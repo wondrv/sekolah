@@ -12,7 +12,7 @@ else $headerClasses .= ' bg-white';
 @endphp
 
 <header class="{{ $headerClasses }}" style="background-color: {{ $headerSettings['header_bg_color'] ?? '#ffffff' }}; color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">
-  <nav class="container mx-auto px-4 py-3">
+  <nav class="container mx-auto px-4 py-3" x-data="{ mobileMenuOpen: false }">
     <div class="flex items-center {{ ($headerSettings['header_logo_position'] ?? 'left') === 'center' ? 'justify-center' : 'justify-between' }}">
 
       <!-- Logo Section -->
@@ -122,7 +122,7 @@ else $headerClasses .= ' bg-white';
 
     <!-- Mobile Navigation Menu -->
     @if(($headerSettings['header_logo_position'] ?? 'left') !== 'center')
-      <div x-data="{ mobileMenuOpen: false }" x-show="mobileMenuOpen"
+      <div x-show="mobileMenuOpen"
            x-transition:enter="transition ease-out duration-200"
            x-transition:enter-start="opacity-0 scale-95"
            x-transition:enter-end="opacity-100 scale-100"
@@ -208,30 +208,4 @@ else $headerClasses .= ' bg-white';
     </div>
   </nav>
 @endif
-    <button class="md:hidden" onclick="toggleMobileMenu()">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-      </svg>
-    </button>
-  </nav>
 
-  {{-- Mobile menu --}}
-  <div id="mobile-menu" class="md:hidden hidden border-t bg-white">
-    @if($menuItems && $menuItems->count() > 0)
-      @foreach($menuItems as $item)
-        <a href="{{ $item->url }}"
-           target="{{ $item->is_external ? '_blank' : '_self' }}"
-           class="block px-4 py-3 border-b hover:bg-gray-50">
-          {{ $item->label }}
-        </a>
-      @endforeach
-    @endif
-  </div>
-</header>
-
-<script>
-function toggleMobileMenu() {
-  const menu = document.getElementById('mobile-menu');
-  menu.classList.toggle('hidden');
-}
-</script>

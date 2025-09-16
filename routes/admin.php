@@ -22,8 +22,8 @@ Route::get('/debug-auth', function() {
     }
 
     return [
-        'user' => $user->toArray(),
-        'isAdmin' => method_exists($user, 'isAdmin') ? $user->isAdmin() : 'method not found',
+        'user' => (array)$user,
+        'isAdmin' => $user->is_admin ?? 'no is_admin field',
         'role' => $user->role ?? 'no role',
         'is_admin' => $user->is_admin ?? 'no is_admin field',
     ];
@@ -157,14 +157,16 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::patch('messages/{message}/reply', [Admin\MessageController::class, 'reply'])->name('admin.messages.reply');
 
-    // NEW: Enrollment Information Management
-    Route::resource('enrollments', Admin\EnrollmentController::class)->names([
-        'index' => 'admin.enrollments.index',
-        'show' => 'admin.enrollments.show',
-        'update' => 'admin.enrollments.update',
-        'destroy' => 'admin.enrollments.destroy',
-    ])->except(['create', 'store', 'edit']);
+    // Enrollment feature removed
 
-    Route::patch('enrollments/{enrollment}/approve', [Admin\EnrollmentController::class, 'approve'])->name('admin.enrollments.approve');
-    Route::patch('enrollments/{enrollment}/reject', [Admin\EnrollmentController::class, 'reject'])->name('admin.enrollments.reject');
+    // Cache Management
+    Route::post('cache/clear', function() {
+        try {
+            \App\Support\Theme::clearCache();
+            \Illuminate\Support\Facades\Cache::flush();
+            return redirect()->back()->with('success', 'Cache berhasil dibersihkan!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal membersihkan cache: ' . $e->getMessage());
+        }
+    })->name('admin.cache.clear');
 });

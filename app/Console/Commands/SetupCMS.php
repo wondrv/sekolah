@@ -93,8 +93,8 @@ class SetupCMS extends Command
             ['title' => 'Berita', 'url' => '/berita', 'sort_order' => 3],
             ['title' => 'Agenda', 'url' => '/agenda', 'sort_order' => 4],
             ['title' => 'Galeri', 'url' => '/galeri', 'sort_order' => 5],
-            ['title' => 'Pendaftaran', 'url' => '/pendaftaran', 'sort_order' => 6],
-            ['title' => 'Kontak', 'url' => '/kontak', 'sort_order' => 7],
+            // Enrollment removed; keep contact instead
+            ['title' => 'Kontak', 'url' => '/kontak', 'sort_order' => 6],
         ];
 
         foreach ($menuItems as $item) {

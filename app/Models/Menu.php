@@ -19,12 +19,12 @@ class Menu extends Model
         'name',
         'slug',
         'location',
-        'active',
+        'is_active',
     ];
 
     protected $casts = [
         'is_external' => 'boolean',
-        'active' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function parent()

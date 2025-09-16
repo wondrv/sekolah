@@ -57,7 +57,6 @@
                 <div class="flex space-x-2 mb-2">
                     <span class="px-2 py-1 text-xs rounded-full
                         @if($message->type === 'contact') bg-blue-100 text-blue-800
-                        @elseif($message->type === 'enrollment') bg-green-100 text-green-800
                         @elseif($message->type === 'complaint') bg-red-100 text-red-800
                         @else bg-yellow-100 text-yellow-800 @endif">
                         {{ ucfirst($message->type) }}

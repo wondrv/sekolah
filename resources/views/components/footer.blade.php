@@ -96,7 +96,6 @@ $socialMedia = $siteInfo['social'] ?? [];
             <a href="/agenda" class="block text-sm hover:text-blue-300 transition-colors py-1">Agenda</a>
             <a href="/galeri" class="block text-sm hover:text-blue-300 transition-colors py-1">Galeri</a>
             <a href="/kontak" class="block text-sm hover:text-blue-300 transition-colors py-1">Kontak</a>
-            <a href="/pendaftaran" class="block text-sm hover:text-blue-300 transition-colors py-1">Pendaftaran</a>
           @endif
         </div>
       </div>
@@ -200,13 +199,6 @@ $socialMedia = $siteInfo['social'] ?? [];
       <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
         <div class="text-sm text-gray-300">
           {{ $footerSettings['footer_copyright'] ?? '© ' . date('Y') . ' ' . ($siteInfo['name'] ?? 'Nama Sekolah') . '. All rights reserved.' }}
-        </div>
-
-        <div class="flex items-center space-x-6 text-sm">
-          <a href="/privacy-policy" class="text-gray-300 hover:text-white transition-colors">Kebijakan Privasi</a>
-          <a href="/terms-of-service" class="text-gray-300 hover:text-white transition-colors">Syarat & Ketentuan</a>
-          <span class="text-gray-400">|</span>
-          <span class="text-gray-400">Powered by Laravel CMS</span>
         </div>
       </div>
     </div>

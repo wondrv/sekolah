@@ -14,9 +14,10 @@ class Setting extends Model
         'value',
     ];
 
-    protected $casts = [
-        'value' => 'array',
-    ];
+    // Remove array casting since we store string values
+    // protected $casts = [
+    //     'value' => 'array',
+    // ];
 
     public static function get($key, $default = null)
     {
@@ -26,6 +27,9 @@ class Setting extends Model
 
     public static function set($key, $value)
     {
+        // Ensure value is never null - convert to empty string
+        $value = $value ?? '';
+
         return self::updateOrCreate(
             ['key' => $key],
             ['value' => $value]

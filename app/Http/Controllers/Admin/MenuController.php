@@ -8,6 +8,8 @@ use App\Models\MenuItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
+use App\Support\Theme;
 
 class MenuController extends Controller
 {
@@ -37,16 +39,29 @@ class MenuController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
             'is_active' => 'boolean',
         ]);
 
+        // Generate slug from name
+        $slug = Str::slug($request->name);
+
+        // Ensure slug is unique
+        $originalSlug = $slug;
+        $counter = 1;
+        while (Menu::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+
         Menu::create([
             'name' => $request->name,
+            'slug' => $slug,
             'location' => $request->location,
-            'description' => $request->description,
             'is_active' => $request->boolean('is_active'),
         ]);
+
+        // Clear theme cache when menu is created
+        Theme::clearCache();
 
         return redirect()->route('admin.menus.index')
                         ->with('success', 'Menu berhasil dibuat.');
@@ -80,16 +95,32 @@ class MenuController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
             'is_active' => 'boolean',
         ]);
 
+        // Generate slug from name if name changed
+        $slug = $menu->slug;
+        if ($request->name !== $menu->name) {
+            $slug = Str::slug($request->name);
+
+            // Ensure slug is unique (exclude current menu)
+            $originalSlug = $slug;
+            $counter = 1;
+            while (Menu::where('slug', $slug)->where('id', '!=', $menu->id)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+        }
+
         $menu->update([
             'name' => $request->name,
+            'slug' => $slug,
             'location' => $request->location,
-            'description' => $request->description,
             'is_active' => $request->boolean('is_active'),
         ]);
+
+        // Clear theme cache when menu is updated
+        Theme::clearCache();
 
         return redirect()->route('admin.menus.index')
                         ->with('success', 'Menu berhasil diupdate.');
@@ -101,6 +132,9 @@ class MenuController extends Controller
     public function destroy(Menu $menu): RedirectResponse
     {
         $menu->delete();
+
+        // Clear theme cache when menu is deleted
+        Theme::clearCache();
 
         return redirect()->route('admin.menus.index')
                         ->with('success', 'Menu berhasil dihapus.');

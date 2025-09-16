@@ -8,6 +8,8 @@ use App\Models\MenuItem;
 use App\Models\Widget;
 use App\Models\Template;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Theme
 {
@@ -38,18 +40,46 @@ class Theme
     {
         return Cache::remember('site.info', 3600, function () {
             $settings = Setting::pluck('value', 'key')->toArray();
+            // Helper to normalize media paths to web URLs
+            $normalize = function ($path, $default = null) {
+                if (empty($path)) {
+                    return $default;
+                }
+                // If already a full URL or a public path we can serve, return as-is
+                if (Str::startsWith($path, ['http://', 'https://', '/storage/', '/images/', '/assets/'])) {
+                    return $path;
+                }
+                // Otherwise, assume it's stored on the public disk
+                return Storage::url($path);
+            };
+
             return [
                 'name' => $settings['site_name'] ?? 'SMK Teknologi Informatika',
                 'tagline' => $settings['site_tagline'] ?? 'Mencetak Generasi Digital Unggul',
                 'description' => $settings['site_description'] ?? 'Sekolah teknologi terdepan yang mempersiapkan siswa menghadapi era digital.',
                 'keywords' => $settings['site_keywords'] ?? 'SMK, teknologi, informatika, komputer, digital',
-                'logo' => $settings['logo'] ?? '/images/logo.png',
-                'favicon' => $settings['favicon'] ?? '/favicon.ico',
-                'hero_image' => $settings['hero_image'] ?? '/images/hero.jpg',
+                'logo' => $normalize($settings['logo'] ?? ($settings['site_logo'] ?? null), '/images/logo.png'),
+                'favicon' => $normalize($settings['favicon'] ?? null, '/favicon.ico'),
+                'hero_image' => $normalize($settings['hero_image'] ?? null, '/images/hero.jpg'),
                 'email' => $settings['contact_email'] ?? 'info@sekolah.sch.id',
                 'phone' => $settings['contact_phone'] ?? '(021) 123-4567',
                 'address' => $settings['contact_address'] ?? 'Jl. Pendidikan No. 123, Jakarta Pusat 10430',
                 'whatsapp' => $settings['contact_whatsapp'] ?? '+62812-3456-7890',
+                // Structure for footer compatibility
+                'contact' => [
+                    'address' => $settings['contact_address'] ?? 'Jl. Pendidikan No. 123, Jakarta Pusat 10430',
+                    'phone' => $settings['contact_phone'] ?? '(021) 123-4567',
+                    'email' => $settings['contact_email'] ?? 'info@sekolah.sch.id',
+                    'whatsapp' => $settings['contact_whatsapp'] ?? '+62812-3456-7890',
+                ],
+                'social' => [
+                    'facebook' => $settings['facebook_url'] ?? '',
+                    'instagram' => $settings['instagram_url'] ?? '',
+                    'youtube' => $settings['youtube_url'] ?? '',
+                    'twitter' => $settings['twitter_url'] ?? '',
+                    'tiktok' => $settings['tiktok_url'] ?? '',
+                    'linkedin' => $settings['linkedin_url'] ?? '',
+                ],
             ];
         });
     }

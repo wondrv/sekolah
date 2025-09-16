@@ -135,8 +135,7 @@
                 <div class="space-y-1">
                     @php
                         $unreadCount = \App\Models\Message::where('status', 'unread')->count();
-                        $pendingCount = \App\Models\Enrollment::where('status', 'pending')->count();
-                        $totalNotifications = $unreadCount + $pendingCount;
+                        $totalNotifications = $unreadCount; // Enrollment removed
                     @endphp
                     <button @click="communication = !communication"
                             class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
@@ -161,15 +160,7 @@
                                 <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1">{{ $unreadCount }}</span>
                             @endif
                         </a>
-                        <a href="{{ route('admin.enrollments.index') }}" class="flex items-center justify-between px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.enrollments.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <div class="flex items-center">
-                                <span class="mr-2">🎓</span>
-                                Enrollments
-                            </div>
-                            @if($pendingCount > 0)
-                                <span class="bg-yellow-500 text-white text-xs rounded-full px-2 py-1">{{ $pendingCount }}</span>
-                            @endif
-                        </a>
+                        {{-- Enrollment feature removed --}}
                     </div>
                 </div>
             </nav>
@@ -193,6 +184,17 @@
                     </div>
                     <div class="flex items-center space-x-4">
                         @yield('header-actions')
+
+                        <!-- Clear Cache Button -->
+                        <form method="POST" action="{{ route('admin.cache.clear') }}" class="inline">
+                            @csrf
+                            <button type="submit"
+                                    class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                                    onclick="return confirm('Yakin ingin membersihkan cache?')">
+                                <span class="mr-1">🗑️</span>
+                                Clear Cache
+                            </button>
+                        </form>
 
                         <!-- View Website Link -->
                         <a href="{{ route('home') }}" target="_blank"

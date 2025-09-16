@@ -18,12 +18,16 @@
   <link rel="icon" href="{{ asset(App\Support\Theme::getSiteInfo()['favicon']) }}">
   <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
 
+  <!-- Alpine.js for small interactivity (navbar, dropdowns) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
   @php
     $colors = App\Support\Theme::getThemeColors();
     $typography = App\Support\Theme::getTypography();
   @endphp
 
   <style>
+    [x-cloak] { display: none !important; }
     :root {
       /* Color System */
       --color-primary: {{ $colors['primary'] }};

@@ -9,6 +9,7 @@ use App\Models\Block;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use App\Support\Theme;
 
 class TemplateController extends Controller
 {
@@ -46,6 +47,9 @@ class TemplateController extends Controller
             'description' => $request->description,
             'is_active' => $request->boolean('is_active'),
         ]);
+
+        // Clear theme cache when template is created
+        Theme::clearCache();
 
         return redirect()->route('admin.templates.index')
                         ->with('success', 'Template berhasil dibuat.');
@@ -97,6 +101,9 @@ class TemplateController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
+        // Clear theme cache when template is updated
+        Theme::clearCache();
+
         return redirect()->route('admin.templates.index')
                         ->with('success', 'Template berhasil diupdate.');
     }
@@ -107,6 +114,9 @@ class TemplateController extends Controller
     public function destroy(Template $template): RedirectResponse
     {
         $template->delete();
+
+        // Clear theme cache when template is deleted
+        Theme::clearCache();
 
         return redirect()->route('admin.templates.index')
                         ->with('success', 'Template berhasil dihapus.');
@@ -126,6 +136,9 @@ class TemplateController extends Controller
             'name' => $request->name,
             'order' => $request->order,
         ]);
+
+        // Clear theme cache when section is added
+        Theme::clearCache();
 
         return redirect()->route('admin.templates.edit', $template)
                         ->with('success', 'Section berhasil ditambahkan.');
@@ -147,6 +160,9 @@ class TemplateController extends Controller
             'content' => $request->content ? json_decode($request->content, true) : [],
             'order' => $request->order,
         ]);
+
+        // Clear theme cache when block is added
+        Theme::clearCache();
 
         return redirect()->route('admin.templates.edit', $template)
                         ->with('success', 'Block berhasil ditambahkan.');
