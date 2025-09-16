@@ -22,21 +22,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2">
                 <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ $gallery->name }}</h2>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ $gallery->title }}</h2>
                     <div class="flex items-center text-sm text-gray-500 space-x-4 mb-4">
-                        <span>Status:
-                            <span class="px-2 py-1 text-xs rounded-full {{ $gallery->is_published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                {{ $gallery->is_published ? 'Published' : 'Draft' }}
-                            </span>
-                        </span>
                         <span>Foto: {{ $gallery->photos->count() }} item</span>
                     </div>
-
-                    @if($gallery->cover_image)
-                        <div class="mb-6">
-                            <img src="{{ Storage::url($gallery->cover_image) }}" alt="{{ $gallery->name }}" class="w-full h-64 object-cover rounded-lg">
-                        </div>
-                    @endif
 
                     @if($gallery->description)
                         <div class="mb-4">
@@ -53,15 +42,22 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         @foreach($gallery->photos as $photo)
                             <div class="bg-gray-100 rounded-lg overflow-hidden">
-                                <img src="{{ Storage::url($photo->image_path) }}" alt="{{ $photo->caption }}" class="w-full h-24 object-cover">
-                                @if($photo->caption)
+                                <img src="{{ Storage::url($photo->path) }}" alt="{{ $photo->alt }}" class="w-full h-24 object-cover">
+                                @if($photo->alt)
                                     <div class="p-2">
-                                        <p class="text-xs text-gray-600 truncate">{{ $photo->caption }}</p>
+                                        <p class="text-xs text-gray-600 truncate">{{ $photo->alt }}</p>
                                     </div>
                                 @endif
                             </div>
                         @endforeach
                     </div>
+                </div>
+                @else
+                <div class="mt-8 text-center py-8">
+                    <p class="text-gray-500">Belum ada foto dalam galeri ini.</p>
+                    <a href="{{ route('admin.galleries.edit', $gallery) }}" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                        Tambah Foto
+                    </a>
                 </div>
                 @endif
             </div>
@@ -75,8 +71,8 @@
                             <p class="text-sm text-gray-900">{{ $gallery->slug }}</p>
                         </div>
                         <div>
-                            <span class="text-sm font-medium text-gray-500">Urutan:</span>
-                            <p class="text-sm text-gray-900">{{ $gallery->sort_order ?? 'Tidak ada' }}</p>
+                            <span class="text-sm font-medium text-gray-500">Total Foto:</span>
+                            <p class="text-sm text-gray-900">{{ $gallery->photos->count() }} foto</p>
                         </div>
                         <div>
                             <span class="text-sm font-medium text-gray-500">Dibuat:</span>

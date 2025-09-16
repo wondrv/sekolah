@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Gallery;
+use App\Models\Photo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -35,6 +36,10 @@ class GalleryController extends Controller
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:galleries,slug',
             'description' => 'nullable|string',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'alt_texts' => 'nullable|array',
+            'alt_texts.*' => 'nullable|string|max:255',
         ]);
 
         $data = $request->only(['title', 'slug', 'description']);
@@ -44,7 +49,20 @@ class GalleryController extends Controller
             $data['slug'] = Str::slug($data['title']);
         }
 
-        Gallery::create($data);
+        $gallery = Gallery::create($data);
+
+        // Handle image uploads
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $index => $image) {
+                $path = $image->store('galleries', 'public');
+
+                $gallery->photos()->create([
+                    'path' => $path,
+                    'alt' => $request->input("alt_texts.{$index}") ?? '',
+                    'sort_order' => $index,
+                ]);
+            }
+        }
 
         return redirect()
             ->route('admin.galleries.index')

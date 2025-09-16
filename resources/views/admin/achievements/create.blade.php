@@ -99,12 +99,22 @@
                         <p class="mt-1 text-sm text-gray-500">Format: JPG, PNG, maksimal 2MB</p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-3 gap-4">
                         <div>
                             <label for="achievement_date" class="block text-sm font-medium text-gray-700 mb-2">Tanggal Prestasi</label>
                             <input type="date" id="achievement_date" name="achievement_date" value="{{ old('achievement_date') }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('achievement_date') border-red-500 @enderror">
                             @error('achievement_date')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Tahun</label>
+                            <input type="number" id="year" name="year" value="{{ old('year', date('Y')) }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('year') border-red-500 @enderror"
+                                   required min="1950" max="{{ date('Y') + 5 }}" placeholder="{{ date('Y') }}">
+                            @error('year')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

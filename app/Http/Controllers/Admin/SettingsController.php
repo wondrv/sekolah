@@ -12,91 +12,72 @@ class SettingsController extends Controller
 {
     public function index()
     {
-        $settings = Setting::pluck('value', 'key')->toArray();
-        return view('admin.settings.index', compact('settings'));
+        return view('admin.settings.index');
     }
 
     public function update(Request $request)
     {
         $request->validate([
             'site_name' => 'required|string|max:255',
-            'site_tagline' => 'nullable|string|max:255',
             'site_description' => 'nullable|string',
-            'site_keywords' => 'nullable|string',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,ico|max:1024',
-            'hero_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
-            'header_logo_position' => 'in:left,center',
-            'header_sticky' => 'boolean',
-            'header_transparent' => 'boolean',
-            'header_bg_color' => 'required|string',
-            'header_text_color' => 'required|string',
-            'primary_color' => 'required|string',
-            'secondary_color' => 'required|string',
-            'accent_color' => 'required|string',
-            'font_family' => 'required|string',
-            'border_radius' => 'required|string',
+            'school_phone' => 'nullable|string|max:20',
+            'school_email' => 'nullable|email|max:255',
+            'school_address' => 'nullable|string',
+            'site_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'primary_color' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+            'secondary_color' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+            'meta_keywords' => 'nullable|string',
+            'meta_description' => 'nullable|string',
+            'facebook_url' => 'nullable|url',
+            'twitter_url' => 'nullable|url',
+            'instagram_url' => 'nullable|url',
+            'youtube_url' => 'nullable|url',
             'contact_email' => 'nullable|email',
-            'contact_phone' => 'nullable|string',
-            'contact_address' => 'nullable|string',
-            'contact_whatsapp' => 'nullable|string',
-            'footer_copyright' => 'nullable|string',
-            'footer_bg_color' => 'required|string',
-            'footer_show_map' => 'boolean',
-            'google_maps_embed' => 'nullable|url',
-            'social_facebook' => 'nullable|url',
-            'social_instagram' => 'nullable|url',
-            'social_youtube' => 'nullable|url',
-            'social_twitter' => 'nullable|url',
-            'social_tiktok' => 'nullable|url',
-            'social_linkedin' => 'nullable|url',
-            'social_show_in_header' => 'boolean',
-            'social_show_in_footer' => 'boolean',
+            'whatsapp_number' => 'nullable|string|max:20',
         ]);
 
-        $settings = $request->except(['_token', '_method', 'logo', 'favicon', 'hero_image']);
+        // Handle logo upload
+        if ($request->hasFile('site_logo')) {
+            // Delete old logo if exists
+            $oldLogo = setting('site_logo');
+            if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
+                Storage::disk('public')->delete($oldLogo);
+            }
 
-        // Handle file uploads
-        if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('images/branding', 'public');
-            $settings['logo'] = 'storage/' . $logoPath;
+            // Store new logo
+            $logoPath = $request->file('site_logo')->store('uploads/logos', 'public');
+            Setting::set('site_logo', $logoPath);
         }
 
-        if ($request->hasFile('favicon')) {
-            $faviconPath = $request->file('favicon')->store('images/branding', 'public');
-            $settings['favicon'] = 'storage/' . $faviconPath;
-        }
-
-        if ($request->hasFile('hero_image')) {
-            $heroPath = $request->file('hero_image')->store('images/hero', 'public');
-            $settings['hero_image'] = 'storage/' . $heroPath;
-        }
-
-        // Handle boolean fields
-        $booleanFields = [
-            'header_sticky', 'header_transparent', 'footer_show_map',
-            'social_show_in_header', 'social_show_in_footer'
+        // Update all other settings
+        $settingsToUpdate = [
+            'site_name',
+            'site_description',
+            'school_phone',
+            'school_email',
+            'school_address',
+            'primary_color',
+            'secondary_color',
+            'meta_keywords',
+            'meta_description',
+            'facebook_url',
+            'twitter_url',
+            'instagram_url',
+            'youtube_url',
+            'contact_email',
+            'whatsapp_number',
         ];
 
-        foreach ($booleanFields as $field) {
-            $settings[$field] = $request->boolean($field);
+        foreach ($settingsToUpdate as $setting) {
+            if ($request->has($setting)) {
+                Setting::set($setting, $request->input($setting));
+            }
         }
 
-        // Save settings to database
-        foreach ($settings as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
-        }
-
-        // Clear theme cache
-        Cache::forget('theme_settings');
-        Cache::forget('site_info');
-        Cache::forget('theme_colors');
-        Cache::forget('typography');
-
-        // Use Theme class cache clearing method
-        \App\Support\Theme::clearCache();
+        // Clear settings cache
+        Cache::forget('settings');
 
         return redirect()->route('admin.settings.index')
-            ->with('success', 'Pengaturan berhasil disimpan! Website akan menampilkan perubahan yang Anda buat.');
+                        ->with('success', 'Settings updated successfully!');
     }
 }

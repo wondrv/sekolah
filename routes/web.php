@@ -8,6 +8,8 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\Admin;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +30,10 @@ Route::get('/agenda', [EventController::class, 'index'])->name('events.index');
 Route::get('/agenda/{event}', [EventController::class, 'show'])->name('events.show');
 Route::get('/galeri', [GalleryController::class, 'index'])->name('galleries.index');
 Route::get('/galeri/{gallery:slug}', [GalleryController::class, 'show'])->name('galleries.show');
+Route::get('/fasilitas', [FacilityController::class, 'index'])->name('facilities.index');
+Route::get('/fasilitas/{facility:slug}', [FacilityController::class, 'show'])->name('facilities.show');
+Route::get('/program', [ProgramController::class, 'index'])->name('programs.index');
+Route::get('/program/{program:slug}', [ProgramController::class, 'show'])->name('programs.show');
 
 // Contact routes
 Route::get('/kontak', [ContactController::class, 'show'])->name('contact');

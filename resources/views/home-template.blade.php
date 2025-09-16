@@ -55,28 +55,7 @@
                     </a>
                 </div>
 
-                @auth
-                    @if(auth()->user()->is_admin ?? false)
-                        <div class="mt-12 p-6 bg-blue-50 rounded-lg border border-blue-200">
-                            <h3 class="text-lg font-semibold text-blue-900 mb-4">🛠️ Panel Admin</h3>
-                            <p class="text-blue-700 mb-4">Kelola website sekolah Anda dengan mudah</p>
-                            <div class="flex flex-wrap gap-3 justify-center">
-                                <a href="{{ route('admin.settings.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-                                    ⚙️ Pengaturan
-                                </a>
-                                <a href="{{ route('admin.templates.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-                                    🎨 Template
-                                </a>
-                                <a href="{{ route('admin.menus.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-                                    📋 Menu
-                                </a>
-                                <a href="{{ route('admin.posts.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-                                    📝 Konten
-                                </a>
-                            </div>
-                        </div>
-                    @endif
-                @endauth
+
             </div>
         </div>
     </section>

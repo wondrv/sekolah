@@ -32,17 +32,11 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="type" class="block text-sm font-medium text-gray-700 mb-2">Tipe</label>
-                            <select id="type" name="type"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('type') border-red-500 @enderror"
-                                    required>
-                                <option value="">Pilih Tipe</option>
-                                <option value="student" {{ old('type') == 'student' ? 'selected' : '' }}>Siswa</option>
-                                <option value="alumni" {{ old('type') == 'alumni' ? 'selected' : '' }}>Alumni</option>
-                                <option value="parent" {{ old('type') == 'parent' ? 'selected' : '' }}>Orang Tua</option>
-                                <option value="teacher" {{ old('type') == 'teacher' ? 'selected' : '' }}>Guru</option>
-                            </select>
-                            @error('type')
+                            <label for="role" class="block text-sm font-medium text-gray-700 mb-2">Role/Posisi</label>
+                            <input type="text" id="role" name="role" value="{{ old('role') }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('role') border-red-500 @enderror"
+                                   required placeholder="Contoh: Alumni, Orang Tua, Guru, Siswa">
+                            @error('role')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
