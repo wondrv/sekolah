@@ -38,8 +38,8 @@ class SettingsController extends Controller
             'site_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,ico|max:1024',
-            'primary_color' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
-            'secondary_color' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+            'primary_color' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
+            'secondary_color' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
             'accent_color' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
             'font_family' => 'nullable|string|max:100',
             'meta_keywords' => 'nullable|string',
@@ -78,7 +78,7 @@ class SettingsController extends Controller
 
         // Handle logo upload
         if ($request->hasFile('site_logo')) {
-            $oldLogo = setting('site_logo');
+            $oldLogo = function_exists('setting') ? setting('site_logo') : Setting::get('site_logo');
             if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
                 Storage::disk('public')->delete($oldLogo);
             }
@@ -88,7 +88,7 @@ class SettingsController extends Controller
 
         // Handle logo upload (alternative field name)
         if ($request->hasFile('logo')) {
-            $oldLogo = setting('logo');
+            $oldLogo = function_exists('setting') ? setting('logo') : Setting::get('logo');
             if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
                 Storage::disk('public')->delete($oldLogo);
             }
@@ -98,7 +98,7 @@ class SettingsController extends Controller
 
         // Handle favicon upload
         if ($request->hasFile('favicon')) {
-            $oldFavicon = setting('favicon');
+            $oldFavicon = function_exists('setting') ? setting('favicon') : Setting::get('favicon');
             if ($oldFavicon && Storage::disk('public')->exists($oldFavicon)) {
                 Storage::disk('public')->delete($oldFavicon);
             }
@@ -108,7 +108,7 @@ class SettingsController extends Controller
 
         // Handle PPDB brochure upload (PDF)
         if ($request->hasFile('ppdb_brochure')) {
-            $old = setting('ppdb_brochure');
+            $old = function_exists('setting') ? setting('ppdb_brochure') : Setting::get('ppdb_brochure');
             if ($old && Storage::disk('public')->exists($old)) {
                 Storage::disk('public')->delete($old);
             }

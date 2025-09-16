@@ -214,11 +214,7 @@
                                     class="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors shadow-md border-2 border-white">
                                 <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
                             </button>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </button>
-
-                            <div x-show="userMenu"
+                            <div x-show="userMenu" x-cloak
                                  x-transition:enter="transition ease-out duration-200"
                                  x-transition:enter-start="opacity-0 scale-95"
                                  x-transition:enter-end="opacity-100 scale-100"
@@ -304,5 +300,84 @@
             </main>
         </div>
     </div>
+
+    <!-- Global Delete Confirmation Modal -->
+    <div id="globalDeleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-24 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg font-bold text-gray-900">Konfirmasi Hapus</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500">
+                        Apakah Anda yakin ingin menghapus <span id="globalDeleteLabel">data ini</span>? Tindakan ini tidak dapat dibatalkan.
+                    </p>
+                </div>
+                <div class="flex justify-center space-x-3 px-4 py-3">
+                    <button id="globalDeleteCancel"
+                            class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">
+                        Batal
+                    </button>
+                    <form id="globalDeleteForm" method="POST" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
+                            Hapus
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const modal = document.getElementById('globalDeleteModal');
+            const form = document.getElementById('globalDeleteForm');
+            const label = document.getElementById('globalDeleteLabel');
+            const cancelBtn = document.getElementById('globalDeleteCancel');
+
+            function openModal(action, text) {
+                form.action = action;
+                label.textContent = text || 'data ini';
+                modal.classList.remove('hidden');
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+            }
+
+            cancelBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                closeModal();
+            });
+
+            // Intercept any delete form submission and show modal instead
+            document.addEventListener('submit', function(e) {
+                const target = e.target;
+                if (!(target instanceof HTMLFormElement)) return;
+                // Allow the modal's own form to submit normally
+                if (target.id === 'globalDeleteForm') return;
+                const methodInput = target.querySelector('input[name="_method"][value="DELETE"]');
+                const hasDeleteMethod = methodInput || (target.method && target.method.toUpperCase() === 'DELETE');
+                if (!hasDeleteMethod) return;
+
+                // Use data-confirm label if present
+                const confirmText = target.getAttribute('data-confirm') || target.getAttribute('data-label') || 'data ini';
+
+                // Prevent default submit and show modal
+                e.preventDefault();
+                openModal(target.action, confirmText);
+            }, true);
+
+            // Also support elements with data-delete-url attributes (e.g., buttons/links)
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('[data-delete-url]');
+                if (!btn) return;
+                e.preventDefault();
+                const url = btn.getAttribute('data-delete-url');
+                const text = btn.getAttribute('data-confirm') || btn.getAttribute('data-label') || btn.getAttribute('data-title') || 'data ini';
+                openModal(url, text);
+            });
+        })();
+    </script>
 </body>
 </html>

@@ -202,7 +202,7 @@
                         class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">
                     Batal
                 </button>
-                <form action="{{ route('admin.posts.destroy', $post) }}" method="POST" class="inline">
+                <form action="{{ route('admin.posts.destroy', $post) }}" method="POST" class="inline" data-confirm="berita: {{ $post->title }}">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">

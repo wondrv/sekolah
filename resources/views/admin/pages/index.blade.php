@@ -87,8 +87,12 @@
                         <div class="flex space-x-2">
                             <a href="{{ route('admin.pages.edit', $page) }}"
                                class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                            <button onclick="confirmDelete({{ $page->id }}, '{{ $page->title }}')"
-                                    class="text-red-600 hover:text-red-900">Hapus</button>
+                            <button type="button"
+                                    class="text-red-600 hover:text-red-900 js-delete-page"
+                                    data-slug="{{ $page->slug }}"
+                                    data-title="{{ $page->title }}">
+                                Hapus
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -138,14 +142,29 @@
 </div>
 
 <script>
-    function confirmDelete(pageId, pageTitle) {
-        document.getElementById('pageTitle').textContent = pageTitle;
-        document.getElementById('deleteForm').action = `/admin/pages/${pageId}`;
-        document.getElementById('deleteModal').classList.remove('hidden');
-    }
+    (function() {
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteForm = document.getElementById('deleteForm');
+        const pageTitleEl = document.getElementById('pageTitle');
 
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').classList.add('hidden');
-    }
+        function openDeleteModal(slug, title) {
+            pageTitleEl.textContent = title || '';
+            deleteForm.action = `/admin/pages/${encodeURIComponent(slug)}`;
+            deleteModal.classList.remove('hidden');
+        }
+
+        window.closeDeleteModal = function() {
+            deleteModal.classList.add('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.js-delete-page');
+            if (!btn) return;
+            e.preventDefault();
+            const slug = btn.getAttribute('data-slug');
+            const title = btn.getAttribute('data-title');
+            if (slug) openDeleteModal(slug, title);
+        });
+    })();
 </script>
 @endsection

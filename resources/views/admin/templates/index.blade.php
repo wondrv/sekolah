@@ -75,13 +75,11 @@
                                class="text-blue-600 hover:text-blue-900">View</a>
                             <a href="{{ route('admin.templates.edit', $template) }}"
                                class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                            <form action="{{ route('admin.templates.destroy', $template) }}"
-                                  method="POST" class="inline">
+                                                        <form action="{{ route('admin.templates.destroy', $template) }}"
+                                                                    method="POST" class="inline" data-confirm="template: {{ $template->name }}">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit"
-                                        onclick="return confirm('Are you sure?')"
-                                        class="text-red-600 hover:text-red-900">
+                                                                <button type="submit" class="text-red-600 hover:text-red-900">
                                     Delete
                                 </button>
                             </form>

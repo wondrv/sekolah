@@ -40,10 +40,13 @@
                                        class="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-sm">
                                         Edit
                                     </a>
-                                    <button onclick="confirmDelete({{ $gallery->id }}, '{{ $gallery->title }}')"
-                                            class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm">
-                                        Hapus
-                                    </button>
+                                    <form action="{{ route('admin.galleries.destroy', $gallery) }}" method="POST" class="inline" data-confirm="galeri: {{ $gallery->title }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm">
+                                            Hapus
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -64,39 +67,5 @@
     </div>
 </div>
 
-<!-- Delete Modal -->
-<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold mb-4">Konfirmasi Hapus</h3>
-        <p class="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus galeri "<span id="galleryTitle" class="font-medium"></span>"?</p>
-
-        <div class="flex justify-end space-x-4">
-            <button onclick="closeDeleteModal()"
-                    class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">
-                Batal
-            </button>
-            <form id="deleteForm" method="POST" class="inline">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
-                    Hapus
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-    function confirmDelete(galleryId, galleryTitle) {
-        document.getElementById('galleryTitle').textContent = galleryTitle;
-        document.getElementById('deleteForm').action = `/admin/galleries/${galleryId}`;
-        document.getElementById('deleteModal').classList.remove('hidden');
-        document.getElementById('deleteModal').classList.add('flex');
-    }
-
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').classList.add('hidden');
-        document.getElementById('deleteModal').classList.remove('flex');
-    }
-</script>
+<!-- Uses global delete modal in layouts.admin -->
 @endsection

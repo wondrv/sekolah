@@ -82,6 +82,7 @@ class GalleryController extends Controller
      */
     public function edit(Gallery $gallery)
     {
+        $gallery->load('photos');
         return view('admin.galleries.edit', compact('gallery'));
     }
 
@@ -94,6 +95,13 @@ class GalleryController extends Controller
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:galleries,slug,' . $gallery->id,
             'description' => 'nullable|string',
+            // New images (optional)
+            'new_images' => 'nullable|array',
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+            // Existing photos metadata updates
+            'photos' => 'nullable|array',
+            'photos.*.alt' => 'nullable|string|max:255',
+            'photos.*.sort_order' => 'nullable|integer|min:0',
         ]);
 
         $data = $request->only(['title', 'slug', 'description']);
@@ -104,6 +112,40 @@ class GalleryController extends Controller
         }
 
         $gallery->update($data);
+
+        // Update existing photos (alt text, sort order)
+        $photosInput = $request->input('photos', []);
+        if (!empty($photosInput)) {
+            foreach ($photosInput as $photoId => $photoData) {
+                /** @var \App\Models\Photo|null $photo */
+                $photo = $gallery->photos()->where('id', $photoId)->first();
+                if (!$photo) continue;
+                $update = [];
+                if (array_key_exists('alt', $photoData)) {
+                    $update['alt'] = $photoData['alt'] ?? '';
+                }
+                if (array_key_exists('sort_order', $photoData)) {
+                    $update['sort_order'] = (int) $photoData['sort_order'];
+                }
+                if (!empty($update)) {
+                    $photo->update($update);
+                }
+            }
+        }
+
+        // Handle new image uploads
+        if ($request->hasFile('new_images')) {
+            $startOrder = (int) ($gallery->photos()->max('sort_order') ?? 0);
+            foreach ($request->file('new_images') as $index => $image) {
+                if (!$image->isValid()) continue;
+                $path = $image->store('galleries', 'public');
+                $gallery->photos()->create([
+                    'path' => $path,
+                    'alt' => '',
+                    'sort_order' => $startOrder + $index + 1,
+                ]);
+            }
+        }
 
         return redirect()
             ->route('admin.galleries.index')

@@ -132,52 +132,20 @@
                 <!-- Danger Zone -->
                 <div class="bg-red-50 p-4 rounded-lg border border-red-200">
                     <h3 class="text-lg font-medium text-red-900 mb-4">Zona Berbahaya</h3>
-                    <button type="button" onclick="confirmDelete()"
-                            class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
-                        Hapus Halaman
-                    </button>
+                    <form action="{{ route('admin.pages.destroy', $page) }}" method="POST" class="inline w-full" data-confirm="halaman: {{ $page->title }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                            Hapus Halaman
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </form>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3 text-center">
-            <h3 class="text-lg font-bold text-gray-900">Konfirmasi Hapus</h3>
-            <div class="mt-2 px-7 py-3">
-                <p class="text-sm text-gray-500">
-                    Apakah Anda yakin ingin menghapus halaman ini? Tindakan ini tidak dapat dibatalkan.
-                </p>
-            </div>
-            <div class="flex justify-center space-x-3 px-4 py-3">
-                <button onclick="closeDeleteModal()"
-                        class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">
-                    Batal
-                </button>
-                <form action="{{ route('admin.pages.destroy', $page) }}" method="POST" class="inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
-                        Hapus
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
-    function confirmDelete() {
-        document.getElementById('deleteModal').classList.remove('hidden');
-    }
-
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').classList.add('hidden');
-    }
-
     // Auto-update stats when body content changes
     const bodyTextarea = document.getElementById('body');
     const charCount = document.getElementById('charCount');

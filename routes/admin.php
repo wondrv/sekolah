@@ -91,6 +91,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         'destroy' => 'admin.galleries.destroy',
     ]);
 
+    // Per-photo deletion
+    Route::delete('photos/{photo}', [Admin\PhotoController::class, 'destroy'])->name('admin.photos.destroy');
+
     // Facilities Management
     Route::resource('facilities', Admin\FacilityController::class)->names([
         'index' => 'admin.facilities.index',
@@ -145,6 +148,11 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         'update' => 'admin.templates.update',
         'destroy' => 'admin.templates.destroy',
     ]);
+    // Per-item deletes within templates
+    Route::delete('templates/{template}/sections/{section}', [Admin\TemplateController::class, 'deleteSection'])
+        ->name('admin.templates.sections.destroy');
+    Route::delete('templates/{template}/blocks/{block}', [Admin\TemplateController::class, 'deleteBlock'])
+        ->name('admin.templates.blocks.destroy');
     Route::post('templates/bootstrap-homepage', [Admin\TemplateController::class, 'bootstrapHomepage'])
         ->name('admin.templates.bootstrap_homepage');
 
@@ -158,6 +166,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         'update' => 'admin.menus.update',
         'destroy' => 'admin.menus.destroy',
     ]);
+    // Per-item delete for menu items
+    Route::delete('menus/{menu}/items/{item}', [Admin\MenuController::class, 'deleteItem'])
+        ->name('admin.menus.items.destroy');
 
     // NEW: Inbox Messages Management
     Route::resource('messages', Admin\MessageController::class)->names([

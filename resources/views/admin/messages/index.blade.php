@@ -113,7 +113,7 @@
                             <a href="{{ route('admin.messages.show', $message) }}"
                                class="text-indigo-600 hover:text-indigo-900">View</a>
 
-                            <form action="{{ route('admin.messages.destroy', $message) }}" method="POST"
+                            <form action="{{ route('admin.messages.destroy', $message) }}" method="POST" data-confirm="pesan dari: {{ $message->name }}"
                                   class="inline" onsubmit="return confirm('Are you sure?')">
                                 @csrf
                                 @method('DELETE')

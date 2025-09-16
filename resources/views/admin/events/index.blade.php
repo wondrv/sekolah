@@ -118,10 +118,13 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex space-x-2">
-                            <a href="{{ route('admin.events.edit', $event) }}"
-                               class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                            <button onclick="confirmDelete({{ $event->id }}, '{{ $event->title }}')"
-                                    class="text-red-600 hover:text-red-900">Hapus</button>
+                                     <a href="{{ route('admin.events.edit', $event) }}"
+                                         class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                     <form action="{{ route('admin.events.destroy', $event) }}" method="POST" class="inline" data-confirm="event: {{ $event->title }}">
+                                          @csrf
+                                          @method('DELETE')
+                                          <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
+                                     </form>
                         </div>
                     </td>
                 </tr>
@@ -143,42 +146,5 @@
     @endif
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3 text-center">
-            <h3 class="text-lg font-bold text-gray-900">Konfirmasi Hapus</h3>
-            <div class="mt-2 px-7 py-3">
-                <p class="text-sm text-gray-500">
-                    Apakah Anda yakin ingin menghapus event "<span id="eventTitle"></span>"? Tindakan ini tidak dapat dibatalkan.
-                </p>
-            </div>
-            <div class="flex justify-center space-x-3 px-4 py-3">
-                <button onclick="closeDeleteModal()"
-                        class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">
-                    Batal
-                </button>
-                <form id="deleteForm" method="POST" class="inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
-                        Hapus
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function confirmDelete(eventId, eventTitle) {
-        document.getElementById('eventTitle').textContent = eventTitle;
-    document.getElementById('deleteForm').action = `/admin/events/${eventId}`;
-        document.getElementById('deleteModal').classList.remove('hidden');
-    }
-
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').classList.add('hidden');
-    }
-</script>
+<!-- Uses global delete modal in layouts.admin -->
 @endsection

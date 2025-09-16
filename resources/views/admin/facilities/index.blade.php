@@ -62,7 +62,7 @@
                                 <div class="flex space-x-2">
                                     <a href="{{ route('admin.facilities.show', $facility) }}" class="text-blue-600 hover:text-blue-900">Lihat</a>
                                     <a href="{{ route('admin.facilities.edit', $facility) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                                    <form action="{{ route('admin.facilities.destroy', $facility) }}" method="POST" class="inline"
+                                    <form action="{{ route('admin.facilities.destroy', $facility) }}" method="POST" class="inline" data-confirm="fasilitas: {{ $facility->name }}"
                                           onsubmit="return confirm('Apakah Anda yakin ingin menghapus fasilitas ini?')">
                                         @csrf
                                         @method('DELETE')

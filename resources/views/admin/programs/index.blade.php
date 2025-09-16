@@ -68,11 +68,10 @@
                                 <div class="flex space-x-2">
                                     <a href="{{ route('admin.programs.show', $program) }}" class="text-blue-600 hover:text-blue-900">Lihat</a>
                                     <a href="{{ route('admin.programs.edit', $program) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                                    <form action="{{ route('admin.programs.destroy', $program) }}" method="POST" class="inline"
-                                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus program ini?')">
+                                    <form action="{{ route('admin.programs.destroy', $program) }}" method="POST" class="inline" data-confirm="program: {{ $program->name }}">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
+                                        <button type="submit" class="text-red-600 hover:text-red-900 cursor-pointer">Hapus</button>
                                     </form>
                                 </div>
                             </td>

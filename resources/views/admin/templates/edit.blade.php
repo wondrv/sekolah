@@ -77,9 +77,14 @@
 
                         <div class="flex items-center justify-between mb-4">
                             <h4 class="text-md font-semibold text-gray-800">{{ $section->name }}</h4>
-                            <button type="button" class="remove-section text-red-600 hover:text-red-800">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <div class="flex items-center gap-3">
+                                <a href="{{ route('admin.templates.sections.destroy', [$template, $section]) }}" onclick="event.preventDefault(); this.nextElementSibling.submit();" class="text-red-600 hover:text-red-800 hidden">Remove</a>
+                                <form action="{{ route('admin.templates.sections.destroy', [$template, $section]) }}" method="POST" class="inline" data-confirm="hapus section: {{ $section->name }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 hover:text-red-800 cursor-pointer">Hapus Section</button>
+                                </form>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -117,14 +122,35 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Section Settings (JSON)</label>
                             <textarea name="sections[{{ $index + 1 }}][settings]" rows="3"
                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                      placeholder='{"background": "white", "text_color": "dark", "padding": "large"}'>{{ is_array($section->settings) ? json_encode($section->settings, JSON_PRETTY_PRINT) : $section->settings }}</textarea>
+                                      placeholder='{"background": "white", "text_color": "dark", "padding": "large"}'>{{ is_array($section->settings ?? null) ? json_encode($section->settings, JSON_PRETTY_PRINT) : ($section->settings ?? '') }}</textarea>
                         </div>
 
-                        <div class="flex items-center">
-                            <input type="checkbox" name="sections[{{ $index + 1 }}][is_active]" value="1" {{ $section->is_active ? 'checked' : '' }}
+                        <div class="flex items-center mb-4">
+                            <input type="checkbox" name="sections[{{ $index + 1 }}][is_active]" value="1" {{ ($section->is_active ?? $section->active) ? 'checked' : '' }}
                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
                             <label class="ml-2 text-sm font-medium text-gray-700">Active Section</label>
                         </div>
+
+                        @if($section->relationLoaded('blocks') && $section->blocks && count($section->blocks))
+                        <div class="mt-4 border-t pt-4">
+                            <h5 class="font-semibold text-gray-800 mb-2">Blocks</h5>
+                            <ul class="space-y-2">
+                                @foreach($section->blocks as $block)
+                                    <li class="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
+                                        <span>
+                                            <span class="inline-block text-xs px-2 py-0.5 rounded bg-gray-200 mr-2">#{{ $block->order }}</span>
+                                            <span class="font-medium">{{ $block->type }}</span>
+                                        </span>
+                                        <form action="{{ route('admin.templates.blocks.destroy', [$template, $block]) }}" method="POST" class="inline" data-confirm="hapus block: {{ $block->type }} (#{{ $block->order }})">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-800 cursor-pointer">Hapus Block</button>
+                                        </form>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        @endif
                     </div>
                     @endforeach
                 </div>
@@ -200,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label class="block text-sm font-medium text-gray-700 mb-1">Section Settings (JSON)</label>
                     <textarea name="sections[${sectionCount}][settings]" rows="3"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                              placeholder='{"background": "white", "text_color": "dark", "padding": "large"}'>{}</textarea>
+                              placeholder='{"background": "white", "text_color": "dark", "padding": "large"}'></textarea>
                 </div>
 
                 <div class="flex items-center">
@@ -214,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sectionsContainer.insertAdjacentHTML('beforeend', sectionHtml);
     });
 
-    // Remove section functionality
+    // Remove section functionality (client-side only for newly added ones)
     sectionsContainer.addEventListener('click', function(e) {
         if (e.target.closest('.remove-section')) {
             e.target.closest('.section-item').remove();

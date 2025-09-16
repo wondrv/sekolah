@@ -162,7 +162,7 @@
                         <i class="fas fa-copy mr-2"></i>Duplicate Template
                     </button>
 
-                    <form action="{{ route('admin.templates.destroy', $template) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this template? This action cannot be undone.')">
+                    <form action="{{ route('admin.templates.destroy', $template) }}" method="POST" class="inline" data-confirm="template: {{ $template->name }}">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition duration-200">

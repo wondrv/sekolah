@@ -350,4 +350,40 @@ class TemplateController extends Controller
 
         return redirect()->route('admin.templates.index')->with('success', 'Homepage template generated/updated.');
     }
+
+    /** Delete a section from a template */
+    public function deleteSection(Template $template, Section $section): RedirectResponse
+    {
+        // Ensure the section belongs to the template
+        if ($section->template_id !== $template->id) {
+            return redirect()->route('admin.templates.edit', $template)
+                ->with('error', 'Section tidak ditemukan pada template ini.');
+        }
+
+        // Deleting section will also delete its blocks if cascades are set; otherwise delete manually
+        $section->delete();
+
+        Theme::clearCache();
+
+        return redirect()->route('admin.templates.edit', $template)
+            ->with('success', 'Section berhasil dihapus.');
+    }
+
+    /** Delete a block from a template (via its section) */
+    public function deleteBlock(Template $template, Block $block): RedirectResponse
+    {
+        // Verify block belongs to a section under this template
+        $block->load('section');
+        if (!$block->section || $block->section->template_id !== $template->id) {
+            return redirect()->route('admin.templates.edit', $template)
+                ->with('error', 'Block tidak ditemukan pada template ini.');
+        }
+
+        $block->delete();
+
+        Theme::clearCache();
+
+        return redirect()->route('admin.templates.edit', $template)
+            ->with('success', 'Block berhasil dihapus.');
+    }
 }

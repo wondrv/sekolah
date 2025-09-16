@@ -21,7 +21,7 @@
                 </svg>
                 Edit
             </a>
-            <form action="{{ route('admin.facilities.destroy', $facility) }}" method="POST" class="inline"
+            <form action="{{ route('admin.facilities.destroy', $facility) }}" method="POST" class="inline" data-confirm="fasilitas: {{ $facility->name }}"
                   onsubmit="return confirm('Apakah Anda yakin ingin menghapus fasilitas ini?')">
                 @csrf
                 @method('DELETE')

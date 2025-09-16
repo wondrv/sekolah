@@ -91,7 +91,7 @@
                 </div>
                 <span class="text-xs text-gray-500">{{ \App\Models\Page::count() }}</span>
             </a>
-            <a href="{{ route('admin.pages.index') }}" class="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+            <a href="{{ route('admin.events.index') }}" class="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                 <div class="flex items-center">
                     <span class="text-sm mr-2">📅</span>
                     <span class="text-sm font-medium text-gray-700">Event & Kegiatan</span>

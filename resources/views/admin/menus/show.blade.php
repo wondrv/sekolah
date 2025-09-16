@@ -220,7 +220,7 @@
                         <i class="fas fa-download mr-2"></i>Export Menu
                     </button>
 
-                    <form action="{{ route('admin.menus.destroy', $menu) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this menu? This action cannot be undone.')">
+                    <form action="{{ route('admin.menus.destroy', $menu) }}" method="POST" class="inline" data-confirm="menu: {{ $menu->name }}">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition duration-200">

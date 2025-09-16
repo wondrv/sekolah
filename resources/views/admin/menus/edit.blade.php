@@ -76,9 +76,13 @@
 
                         <div class="flex items-center justify-between mb-4">
                             <h4 class="text-md font-semibold text-gray-800">{{ $item->title }}</h4>
-                            <button type="button" class="remove-menu-item text-red-600 hover:text-red-800">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <div class="flex items-center gap-3">
+                                <form action="{{ route('admin.menus.items.destroy', [$menu, $item]) }}" method="POST" class="inline" data-confirm="hapus menu item: {{ $item->title }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 hover:text-red-800 cursor-pointer">Hapus Item</button>
+                                </form>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -286,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Remove menu item functionality
+    // Remove menu item functionality (client-side only for newly added ones)
     menuItemsContainer.addEventListener('click', function(e) {
         if (e.target.closest('.remove-menu-item')) {
             e.target.closest('.menu-item').remove();
