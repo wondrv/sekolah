@@ -6,9 +6,9 @@
 @section('content')
 @if($template && $template->sections)
     @foreach($template->sections as $section)
-        @if($section->is_active && $section->blocks)
+        @if(($section->active ?? false) && $section->blocks)
             @foreach($section->blocks as $block)
-                @if($block->is_active)
+                @if(($block->active ?? false))
                     <x-block-renderer :block="$block" />
                 @endif
             @endforeach

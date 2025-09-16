@@ -8,7 +8,6 @@
 
     @php
       $galleries = \App\Models\Gallery::with('photos')
-        ->where('status', 'published')
         ->orderBy('created_at', 'desc')
         ->limit($data['limit'] ?? 6)
         ->get();
@@ -21,7 +20,7 @@
             <a href="{{ route('galleries.show', $gallery->slug) }}" class="block">
               <div class="aspect-video bg-gray-200 rounded-lg overflow-hidden mb-4">
                 @if($gallery->photos->count() > 0)
-                  <img src="{{ asset('storage/' . $gallery->photos->first()->filename) }}"
+                  <img src="{{ $gallery->photos->first()->url }}"
                        alt="{{ $gallery->title }}"
                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                 @else
@@ -34,8 +33,8 @@
               </div>
 
               <h3 class="text-xl font-semibold mb-2 group-hover:text-blue-600">{{ $gallery->title }}</h3>
-              @if($gallery->excerpt)
-                <p class="text-gray-600 text-sm">{{ $gallery->excerpt }}</p>
+              @if($gallery->description)
+                <p class="text-gray-600 text-sm">{{ \Illuminate\Support\Str::limit(strip_tags($gallery->description), 120) }}</p>
               @endif
 
               <div class="mt-2 text-sm text-gray-500">

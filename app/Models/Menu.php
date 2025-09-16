@@ -39,7 +39,7 @@ class Menu extends Model
 
     public function items()
     {
-        return $this->hasMany(MenuItem::class)->whereNull('parent_id')->orderBy('order');
+        return $this->hasMany(MenuItem::class)->whereNull('parent_id')->where('is_active', true)->orderBy('sort_order');
     }
 
     public function allItems()

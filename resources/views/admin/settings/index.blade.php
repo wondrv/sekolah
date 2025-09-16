@@ -217,6 +217,93 @@
                                 value="{{ old('linkedin_url', $settings['linkedin_url'] ?? '') }}"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
+
+                        <!-- Agenda & Kegiatan -->
+                        <h4 class="text-md font-medium text-gray-900 border-b pb-1 mt-6">Agenda & Kegiatan</h4>
+
+                        <div class="flex items-center gap-2">
+                            <input type="hidden" name="agenda_show_on_home" value="0">
+                            <input type="checkbox" name="agenda_show_on_home" id="agenda_show_on_home" value="1" class="rounded"
+                                   {{ ($settings['agenda_show_on_home'] ?? '1') == '1' ? 'checked' : '' }}>
+                            <label for="agenda_show_on_home" class="text-sm">Tampilkan Agenda di Beranda</label>
+                        </div>
+
+                        <div>
+                            <label for="agenda_items_home" class="block text-sm font-medium text-gray-700">Jumlah Agenda di Beranda</label>
+                            <input type="number" min="1" max="12" name="agenda_items_home" id="agenda_items_home"
+                                   value="{{ old('agenda_items_home', $settings['agenda_items_home'] ?? 4) }}"
+                                   class="mt-1 block w-28 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label for="agenda_section_title" class="block text-sm font-medium text-gray-700">Judul Bagian Agenda</label>
+                            <input type="text" name="agenda_section_title" id="agenda_section_title"
+                                   value="{{ old('agenda_section_title', $settings['agenda_section_title'] ?? 'Agenda Terdekat') }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+
+                        <div class="mt-2">
+                            <a href="{{ route('admin.events.index') }}" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+                                Kelola Agenda & Kegiatan →
+                            </a>
+                        </div>
+
+                        <!-- Berita / News -->
+                        <h4 class="text-md font-medium text-gray-900 border-b pb-1 mt-6">Berita</h4>
+
+                        <div class="flex items-center gap-2">
+                            <input type="hidden" name="news_show_on_home" value="0">
+                            <input type="checkbox" name="news_show_on_home" id="news_show_on_home" value="1" class="rounded"
+                                   {{ ($settings['news_show_on_home'] ?? '1') == '1' ? 'checked' : '' }}>
+                            <label for="news_show_on_home" class="text-sm">Tampilkan Berita di Beranda</label>
+                        </div>
+
+                        <!-- Pengumuman / Announcements -->
+                        <h4 class="text-md font-medium text-gray-900 border-b pb-1 mt-6">Pengumuman</h4>
+
+                        <div class="flex items-center gap-2">
+                            <input type="hidden" name="announcements_show_on_home" value="0">
+                            <input type="checkbox" name="announcements_show_on_home" id="announcements_show_on_home" value="1" class="rounded"
+                                   {{ ($settings['announcements_show_on_home'] ?? '1') == '1' ? 'checked' : '' }}>
+                            <label for="announcements_show_on_home" class="text-sm">Tampilkan Pengumuman di Beranda</label>
+                        </div>
+
+                        <div>
+                            <label for="announcements_items_home" class="block text-sm font-medium text-gray-700">Jumlah Pengumuman di Beranda</label>
+                            <input type="number" min="1" max="12" name="announcements_items_home" id="announcements_items_home"
+                                   value="{{ old('announcements_items_home', $settings['announcements_items_home'] ?? 3) }}"
+                                   class="mt-1 block w-28 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label for="announcements_section_title" class="block text-sm font-medium text-gray-700">Judul Bagian Pengumuman</label>
+                            <input type="text" name="announcements_section_title" id="announcements_section_title"
+                                   value="{{ old('announcements_section_title', $settings['announcements_section_title'] ?? 'Pengumuman') }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label for="announcements_category_slug" class="block text-sm font-medium text-gray-700">Slug Kategori Pengumuman</label>
+                            <input type="text" name="announcements_category_slug" id="announcements_category_slug"
+                                   value="{{ old('announcements_category_slug', $settings['announcements_category_slug'] ?? 'pengumuman') }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                   placeholder="Misal: pengumuman">
+                            <p class="text-xs text-gray-500 mt-1">Pastikan ada kategori dengan slug ini pada Berita.</p>
+                        </div>
+
+                        <div>
+                            <label for="news_items_home" class="block text-sm font-medium text-gray-700">Jumlah Berita di Beranda</label>
+                            <input type="number" min="1" max="12" name="news_items_home" id="news_items_home"
+                                   value="{{ old('news_items_home', $settings['news_items_home'] ?? 3) }}"
+                                   class="mt-1 block w-28 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label for="news_section_title" class="block text-sm font-medium text-gray-700">Judul Bagian Berita</label>
+                            <input type="text" name="news_section_title" id="news_section_title"
+                                   value="{{ old('news_section_title', $settings['news_section_title'] ?? 'Berita Terbaru') }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
                     </div>
                 </div>
 

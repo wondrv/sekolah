@@ -40,11 +40,11 @@ else $headerClasses .= ' bg-white';
           @if($menuItems && $menuItems->count() > 0)
             @foreach($menuItems as $item)
               <div class="group relative">
-                <a href="{{ $item->url }}"
-                   target="{{ $item->is_external ? '_blank' : '_self' }}"
+                <a href="{{ $item->url ?? '#' }}"
+                   target="{{ $item->target ?? '_self' }}"
                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-black/5"
                    style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">
-                  {{ $item->label }}
+                  {{ $item->title ?? 'Menu' }}
                   @if($item->children->count() > 0)
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -56,10 +56,10 @@ else $headerClasses .= ' bg-white';
                   <div class="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div class="py-1">
                       @foreach($item->children as $child)
-                        <a href="{{ $child->url }}"
-                           target="{{ $child->is_external ? '_blank' : '_self' }}"
+                        <a href="{{ $child->url ?? '#' }}"
+                           target="{{ $child->target ?? '_self' }}"
                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                          {{ $child->label }}
+                          {{ $child->title ?? 'Submenu' }}
                         </a>
                       @endforeach
                     </div>
@@ -134,20 +134,20 @@ else $headerClasses .= ' bg-white';
           @if($menuItems && $menuItems->count() > 0)
             @foreach($menuItems as $item)
               <div>
-                <a href="{{ $item->url }}"
-                   target="{{ $item->is_external ? '_blank' : '_self' }}"
+                <a href="{{ $item->url ?? '#' }}"
+                   target="{{ $item->target ?? '_self' }}"
                    class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors"
                    style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">
-                  {{ $item->label }}
+                  {{ $item->title ?? 'Menu' }}
                 </a>
                 @if($item->children->count() > 0)
                   <div class="ml-4 space-y-1">
                     @foreach($item->children as $child)
-                      <a href="{{ $child->url }}"
-                         target="{{ $child->is_external ? '_blank' : '_self' }}"
+                      <a href="{{ $child->url ?? '#' }}"
+                         target="{{ $child->target ?? '_self' }}"
                          class="block px-3 py-2 text-sm hover:bg-black/5 transition-colors rounded-md"
                          style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">
-                        {{ $child->label }}
+                        {{ $child->title ?? 'Submenu' }}
                       </a>
                     @endforeach
                   </div>

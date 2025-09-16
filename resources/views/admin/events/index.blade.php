@@ -173,7 +173,7 @@
 <script>
     function confirmDelete(eventId, eventTitle) {
         document.getElementById('eventTitle').textContent = eventTitle;
-        document.getElementById('deleteForm').action = `/admin/events/${eventId}`;
+    document.getElementById('deleteForm').action = `/admin/events/${eventId}`;
         document.getElementById('deleteModal').classList.remove('hidden');
     }
 

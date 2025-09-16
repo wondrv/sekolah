@@ -135,6 +135,8 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         'update' => 'admin.templates.update',
         'destroy' => 'admin.templates.destroy',
     ]);
+    Route::post('templates/bootstrap-homepage', [Admin\TemplateController::class, 'bootstrapHomepage'])
+        ->name('admin.templates.bootstrap_homepage');
 
     // Menu Management
     Route::resource('menus', Admin\MenuController::class)->names([

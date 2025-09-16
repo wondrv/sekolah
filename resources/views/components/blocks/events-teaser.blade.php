@@ -1,16 +1,22 @@
 @props(['data'])
 
+@php
+  $limit = $data['limit'] ?? \App\Models\Setting::get('agenda_items_home', 3);
+  $title = $data['title'] ?? \App\Models\Setting::get('agenda_section_title', 'Agenda Mendatang');
+  $show = \App\Models\Setting::get('agenda_show_on_home', true);
+@endphp
+
+@if($show)
 <section class="events-teaser-block py-16 {{ $data['background_color'] ?? 'bg-gray-50' }}">
   <div class="container mx-auto px-4">
-    @if(isset($data['title']))
-      <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">{{ $data['title'] }}</h2>
+    @if($title)
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">{{ $title }}</h2>
     @endif
 
     @php
-      $events = \App\Models\Event::where('status', 'published')
-        ->where('date', '>=', now())
-        ->orderBy('date', 'asc')
-        ->limit($data['limit'] ?? 3)
+      $events = \App\Models\Event::where('starts_at', '>=', now())
+        ->orderBy('starts_at', 'asc')
+        ->limit($limit)
         ->get();
     @endphp
 
@@ -18,20 +24,12 @@
       <div class="grid md:grid-cols-{{ min($events->count(), 3) }} gap-8">
         @foreach($events as $event)
           <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-            @if($event->thumbnail)
-              <div class="aspect-video bg-gray-200">
-                <img src="{{ asset('storage/' . $event->thumbnail) }}"
-                     alt="{{ $event->title }}"
-                     class="w-full h-full object-cover">
-              </div>
-            @endif
-
             <div class="p-6">
               <div class="flex items-center text-sm text-gray-500 mb-3">
                 <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
                 </svg>
-                {{ $event->date ? $event->date->format('d M Y') : '' }}
+                {{ optional($event->starts_at)->format('d M Y') }}
               </div>
 
               <h3 class="text-xl font-semibold mb-3">
@@ -40,8 +38,8 @@
                 </a>
               </h3>
 
-              @if($event->excerpt)
-                <p class="text-gray-600 mb-4">{{ $event->excerpt }}</p>
+              @if($event->description)
+                <p class="text-gray-600 mb-4">{{ \Illuminate\Support\Str::limit(strip_tags($event->description), 120) }}</p>
               @endif
 
               <a href="{{ route('events.show', $event->id) }}"
@@ -71,3 +69,4 @@
     @endif
   </div>
 </section>
+@endif

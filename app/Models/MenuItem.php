@@ -14,14 +14,17 @@ class MenuItem extends Model
         'parent_id',
         'title',
         'url',
+        'route_name',
+        'route_params',
         'target',
-        'icon_class',
-        'order',
-        'visible',
+        'css_class',
+        'is_active',
+        'sort_order',
     ];
 
     protected $casts = [
-        'visible' => 'boolean',
+        'is_active' => 'boolean',
+        'route_params' => 'array',
     ];
 
     public function menu()
@@ -36,6 +39,6 @@ class MenuItem extends Model
 
     public function children()
     {
-        return $this->hasMany(MenuItem::class, 'parent_id')->orderBy('order');
+        return $this->hasMany(MenuItem::class, 'parent_id')->orderBy('sort_order');
     }
 }

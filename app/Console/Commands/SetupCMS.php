@@ -74,39 +74,83 @@ class SetupCMS extends Command
         }
         $this->info('✅ Default settings created');
 
-        // Create main menu
-        $mainMenu = Menu::updateOrCreate(
-            ['name' => 'main'],
+        // Create header menu (reference-style IA)
+        $headerMenu = Menu::updateOrCreate(
+            ['name' => 'header'],
             [
-                'slug' => 'main',
+                'slug' => 'header',
                 'location' => 'header',
                 'is_active' => true,
-                'sort_order' => 0
+                'sort_order' => 0,
             ]
-        );        // Clear existing menu items for fresh setup
-        $mainMenu->items()->delete();
+        );
 
-        // Create menu items
-        $menuItems = [
-            ['title' => 'Beranda', 'url' => '/', 'sort_order' => 1],
-            ['title' => 'Profil', 'url' => '/profil', 'sort_order' => 2],
-            ['title' => 'Berita', 'url' => '/berita', 'sort_order' => 3],
-            ['title' => 'Agenda', 'url' => '/agenda', 'sort_order' => 4],
-            ['title' => 'Galeri', 'url' => '/galeri', 'sort_order' => 5],
-            // Enrollment removed; keep contact instead
-            ['title' => 'Kontak', 'url' => '/kontak', 'sort_order' => 6],
-        ];
+        // Clear existing items for fresh setup
+        MenuItem::where('menu_id', $headerMenu->id)->delete();
 
-        foreach ($menuItems as $item) {
+        // Top-level items
+        $home = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Beranda', 'url' => '/', 'sort_order' => 1, 'is_active' => true]);
+        $profil = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Profil', 'url' => '/profil', 'sort_order' => 2, 'is_active' => true]);
+        $manajemen = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Manajemen', 'url' => '#', 'sort_order' => 3, 'is_active' => true]);
+        $layanan = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Layanan', 'url' => '#', 'sort_order' => 4, 'is_active' => true]);
+        $resource = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Resource', 'url' => '#', 'sort_order' => 5, 'is_active' => true]);
+        $acara = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Acara', 'url' => '/agenda', 'sort_order' => 6, 'is_active' => true]);
+        $kontak = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Kontak', 'url' => '/kontak', 'sort_order' => 7, 'is_active' => true]);
+
+        // Manajemen children
+        foreach ([
+            ['Kurikulum', '/kurikulum', 1],
+            ['Kesiswaan', '/kesiswaan', 2],
+            ['Ismuba', '/ismuba', 3],
+            ['Humas', '/humas', 4],
+            ['Sarpras', '/sarpras', 5],
+            ['Human Resource', '/human-resource', 6],
+        ] as [$title, $url, $order]) {
             MenuItem::create([
-                'menu_id' => $mainMenu->id,
-                'title' => $item['title'],
-                'url' => $item['url'],
-                'sort_order' => $item['sort_order'],
+                'menu_id' => $headerMenu->id,
+                'parent_id' => $manajemen->id,
+                'title' => $title,
+                'url' => $url,
+                'sort_order' => $order,
                 'is_active' => true,
             ]);
         }
-        $this->info('✅ Main navigation menu created');
+
+        // Layanan children
+        foreach ([
+            ['PPDB', 'https://smam1ta.sch.id/ppdb-sekolah/', 1, '_blank'],
+            ['Rapor', '/rapor', 2, '_self'],
+            ['SKL', '/skl', 3, '_self'],
+            ['Berita', '/berita', 4, '_self'],
+            ['Pengumuman', '/berita?kategori=pengumuman', 5, '_self'],
+        ] as [$title, $url, $order, $target]) {
+            MenuItem::create([
+                'menu_id' => $headerMenu->id,
+                'parent_id' => $layanan->id,
+                'title' => $title,
+                'url' => $url,
+                'target' => $target,
+                'sort_order' => $order,
+                'is_active' => true,
+            ]);
+        }
+
+        // Resource children
+        foreach ([
+            ['Unduh', '/unduh', 1],
+            ['Pusat Bantuan', '/pusat-bantuan', 2],
+        ] as [$title, $url, $order]) {
+            MenuItem::create([
+                'menu_id' => $headerMenu->id,
+                'parent_id' => $resource->id,
+                'title' => $title,
+                'url' => $url,
+                'sort_order' => $order,
+                'is_active' => true,
+            ]);
+        }
+
+        $this->info('✅ Header navigation seeded (reference-style)');
 
         // Clear theme cache
         Cache::forget('theme_settings');

@@ -8,9 +8,17 @@
 <div class="mb-6">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Template Builder</h1>
-        <a href="{{ route('admin.templates.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            Buat Template Baru
-        </a>
+        <div class="flex gap-2">
+            <form method="POST" action="{{ route('admin.templates.bootstrap_homepage') }}">
+                @csrf
+                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                    Generate Default Homepage
+                </button>
+            </form>
+            <a href="{{ route('admin.templates.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                Buat Template Baru
+            </a>
+        </div>
     </div>
     <p class="text-gray-600 mt-2">Kelola template dan layout untuk halaman website</p>
 </div>
@@ -54,8 +62,8 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                            {{ $template->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                            {{ $template->is_active ? 'Active' : 'Inactive' }}
+                            {{ $template->active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                            {{ $template->active ? 'Active' : 'Inactive' }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

@@ -149,7 +149,13 @@ class Theme
     public static function getHomeTemplate()
     {
         return Cache::remember('home.template', 3600, function () {
-            return Template::with(['sections.blocks'])->where('is_active', true)->where('type', 'homepage')->first();
+            // Try slug 'homepage' first if exists, else first active template
+            $query = Template::with(['sections.blocks'])->where('active', true);
+            $bySlug = (clone $query)->where('slug', 'homepage')->first();
+            if ($bySlug) {
+                return $bySlug;
+            }
+            return $query->orderBy('id')->first();
         });
     }
 }

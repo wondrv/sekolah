@@ -15,7 +15,15 @@ class PostController extends Controller
     {
         $query = Post::with(['category', 'user'])->published();
 
-        // Search functionality only (no category filtering - handled by JavaScript)
+        // Filter by category slug if provided (e.g., ?kategori=pengumuman)
+        if ($request->filled('kategori')) {
+            $category = Category::where('slug', $request->kategori)->first();
+            if ($category) {
+                $query->where('category_id', $category->id);
+            }
+        }
+
+        // Search functionality
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')

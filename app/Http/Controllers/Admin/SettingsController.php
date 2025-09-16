@@ -54,6 +54,19 @@ class SettingsController extends Controller
             'header_bg_color' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
             'header_text_color' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
             'social_show_in_header' => 'nullable|boolean',
+            // Agenda settings
+            'agenda_show_on_home' => 'nullable|boolean',
+            'agenda_items_home' => 'nullable|integer|min:1|max:12',
+            'agenda_section_title' => 'nullable|string|max:100',
+            // News settings
+            'news_show_on_home' => 'nullable|boolean',
+            'news_items_home' => 'nullable|integer|min:1|max:12',
+            'news_section_title' => 'nullable|string|max:100',
+            // Announcements settings
+            'announcements_show_on_home' => 'nullable|boolean',
+            'announcements_items_home' => 'nullable|integer|min:1|max:12',
+            'announcements_section_title' => 'nullable|string|max:100',
+            'announcements_category_slug' => 'nullable|string|max:100',
         ]);
 
         // Handle logo upload
@@ -112,10 +125,20 @@ class SettingsController extends Controller
             'tiktok_url',
             'linkedin_url',
             'whatsapp_number',
+            // Agenda settings (non-boolean)
+            'agenda_items_home',
+            'agenda_section_title',
             // Header settings (non-boolean)
             'header_logo_position',
             'header_bg_color',
             'header_text_color',
+            // News settings (non-boolean)
+            'news_items_home',
+            'news_section_title',
+            // Announcements settings (non-boolean)
+            'announcements_items_home',
+            'announcements_section_title',
+            'announcements_category_slug',
         ];
 
         foreach ($settingsToUpdate as $setting) {
@@ -125,7 +148,7 @@ class SettingsController extends Controller
         }
 
         // Handle boolean toggles explicitly to allow turning off
-        $booleanSettings = ['header_sticky', 'header_transparent', 'social_show_in_header'];
+    $booleanSettings = ['header_sticky', 'header_transparent', 'social_show_in_header', 'agenda_show_on_home', 'news_show_on_home', 'announcements_show_on_home'];
         foreach ($booleanSettings as $boolKey) {
             Setting::set($boolKey, $request->boolean($boolKey) ? '1' : '0');
         }

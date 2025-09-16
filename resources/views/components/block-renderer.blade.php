@@ -29,6 +29,14 @@
         <x-blocks.events-teaser :data="$block->data" />
         @break
 
+    @case('posts_teaser')
+        <x-blocks.posts-teaser :data="$block->data" />
+        @break
+
+    @case('announcements_teaser')
+        <x-blocks.announcements-teaser :data="$block->data" />
+        @break
+
     @default
         <div class="py-8 bg-gray-100 text-center">
             <p class="text-gray-500">Unknown block type: {{ $block->type }}</p>

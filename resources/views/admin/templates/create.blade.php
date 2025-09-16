@@ -41,23 +41,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-6 mb-6">
-                <div>
-                    <label for="type" class="block text-sm font-medium text-gray-700 mb-2">Template Type</label>
-                    <select id="type" name="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select Type</option>
-                        <option value="homepage" {{ old('type') == 'homepage' ? 'selected' : '' }}>Homepage</option>
-                        <option value="about" {{ old('type') == 'about' ? 'selected' : '' }}>About Page</option>
-                        <option value="contact" {{ old('type') == 'contact' ? 'selected' : '' }}>Contact Page</option>
-                        <option value="news" {{ old('type') == 'news' ? 'selected' : '' }}>News Page</option>
-                        <option value="events" {{ old('type') == 'events' ? 'selected' : '' }}>Events Page</option>
-                        <option value="custom" {{ old('type') == 'custom' ? 'selected' : '' }}>Custom Page</option>
-                    </select>
-                    @error('type')
-                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
+            <!-- Optional: You can use slug to mark special templates like 'homepage' -->
 
             <div class="mb-6">
                 <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
@@ -83,9 +67,9 @@
             </div>
 
             <div class="flex items-center">
-                <input type="checkbox" id="is_active" name="is_active" value="1" {{ old('is_active') ? 'checked' : '' }}
+                <input type="checkbox" id="active" name="active" value="1" {{ old('active') ? 'checked' : '' }}
                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
-                <label for="is_active" class="ml-2 text-sm font-medium text-gray-700">Active Template</label>
+                <label for="active" class="ml-2 text-sm font-medium text-gray-700">Active Template</label>
             </div>
 
             <div class="flex justify-end space-x-4 mt-8">

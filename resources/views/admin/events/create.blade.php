@@ -8,7 +8,7 @@
 <div class="mb-6">
     <div class="flex items-center justify-between">
         <h2 class="text-2xl font-bold text-gray-900">Tambah Event</h2>
-        <a href="{{ route('admin.events.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+    <a href="{{ route('admin.events.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
             Kembali
         </a>
     </div>
