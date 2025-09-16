@@ -183,6 +183,24 @@
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
 
+                        <!-- PPDB -->
+                        <h4 class="text-md font-medium text-gray-900 border-b pb-1 mt-6">PPDB</h4>
+                        <div>
+                            <label for="ppdb_brochure" class="block text-sm font-medium text-gray-700">Upload Brosur (PDF)</label>
+                            <input type="file" name="ppdb_brochure" id="ppdb_brochure" accept="application/pdf"
+                                   class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            @if(isset($settings['ppdb_brochure']) && $settings['ppdb_brochure'])
+                                <p class="text-xs text-gray-500 mt-1">Brosur saat ini: <a class="text-blue-600 hover:underline" target="_blank" href="{{ asset('storage/' . $settings['ppdb_brochure']) }}">Lihat/Unduh</a></p>
+                            @endif
+                        </div>
+                        <div>
+                            <label for="ppdb_brochure_url" class="block text-sm font-medium text-gray-700">Atau URL Brosur</label>
+                            <input type="url" name="ppdb_brochure_url" id="ppdb_brochure_url" value="{{ old('ppdb_brochure_url', $settings['ppdb_brochure_url'] ?? '') }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                   placeholder="https://.../brosur.pdf">
+                            <p class="text-xs text-gray-500 mt-1">Jika diisi, tombol unduh akan menggunakan URL ini.</p>
+                        </div>
+
                         <div>
                             <label for="instagram_url" class="block text-sm font-medium text-gray-700">Instagram URL</label>
                             <input type="url" name="instagram_url" id="instagram_url"
@@ -288,7 +306,16 @@
                                    value="{{ old('announcements_category_slug', $settings['announcements_category_slug'] ?? 'pengumuman') }}"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                    placeholder="Misal: pengumuman">
-                            <p class="text-xs text-gray-500 mt-1">Pastikan ada kategori dengan slug ini pada Berita.</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <p class="text-xs text-gray-500">Pastikan ada kategori dengan slug ini pada Berita.</p>
+                                <form method="POST" action="{{ route('admin.settings.ensure_announcements_category') }}">
+                                    @csrf
+                                    <input type="hidden" name="slug" value="{{ old('announcements_category_slug', $settings['announcements_category_slug'] ?? 'pengumuman') }}">
+                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700">
+                                        Buat/cek kategori
+                                    </button>
+                                </form>
+                            </div>
                         </div>
 
                         <div>

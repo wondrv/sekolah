@@ -91,7 +91,7 @@ $socialMedia = $siteInfo['social'] ?? [];
             @endforeach
           @else
             <!-- Fallback links -->
-            <a href="/profil" class="block text-sm hover:text-blue-300 transition-colors py-1">Profil Sekolah</a>
+            <a href="/tentang-kita" class="block text-sm hover:text-blue-300 transition-colors py-1">Tentang Kita</a>
             <a href="/berita" class="block text-sm hover:text-blue-300 transition-colors py-1">Berita</a>
             <a href="/agenda" class="block text-sm hover:text-blue-300 transition-colors py-1">Agenda</a>
             <a href="/galeri" class="block text-sm hover:text-blue-300 transition-colors py-1">Galeri</a>

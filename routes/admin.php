@@ -36,6 +36,16 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Settings Management
     Route::get('settings', [Admin\SettingsController::class, 'index'])->name('admin.settings.index');
     Route::put('settings', [Admin\SettingsController::class, 'update'])->name('admin.settings.update');
+    Route::post('settings/ensure-announcements-category', [Admin\SettingsController::class, 'ensureAnnouncementsCategory'])
+        ->name('admin.settings.ensure_announcements_category');
+    Route::post('settings/ensure-ppdb-pages', [Admin\SettingsController::class, 'ensurePPDBPages'])
+        ->name('admin.settings.ensure_ppdb_pages');
+    Route::post('settings/ensure-ppdb-menu', [Admin\SettingsController::class, 'ensurePPDBMenu'])
+        ->name('admin.settings.ensure_ppdb_menu');
+    Route::post('settings/ensure-tentang-kita-dropdown', [Admin\SettingsController::class, 'ensureProfileMenuDropdown'])
+        ->name('admin.settings.ensure_tentang_kita_dropdown');
+    Route::post('settings/add-agenda-under-tentang-kita', [Admin\SettingsController::class, 'addAgendaUnderProfile'])
+        ->name('admin.settings.add_agenda_under_tentang_kita');
 
     // Posts Management
     Route::resource('posts', Admin\PostController::class)->names([

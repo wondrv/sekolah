@@ -69,7 +69,7 @@ else $headerClasses .= ' bg-white';
             @endforeach
           @else
             <!-- Fallback navigation -->
-            <a href="/profil" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Profil</a>
+            <a href="/tentang-kita" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Tentang Kita</a>
             <a href="/berita" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Berita</a>
             <a href="/agenda" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Agenda</a>
             <a href="/galeri" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Galeri</a>
@@ -155,7 +155,7 @@ else $headerClasses .= ' bg-white';
               </div>
             @endforeach
           @else
-            <a href="/profil" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Profil</a>
+            <a href="/tentang-kita" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Tentang Kita</a>
             <a href="/berita" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Berita</a>
             <a href="/agenda" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Agenda</a>
             <a href="/galeri" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Galeri</a>

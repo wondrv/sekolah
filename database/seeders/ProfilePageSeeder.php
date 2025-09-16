@@ -13,12 +13,12 @@ class ProfilePageSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create profile page if it doesn't exist
+        // Create "Tentang Kita" page if it doesn't exist
         Page::updateOrCreate(
-            ['slug' => 'profil'],
+            ['slug' => 'tentang-kita'],
             [
-                'title' => 'Profil Sekolah',
-                'slug' => 'profil',
+                'title' => 'Tentang Kita',
+                'slug' => 'tentang-kita',
                 'body' => '
                     <div class="prose max-w-none">
                         <h2>Visi dan Misi</h2>
@@ -57,12 +57,12 @@ class ProfilePageSeeder extends Seeder
             ]
         );
 
-        // Create additional profile pages
+        // Create additional "Tentang Kita" sub pages
         Page::updateOrCreate(
-            ['slug' => 'visi-misi'],
+            ['slug' => 'tentang-kita-visi-misi'],
             [
                 'title' => 'Visi dan Misi',
-                'slug' => 'visi-misi',
+                'slug' => 'tentang-kita-visi-misi',
                 'body' => '
                     <div class="prose max-w-none">
                         <h2>Visi</h2>
@@ -93,10 +93,10 @@ class ProfilePageSeeder extends Seeder
         );
 
         Page::updateOrCreate(
-            ['slug' => 'sejarah'],
+            ['slug' => 'tentang-kita-sejarah'],
             [
                 'title' => 'Sejarah Sekolah',
-                'slug' => 'sejarah',
+                'slug' => 'tentang-kita-sejarah',
                 'body' => '
                     <div class="prose max-w-none">
                         <h2>Awal Berdiri</h2>

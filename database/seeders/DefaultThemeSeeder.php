@@ -65,7 +65,7 @@ class DefaultThemeSeeder extends Seeder
 
         $primaryMenuItems = [
             ['title' => 'Beranda', 'url' => '/', 'sort_order' => 1],
-            ['title' => 'Profil', 'url' => '/profil', 'sort_order' => 2],
+            ['title' => 'Tentang Kita', 'url' => '/tentang-kita', 'sort_order' => 2],
             ['title' => 'Berita', 'url' => '/berita', 'sort_order' => 3],
             ['title' => 'Agenda', 'url' => '/agenda', 'sort_order' => 4],
             ['title' => 'Galeri', 'url' => '/galeri', 'sort_order' => 5],
@@ -92,8 +92,8 @@ class DefaultThemeSeeder extends Seeder
         ]);
 
         $footerMenuItems = [
-            ['title' => 'Kebijakan Privasi', 'url' => '/profil/kebijakan-privasi', 'sort_order' => 1],
-            ['title' => 'Syarat & Ketentuan', 'url' => '/profil/syarat-ketentuan', 'sort_order' => 2],
+            ['title' => 'Kebijakan Privasi', 'url' => '/tentang-kita/kebijakan-privasi', 'sort_order' => 1],
+            ['title' => 'Syarat & Ketentuan', 'url' => '/tentang-kita/syarat-ketentuan', 'sort_order' => 2],
             ['title' => 'Sitemap', 'url' => '/sitemap', 'sort_order' => 3],
         ];
 
@@ -135,12 +135,12 @@ class DefaultThemeSeeder extends Seeder
                 'buttons' => [
                     [
                         'text' => 'Tentang Kami',
-                        'url' => '/profil',
+                        'url' => '/tentang-kita',
                         'style' => 'primary'
                     ],
                     [
                         'text' => 'Penerimaan Siswa Baru',
-                        'url' => '/profil/penerimaan-siswa-baru',
+                        'url' => '/tentang-kita/penerimaan-siswa-baru',
                         'style' => 'secondary'
                     ]
                 ]
@@ -215,7 +215,7 @@ class DefaultThemeSeeder extends Seeder
                         'image' => '/images/program-ipa.jpg',
                         'link' => [
                             'text' => 'Selengkapnya',
-                            'url' => '/profil/program-ipa'
+                            'url' => '/tentang-kita/program-ipa'
                         ]
                     ],
                     [
@@ -224,7 +224,7 @@ class DefaultThemeSeeder extends Seeder
                         'image' => '/images/program-ips.jpg',
                         'link' => [
                             'text' => 'Selengkapnya',
-                            'url' => '/profil/program-ips'
+                            'url' => '/tentang-kita/program-ips'
                         ]
                     ],
                     [
@@ -233,7 +233,7 @@ class DefaultThemeSeeder extends Seeder
                         'image' => '/images/program-bahasa.jpg',
                         'link' => [
                             'text' => 'Selengkapnya',
-                            'url' => '/profil/program-bahasa'
+                            'url' => '/tentang-kita/program-bahasa'
                         ]
                     ]
                 ]
@@ -282,7 +282,7 @@ class DefaultThemeSeeder extends Seeder
                 'background_color' => 'bg-gradient-to-r from-blue-600 to-blue-800',
                 'button' => [
                     'text' => 'Daftar Sekarang',
-                    'url' => '/profil/penerimaan-siswa-baru'
+                    'url' => '/tentang-kita/penerimaan-siswa-baru'
                 ]
             ],
             'order' => 1,

@@ -22,7 +22,17 @@ Route::get('/test-cms', function () {
 })->name('test-cms');
 
 // Dynamic content routes
-Route::get('/profil/{slug?}', [PageController::class, 'show'])->name('pages.show');
+// New: rename Profil to Tentang Kita; keep backward-compat redirect
+Route::get('/tentang-kita/{slug?}', [PageController::class, 'show'])->name('pages.show');
+Route::get('/profil/{slug?}', function ($slug = null) {
+    $target = '/tentang-kita' . ($slug ? '/' . $slug : '');
+    return redirect($target, 301);
+});
+// PPDB: single combined page with anchors
+Route::get('/ppdb', function () { return app(\App\Http\Controllers\PageController::class)->show('ppdb'); })->name('ppdb');
+// Backward-friendly endpoints redirecting to anchors
+Route::get('/ppdb/brosur', function () { return redirect()->to(route('ppdb') . '#brosur'); })->name('ppdb.brosur');
+Route::get('/ppdb/biaya', function () { return redirect()->to(route('ppdb') . '#biaya'); })->name('ppdb.biaya');
 Route::get('/berita', [PostController::class, 'index'])->name('posts.index');
 Route::get('/berita/{post:slug}', [PostController::class, 'show'])->name('posts.show');
 Route::get('/agenda', [EventController::class, 'index'])->name('events.index');

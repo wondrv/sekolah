@@ -210,7 +210,7 @@ class TemplateController extends Controller
                 'background_color' => 'bg-gradient-to-r from-blue-600 to-blue-800',
                 'text_align' => 'text-center',
                 'buttons' => [
-                    ['text' => 'Tentang Kami', 'url' => '/profil', 'style' => 'primary'],
+                    ['text' => 'Tentang Kita', 'url' => '/tentang-kita', 'style' => 'primary'],
                     ['text' => 'Hubungi Kami', 'url' => '/kontak', 'style' => 'secondary'],
                 ],
             ],
@@ -250,9 +250,9 @@ class TemplateController extends Controller
                 'background_color' => 'bg-gray-50',
                 'columns' => 3,
                 'cards' => [
-                    ['title' => 'Program IPA', 'description' => '...', 'image' => '/images/program-ipa.jpg', 'link' => ['text' => 'Selengkapnya', 'url' => '/profil/program-ipa']],
-                    ['title' => 'Program IPS', 'description' => '...', 'image' => '/images/program-ips.jpg', 'link' => ['text' => 'Selengkapnya', 'url' => '/profil/program-ips']],
-                    ['title' => 'Program Bahasa', 'description' => '...', 'image' => '/images/program-bahasa.jpg', 'link' => ['text' => 'Selengkapnya', 'url' => '/profil/program-bahasa']],
+                    ['title' => 'Program IPA', 'description' => '...', 'image' => '/images/program-ipa.jpg', 'link' => ['text' => 'Selengkapnya', 'url' => '/tentang-kita/program-ipa']],
+                    ['title' => 'Program IPS', 'description' => '...', 'image' => '/images/program-ips.jpg', 'link' => ['text' => 'Selengkapnya', 'url' => '/tentang-kita/program-ips']],
+                    ['title' => 'Program Bahasa', 'description' => '...', 'image' => '/images/program-bahasa.jpg', 'link' => ['text' => 'Selengkapnya', 'url' => '/tentang-kita/program-bahasa']],
                 ],
             ],
             'active' => true,

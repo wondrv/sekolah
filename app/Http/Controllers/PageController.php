@@ -10,10 +10,12 @@ class PageController extends Controller
     /**
      * Display the specified page
      */
-    public function show($slug = 'profil')
+    public function show($slug = 'tentang-kita')
     {
         $page = Page::where('slug', $slug)->firstOrFail();
-
+        if ($slug === 'ppdb') {
+            return view('pages.custom.ppdb', compact('page'));
+        }
         return view('pages.show', compact('page'));
     }
 

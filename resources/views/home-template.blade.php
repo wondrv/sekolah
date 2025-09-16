@@ -41,9 +41,9 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <a href="/profil" class="btn-primary px-8 py-4 text-lg rounded-lg inline-flex items-center">
+                    <a href="/tentang-kita" class="btn-primary px-8 py-4 text-lg rounded-lg inline-flex items-center">
                         <span class="mr-2">📚</span>
-                        Profil Sekolah
+                        Tentang Kita
                     </a>
                     <a href="/berita" class="btn-secondary px-8 py-4 text-lg rounded-lg inline-flex items-center">
                         <span class="mr-2">📰</span>

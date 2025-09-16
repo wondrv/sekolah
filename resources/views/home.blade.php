@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title','Selamat Datang di Nama Sekolah')
-@section('meta_description','Website resmi Nama Sekolah: profil, berita, agenda.')
+@section('meta_description','Website resmi Nama Sekolah: tentang kita, berita, agenda.')
 @section('content')
 <section class="relative">
   <div class="container mx-auto px-4 py-16 grid lg:grid-cols-2 gap-10 items-center">
