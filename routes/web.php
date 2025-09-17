@@ -48,7 +48,6 @@ Route::get('/program/{program:slug}', [ProgramController::class, 'show'])->name(
 Route::get('/kontak', [ContactController::class, 'show'])->name('contact');
 Route::post('/kontak', [ContactController::class, 'store'])->name('contact.store');
 
-// Enrollment feature removed
 
 // Dashboard route - redirects to admin
 Route::get('/dashboard', function () {

@@ -180,8 +180,6 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::patch('messages/{message}/reply', [Admin\MessageController::class, 'reply'])->name('admin.messages.reply');
 
-    // Enrollment feature removed
-
     // Cache Management
     Route::post('cache/clear', function() {
         try {

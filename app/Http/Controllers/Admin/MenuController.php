@@ -82,9 +82,10 @@ class MenuController extends Controller
      */
     public function edit(Menu $menu): View
     {
-        $menu->load('items');
+        // For admin editing, include all items (including inactive), top-level only
+        $items = $menu->allItems()->whereNull('parent_id')->orderBy('sort_order')->get();
 
-        return view('admin.menus.edit', compact('menu'));
+        return view('admin.menus.edit', compact('menu', 'items'));
     }
 
     /**
@@ -96,6 +97,14 @@ class MenuController extends Controller
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:100',
             'is_active' => 'boolean',
+            'menu_items' => 'array',
+            'menu_items.*.id' => 'nullable|integer|exists:menu_items,id',
+            'menu_items.*.title' => 'nullable|string|max:255',
+            'menu_items.*.url' => 'nullable|string|max:500',
+            'menu_items.*.target' => 'nullable|in:_self,_blank',
+            'menu_items.*.css_class' => 'nullable|string|max:255',
+            'menu_items.*.is_active' => 'nullable|boolean',
+            'menu_items.*.sort_order' => 'nullable|integer|min:1',
         ]);
 
         // Generate slug from name if name changed
@@ -119,7 +128,51 @@ class MenuController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
-        // Clear theme cache when menu is updated
+        // Upsert top-level menu items (keep existing if not present)
+        $items = $request->input('menu_items', []);
+        foreach ($items as $itemData) {
+            // Skip empty items
+            $title = trim($itemData['title'] ?? '');
+            $url = trim($itemData['url'] ?? '');
+            $sort = isset($itemData['sort_order']) ? (int)$itemData['sort_order'] : null;
+            $target = $itemData['target'] ?? null;
+            $css = $itemData['css_class'] ?? null;
+            $active = isset($itemData['is_active']) && (bool)$itemData['is_active'];
+
+            if (!($itemData['id'] ?? null) && $title === '' && $url === '') {
+                continue; // nothing to create
+            }
+
+            if (!empty($itemData['id'])) {
+                $menuItem = MenuItem::where('id', $itemData['id'])
+                    ->where('menu_id', $menu->id)
+                    ->first();
+                if ($menuItem) {
+                    $menuItem->update([
+                        'title' => $title !== '' ? $title : $menuItem->title,
+                        'url' => $url !== '' ? $url : $menuItem->url,
+                        'target' => $target ?? $menuItem->target,
+                        'css_class' => $css ?? $menuItem->css_class,
+                        'is_active' => $active,
+                        'sort_order' => $sort ?? ($menuItem->sort_order ?? 1),
+                        'parent_id' => null, // keep top-level in this editor
+                    ]);
+                }
+            } else {
+                MenuItem::create([
+                    'menu_id' => $menu->id,
+                    'parent_id' => null,
+                    'title' => $title,
+                    'url' => $url,
+                    'target' => $target,
+                    'css_class' => $css,
+                    'is_active' => $active,
+                    'sort_order' => $sort ?? ((MenuItem::where('menu_id', $menu->id)->max('sort_order') ?? 0) + 1),
+                ]);
+            }
+        }
+
+        // Clear theme cache when menu and items are updated
         Theme::clearCache();
 
         return redirect()->route('admin.menus.index')
@@ -148,7 +201,7 @@ class MenuController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'url' => 'required|string|max:500',
-            'order' => 'required|integer|min:1',
+            'sort_order' => 'required|integer|min:1',
             'parent_id' => 'nullable|exists:menu_items,id',
             'is_active' => 'boolean',
         ]);
@@ -156,7 +209,7 @@ class MenuController extends Controller
         $menu->items()->create([
             'title' => $request->title,
             'url' => $request->url,
-            'order' => $request->order,
+            'sort_order' => $request->sort_order,
             'parent_id' => $request->parent_id,
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -173,12 +226,12 @@ class MenuController extends Controller
         $request->validate([
             'items' => 'required|array',
             'items.*.id' => 'required|exists:menu_items,id',
-            'items.*.order' => 'required|integer|min:1',
+            'items.*.sort_order' => 'required|integer|min:1',
         ]);
 
         foreach ($request->items as $itemData) {
             MenuItem::where('id', $itemData['id'])
-                   ->update(['order' => $itemData['order']]);
+                   ->update(['sort_order' => $itemData['sort_order']]);
         }
 
         return redirect()->route('admin.menus.edit', $menu)

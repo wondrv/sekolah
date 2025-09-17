@@ -70,18 +70,19 @@
                 </div>
 
                 <div id="menu-items-container" class="space-y-4">
-                    @foreach($menu->items as $index => $item)
+                    @foreach(($items ?? $menu->items) as $index => $item)
                     <div class="menu-item border border-gray-200 rounded-lg p-4" data-item="{{ $index + 1 }}">
                         <input type="hidden" name="menu_items[{{ $index + 1 }}][id]" value="{{ $item->id }}">
 
                         <div class="flex items-center justify-between mb-4">
                             <h4 class="text-md font-semibold text-gray-800">{{ $item->title }}</h4>
                             <div class="flex items-center gap-3">
-                                <form action="{{ route('admin.menus.items.destroy', [$menu, $item]) }}" method="POST" class="inline" data-confirm="hapus menu item: {{ $item->title }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800 cursor-pointer">Hapus Item</button>
-                                </form>
+                                <button type="button"
+                                        class="text-red-600 hover:text-red-800 cursor-pointer"
+                                        data-delete-url="{{ route('admin.menus.items.destroy', [$menu, $item]) }}"
+                                        data-confirm="hapus menu item: {{ $item->title }}">
+                                    Hapus Item
+                                </button>
                             </div>
                         </div>
 
@@ -103,7 +104,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
-                                <input type="number" name="menu_items[{{ $index + 1 }}][order]" value="{{ $item->order }}"
+                                <input type="number" name="menu_items[{{ $index + 1 }}][sort_order]" value="{{ $item->sort_order }}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                        min="1" required>
                             </div>
@@ -164,7 +165,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let itemCount = {{ $menu->items->count() }};
+    let itemCount = {{ ($items ?? $menu->items)->count() }};
     const menuItemsContainer = document.getElementById('menu-items-container');
     const addMenuItemBtn = document.getElementById('add-menu-item');
 
@@ -216,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
-                        <input type="number" name="menu_items[${itemCount}][order]" value="${itemCount}"
+                        <input type="number" name="menu_items[${itemCount}][sort_order]" value="${itemCount}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                min="1" required>
                     </div>

@@ -16,7 +16,12 @@
 <body class="font-sans antialiased bg-gray-100">
     <div class="min-h-screen flex">
         <!-- Left Sidebar -->
-        <div class="w-64 shadow-lg border-r border-gray-800 flex flex-col" style="background-color: #36454F;" x-data="{ content: false, school: false, advanced: false, communication: false }">
+        <div class="w-64 shadow-lg border-r border-gray-800 flex flex-col" style="background-color: #36454F;" x-data="{
+                content: {{ (request()->routeIs('admin.posts.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.events.*') || request()->routeIs('admin.galleries.*')) ? 'true' : 'false' }},
+                school: {{ (request()->routeIs('admin.facilities.*') || request()->routeIs('admin.programs.*') || request()->routeIs('admin.achievements.*') || request()->routeIs('admin.testimonials.*')) ? 'true' : 'false' }},
+                advanced: {{ (request()->routeIs('admin.templates.*') || request()->routeIs('admin.menus.*') || request()->routeIs('admin.settings.*')) ? 'true' : 'false' }},
+                communication: {{ (request()->routeIs('admin.messages.*')) ? 'true' : 'false' }}
+            }">
             <!-- Sidebar Header -->
             <div class="p-6 border-b border-gray-800">
                 <div class="flex items-center space-x-3">
@@ -52,17 +57,10 @@
                         </svg>
                     </button>
                     <div x-show="content" x-transition class="ml-6 space-y-1">
-                        <a href="{{ route('admin.posts.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.posts.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">📰</span>
-                            Berita & Artikel
-                        </a>
+                        <!-- Pages single link (no dropdown) -->
                         <a href="{{ route('admin.pages.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.pages.*') ? 'bg-blue-600 text-white' : '' }}">
                             <span class="mr-2">📄</span>
                             Halaman
-                        </a>
-                        <a href="{{ route('admin.events.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.events.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">📅</span>
-                            Event & Kegiatan
                         </a>
                         <a href="{{ route('admin.galleries.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.galleries.*') ? 'bg-blue-600 text-white' : '' }}">
                             <span class="mr-2">🖼️</span>
@@ -135,7 +133,7 @@
                 <div class="space-y-1">
                     @php
                         $unreadCount = \App\Models\Message::where('status', 'unread')->count();
-                        $totalNotifications = $unreadCount; // Enrollment removed
+                        $totalNotifications = $unreadCount;
                     @endphp
                     <button @click="communication = !communication"
                             class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
@@ -160,7 +158,6 @@
                                 <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1">{{ $unreadCount }}</span>
                             @endif
                         </a>
-                        {{-- Enrollment feature removed --}}
                     </div>
                 </div>
             </nav>

@@ -60,7 +60,6 @@
         </div>
     </div>
 
-    {{-- Enrollment feature removed --}}
 </div>
 
 <!-- Quick Management Cards -->
@@ -227,8 +226,6 @@
             @endforelse
         </div>
     </div>
-
-    {{-- Recent enrollments removed --}}
 
     <!-- Recent Posts Section -->
     <div class="bg-white rounded-lg shadow-sm">
