@@ -1,8 +1,8 @@
 @extends('layouts.app')
-@section('title','Tentang Kita')
+@section('title','Tentang Kami')
 @section('content')
 <div class="container mx-auto px-4 py-16">
-    <h1 class="text-4xl font-bold text-center mb-12">Tentang Kita</h1>
+    <h1 class="text-4xl font-bold text-center mb-12">Tentang Kami</h1>
 
     <div class="max-w-4xl mx-auto">
         <section class="mb-12">

@@ -123,7 +123,7 @@ class SampleContentSeeder extends Seeder
         $pages = [
             [
                 'title' => 'Tentang Kita',
-                'slug' => 'tentang-kita',
+                'slug' => 'tentang-kami',
                 'body' => '<h2>Sejarah Singkat</h2><p>Sekolah kami didirikan pada tahun 1985 dengan visi menjadi lembaga pendidikan yang unggul dan berkarakter.</p><h2>Visi</h2><p>Menjadi sekolah yang unggul dalam prestasi, berkarakter mulia, dan berwawasan global.</p><h2>Misi</h2><ul><li>Menyelenggarakan pendidikan berkualitas</li><li>Mengembangkan potensi siswa secara optimal</li><li>Membangun karakter siswa yang berakhlak mulia</li></ul>',
                 'is_pinned' => true,
             ],

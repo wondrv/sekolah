@@ -67,13 +67,6 @@ else $headerClasses .= ' bg-white';
                 @endif
               </div>
             @endforeach
-          @else
-            <!-- Fallback navigation -->
-            <a href="/tentang-kita" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Tentang Kita</a>
-            <a href="/berita" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Berita</a>
-            <a href="/agenda" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Agenda</a>
-            <a href="/galeri" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Galeri</a>
-            <a href="/kontak" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Kontak</a>
           @endif
 
           <!-- Social Media Links (if enabled) -->
@@ -154,12 +147,6 @@ else $headerClasses .= ' bg-white';
                 @endif
               </div>
             @endforeach
-          @else
-            <a href="/tentang-kita" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Tentang Kita</a>
-            <a href="/berita" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Berita</a>
-            <a href="/agenda" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Agenda</a>
-            <a href="/galeri" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Galeri</a>
-            <a href="/kontak" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-black/5 transition-colors" style="color: {{ $headerSettings['header_text_color'] ?? '#000000' }};">Kontak</a>
           @endif
         </div>
       </div>
@@ -176,10 +163,10 @@ else $headerClasses .= ' bg-white';
           @if($menuItems && $menuItems->count() > 0)
             @foreach($menuItems as $item)
               <div class="group relative">
-                <a href="{{ $item->url }}"
-                   target="{{ $item->is_external ? '_blank' : '_self' }}"
+                <a href="{{ $item->url ?? '#' }}"
+                   target="{{ $item->target ?? '_self' }}"
                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200">
-                  {{ $item->label }}
+                  {{ $item->title ?? 'Menu' }}
                   @if($item->children->count() > 0)
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -191,10 +178,10 @@ else $headerClasses .= ' bg-white';
                   <div class="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div class="py-1">
                       @foreach($item->children as $child)
-                        <a href="{{ $child->url }}"
-                           target="{{ $child->is_external ? '_blank' : '_self' }}"
+                        <a href="{{ $child->url ?? '#' }}"
+                           target="{{ $child->target ?? '_self' }}"
                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                          {{ $child->label }}
+                          {{ $child->title ?? 'Submenu' }}
                         </a>
                       @endforeach
                     </div>

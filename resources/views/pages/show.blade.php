@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', $page->title)
-@section('meta_description', Str::limit(strip_tags($page->body), 160))
+@section('meta_description', \Illuminate\Support\Str::limit(strip_tags($page->body), 160))
 
 @section('content')
 <div class="container mx-auto px-4 py-8">

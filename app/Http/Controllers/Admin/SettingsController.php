@@ -172,6 +172,74 @@ class SettingsController extends Controller
             Setting::set($boolKey, $request->boolean($boolKey) ? '1' : '0');
         }
 
+        // Ensure PPDB essentials exist (create if missing, do not overwrite if already present)
+        try {
+            // Ensure PPDB page exists
+            $ppdbPage = Page::where('slug', 'ppdb')->first();
+            if (!$ppdbPage) {
+                $body = <<<HTML
+<div class="space-y-16">
+    <section id="brosur">
+        <h2 class="text-2xl font-bold mb-4">Brosur PPDB</h2>
+        <p>Unduh brosur PPDB terbaru kami. Informasi program, fasilitas, dan keunggulan sekolah tersaji lengkap.</p>
+        <ul class="list-disc pl-6 mt-3">
+            <li><a href="#" class="text-blue-600 hover:underline">Brosur PPDB (PDF)</a></li>
+        </ul>
+    </section>
+    <section id="biaya">
+        <h2 class="text-2xl font-bold mb-4">Biaya Pendaftaran</h2>
+        <p>Berikut adalah rincian biaya pendaftaran PPDB. Silakan hubungi pihak sekolah untuk informasi terbaru.</p>
+        <table class="min-w-full divide-y divide-gray-200 mt-4">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-900">Komponen</th>
+                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-900">Nominal</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                <tr><td class="px-4 py-2">Formulir Pendaftaran</td><td class="px-4 py-2">Rp 100.000</td></tr>
+                <tr><td class="px-4 py-2">Uang Pangkal</td><td class="px-4 py-2">Rp 2.000.000</td></tr>
+                <tr><td class="px-4 py-2">Seragam</td><td class="px-4 py-2">Rp 1.000.000</td></tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+HTML;
+                Page::create([
+                    'slug' => 'ppdb',
+                    'title' => 'PPDB',
+                    'body' => $body,
+                ]);
+            }
+
+            // Ensure Header menu exists and PPDB item is present
+            $menu = Menu::firstOrCreate(
+                ['location' => 'header'],
+                [
+                    'name' => 'Header Menu',
+                    'slug' => 'header',
+                    'location' => 'header',
+                    'is_active' => true,
+                    'sort_order' => 1,
+                ]
+            );
+
+            MenuItem::updateOrCreate(
+                [
+                    'menu_id' => $menu->id,
+                    'parent_id' => null,
+                    'title' => 'PPDB',
+                ],
+                [
+                    'url' => '/ppdb',
+                    'sort_order' => 50,
+                    'is_active' => true,
+                ]
+            );
+        } catch (\Throwable $e) {
+            // swallow and proceed; not fatal for settings save
+        }
+
         // Clear all theme-related caches
         Theme::clearCache();
 
@@ -246,14 +314,16 @@ HTML;
      */
     public function ensurePPDBMenu(Request $request)
     {
-        $menu = Menu::firstOrCreate(['location' => 'header'], [
-            'name' => 'Header Menu',
-            'slug' => 'header',
-            'label' => 'Header',
-            'location' => 'header',
-            'is_active' => true,
-            'sort_order' => 1,
-        ]);
+        $menu = Menu::firstOrCreate(
+            ['location' => 'header'],
+            [
+                'name' => 'Header Menu',
+                'slug' => 'header',
+                'location' => 'header',
+                'is_active' => true,
+                'sort_order' => 1,
+            ]
+        );
 
         // Single PPDB menu item pointing to combined page
         MenuItem::updateOrCreate([
@@ -276,20 +346,22 @@ HTML;
      */
     public function ensureProfileMenuDropdown(Request $request)
     {
-        $menu = Menu::firstOrCreate(['location' => 'header'], [
-            'name' => 'Header Menu',
-            'slug' => 'header',
-            'label' => 'Header',
-            'location' => 'header',
-            'is_active' => true,
-            'sort_order' => 1,
-        ]);
+        $menu = Menu::firstOrCreate(
+            ['location' => 'header'],
+            [
+                'name' => 'Header Menu',
+                'slug' => 'header',
+                'location' => 'header',
+                'is_active' => true,
+                'sort_order' => 1,
+            ]
+        );
 
         // Ensure pages exist
         $pages = [
-            ['title' => 'Sejarah', 'slug' => 'tentang-kita-sejarah', 'body' => '<p>Sejarah singkat sekolah.</p>'],
-            ['title' => 'Visi Misi', 'slug' => 'tentang-kita-visi-misi', 'body' => '<p>Visi dan misi sekolah.</p>'],
-            ['title' => 'Struktur Organisasi', 'slug' => 'tentang-kita-struktur-organisasi', 'body' => '<p>Struktur organisasi sekolah.</p>'],
+            ['title' => 'Sejarah', 'slug' => 'tentang-kami-sejarah', 'body' => '<p>Sejarah singkat sekolah.</p>'],
+            ['title' => 'Visi Misi', 'slug' => 'tentang-kami-visi-misi', 'body' => '<p>Visi dan misi sekolah.</p>'],
+            ['title' => 'Struktur Organisasi', 'slug' => 'tentang-kami-struktur-organisasi', 'body' => '<p>Struktur organisasi sekolah.</p>'],
         ];
         foreach ($pages as $p) {
             Page::updateOrCreate(['slug' => $p['slug']], ['title' => $p['title'], 'body' => $p['body']]);
@@ -308,9 +380,9 @@ HTML;
 
         // Children submenu items
         $subs = [
-            ['title' => 'Sejarah', 'slug' => 'tentang-kita-sejarah', 'order' => 1],
-            ['title' => 'Visi Misi', 'slug' => 'tentang-kita-visi-misi', 'order' => 2],
-            ['title' => 'Struktur Organisasi', 'slug' => 'tentang-kita-struktur-organisasi', 'order' => 3],
+            ['title' => 'Sejarah', 'slug' => 'tentang-kami-sejarah', 'order' => 1],
+            ['title' => 'Visi Misi', 'slug' => 'tentang-kami-visi-misi', 'order' => 2],
+            ['title' => 'Struktur Organisasi', 'slug' => 'tentang-kami-struktur-organisasi', 'order' => 3],
         ];
         foreach ($subs as $s) {
             MenuItem::updateOrCreate([
@@ -334,14 +406,16 @@ HTML;
      */
     public function addAgendaUnderProfile(Request $request)
     {
-        $menu = Menu::firstOrCreate(['location' => 'header'], [
-            'name' => 'Header Menu',
-            'slug' => 'header',
-            'label' => 'Header',
-            'location' => 'header',
-            'is_active' => true,
-            'sort_order' => 1,
-        ]);
+        $menu = Menu::firstOrCreate(
+            ['location' => 'header'],
+            [
+                'name' => 'Header Menu',
+                'slug' => 'header',
+                'location' => 'header',
+                'is_active' => true,
+                'sort_order' => 1,
+            ]
+        );
 
         // Find Tentang Kita parent
         $profil = MenuItem::where('menu_id', $menu->id)

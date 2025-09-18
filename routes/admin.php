@@ -42,9 +42,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         ->name('admin.settings.ensure_ppdb_pages');
     Route::post('settings/ensure-ppdb-menu', [Admin\SettingsController::class, 'ensurePPDBMenu'])
         ->name('admin.settings.ensure_ppdb_menu');
-    Route::post('settings/ensure-tentang-kita-dropdown', [Admin\SettingsController::class, 'ensureProfileMenuDropdown'])
+    Route::post('settings/ensure-tentang-kami-dropdown', [Admin\SettingsController::class, 'ensureProfileMenuDropdown'])
         ->name('admin.settings.ensure_tentang_kita_dropdown');
-    Route::post('settings/add-agenda-under-tentang-kita', [Admin\SettingsController::class, 'addAgendaUnderProfile'])
+    Route::post('settings/add-agenda-under-tentang-kami', [Admin\SettingsController::class, 'addAgendaUnderProfile'])
         ->name('admin.settings.add_agenda_under_tentang_kita');
 
     // Posts Management

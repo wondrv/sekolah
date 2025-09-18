@@ -22,17 +22,27 @@ Route::get('/test-cms', function () {
 })->name('test-cms');
 
 // Dynamic content routes
-// New: rename Profil to Tentang Kita; keep backward-compat redirect
-Route::get('/tentang-kita/{slug?}', [PageController::class, 'show'])->name('pages.show');
+// Backward compatibility route with tentang-kami prefix - redirects to clean URLs
+Route::get('/tentang-kami/{slug?}', function ($slug = null) {
+    if ($slug) {
+        return redirect('/' . $slug, 301);
+    }
+    // For /tentang-kami without slug, use PageController to show the tentang-kami page
+    return app(\App\Http\Controllers\PageController::class)->showSingle('tentang-kami');
+})->name('pages.show');
+// Backward compatibility for old URLs
 Route::get('/profil/{slug?}', function ($slug = null) {
-    $target = '/tentang-kita' . ($slug ? '/' . $slug : '');
+    $target = '/tentang-kami' . ($slug ? '/' . $slug : '');
     return redirect($target, 301);
 });
-// PPDB: single combined page with anchors
-Route::get('/ppdb', function () { return app(\App\Http\Controllers\PageController::class)->show('ppdb'); })->name('ppdb');
+Route::get('/tentang-kita/{slug?}', function ($slug = null) {
+    $target = '/tentang-kami' . ($slug ? '/' . $slug : '');
+    return redirect($target, 301);
+});
+// Removed specific PPDB route - now handled by universal /{slug} route
 // Backward-friendly endpoints redirecting to anchors
-Route::get('/ppdb/brosur', function () { return redirect()->to(route('ppdb') . '#brosur'); })->name('ppdb.brosur');
-Route::get('/ppdb/biaya', function () { return redirect()->to(route('ppdb') . '#biaya'); })->name('ppdb.biaya');
+Route::get('/ppdb/brosur', function () { return redirect()->to('/ppdb#brosur'); })->name('ppdb.brosur');
+Route::get('/ppdb/biaya', function () { return redirect()->to('/ppdb#biaya'); })->name('ppdb.biaya');
 Route::get('/berita', [PostController::class, 'index'])->name('posts.index');
 Route::get('/berita/{post:slug}', [PostController::class, 'show'])->name('posts.show');
 Route::get('/agenda', [EventController::class, 'index'])->name('events.index');
@@ -65,5 +75,19 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Authentication routes
+require __DIR__.'/auth.php';
+
+// Specific named routes for important pages (before universal route)
+Route::get('/ppdb', function() {
+    return app(\App\Http\Controllers\PageController::class)->showSingle('ppdb');
+})->name('ppdb');
+
+// Universal single page route - MUST be last to avoid conflicts with other routes
+// This allows ANY page to be accessed directly by slug without prefix
+Route::get('/{slug}', [PageController::class, 'showSingle'])
+    ->where('slug', '[a-zA-Z0-9\-_]+')
+    ->name('pages.single');
 
 require __DIR__.'/auth.php';

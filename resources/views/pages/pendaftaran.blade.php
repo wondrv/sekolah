@@ -5,9 +5,12 @@
     <div class="max-w-2xl mx-auto text-center bg-white rounded-lg shadow p-10">
         <h1 class="text-3xl font-bold text-gray-900 mb-4">Pendaftaran Online Tidak Tersedia</h1>
         <p class="text-gray-600 mb-6">Fitur pendaftaran online telah dinonaktifkan. Untuk informasi pendaftaran, silakan hubungi kami melalui halaman kontak.</p>
+        @php $headerMenu = App\Support\Theme::getMenu('header'); $contactItem = $headerMenu->first(function($i){ return stripos($i->title ?? '', 'kontak') !== false; }); @endphp
         <div class="flex justify-center gap-4">
             <a href="/" class="btn-secondary px-6 py-3 rounded-lg">Kembali ke Beranda</a>
-            <a href="/kontak" class="btn-primary px-6 py-3 rounded-lg">Halaman Kontak</a>
+            @if($contactItem)
+                <a href="{{ $contactItem->url ?? '#' }}" target="{{ $contactItem->target ?? '_self' }}" class="btn-primary px-6 py-3 rounded-lg">Halaman Kontak</a>
+            @endif
         </div>
     </div>
 </div>

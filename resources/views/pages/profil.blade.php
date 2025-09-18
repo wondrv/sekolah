@@ -1,1 +1,1 @@
-{{-- Deprecated: use pages/tentang-kita.blade.php --}}
+{{-- Deprecated: use pages/tentang-kami.blade.php --}}

@@ -70,12 +70,21 @@
                 </div>
 
                 <div id="menu-items-container" class="space-y-4">
+                    {{-- Show ALL menu items (both parent and child items) for editing --}}
                     @foreach(($items ?? $menu->items) as $index => $item)
-                    <div class="menu-item border border-gray-200 rounded-lg p-4" data-item="{{ $index + 1 }}">
+                    <div class="menu-item border border-gray-200 rounded-lg p-4 {{ $item->parent_id ? 'ml-8 border-l-4 border-l-blue-500 bg-blue-50' : '' }}" data-item="{{ $index + 1 }}">
                         <input type="hidden" name="menu_items[{{ $index + 1 }}][id]" value="{{ $item->id }}">
 
                         <div class="flex items-center justify-between mb-4">
-                            <h4 class="text-md font-semibold text-gray-800">{{ $item->title }}</h4>
+                            <h4 class="text-md font-semibold text-gray-800">
+                                @if($item->parent_id)
+                                    <i class="fas fa-arrow-right text-blue-500 mr-2"></i>
+                                @endif
+                                {{ $item->title }}
+                                @if($item->parent_id)
+                                    <span class="text-sm text-blue-600 ml-2">(Submenu)</span>
+                                @endif
+                            </h4>
                             <div class="flex items-center gap-3">
                                 <button type="button"
                                         class="text-red-600 hover:text-red-800 cursor-pointer"
@@ -86,37 +95,38 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
                                 <input type="text" name="menu_items[{{ $index + 1 }}][title]" value="{{ $item->title }}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter menu title" required>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Type</label>
-                                <select name="menu_items[{{ $index + 1 }}][link_type]" class="link-type-select w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                                    <option value="">Select Type</option>
-                                    <option value="page" {{ ($item->link_type ?? 'page') == 'page' ? 'selected' : '' }}>Internal Page</option>
-                                    <option value="url" {{ ($item->link_type ?? 'page') == 'url' ? 'selected' : '' }}>Custom URL</option>
-                                    <option value="external" {{ ($item->link_type ?? 'page') == 'external' ? 'selected' : '' }}>External Link</option>
-                                </select>
-                            </div>
+                            <!-- Link Type removed: use direct URL only to keep everything CMS-driven -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
                                 <input type="number" name="menu_items[{{ $index + 1 }}][sort_order]" value="{{ $item->sort_order }}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                        min="1" required>
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Parent (optional)</label>
+                                <select name="menu_items[{{ $index + 1 }}][parent_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">— Top Level —</option>
+                                    @foreach(($allItems ?? collect()) as $parent)
+                                        @if($parent->id !== $item->id)
+                                            <option value="{{ $parent->id }}" {{ $item->parent_id === $parent->id ? 'selected' : '' }}>{{ $parent->title }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
 
                         <div class="mb-4">
-                            <div class="link-input-container">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                                <input type="text" name="menu_items[{{ $index + 1 }}][url]" value="{{ $item->url }}"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter URL">
-                            </div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                            <input type="text" name="menu_items[{{ $index + 1 }}][url]" value="{{ $item->url }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="Contoh: /ppdb atau https://example.com" required>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -169,26 +179,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuItemsContainer = document.getElementById('menu-items-container');
     const addMenuItemBtn = document.getElementById('add-menu-item');
 
-    // Available pages for linking
-    const availablePages = [
-        { value: '/', text: 'Homepage' },
-        { value: '/about', text: 'About Us' },
-        { value: '/programs', text: 'Programs' },
-        { value: '/facilities', text: 'Facilities' },
-        { value: '/events', text: 'Events' },
-        { value: '/news', text: 'News' },
-        { value: '/contact', text: 'Contact' },
-        { value: '/admissions', text: 'Admissions' },
-        { value: '/gallery', text: 'Gallery' }
-    ];
-
     addMenuItemBtn.addEventListener('click', function() {
         itemCount++;
-
-        let pageOptions = '';
-        availablePages.forEach(page => {
-            pageOptions += `<option value="${page.value}">${page.text}</option>`;
-        });
 
         const menuItemHtml = `
             <div class="menu-item border border-gray-200 rounded-lg p-4" data-item="${itemCount}">
@@ -199,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
                         <input type="text" name="menu_items[${itemCount}][title]"
@@ -207,29 +199,27 @@ document.addEventListener('DOMContentLoaded', function() {
                                placeholder="Enter menu title" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Link Type</label>
-                        <select name="menu_items[${itemCount}][link_type]" class="link-type-select w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                            <option value="">Select Type</option>
-                            <option value="page">Internal Page</option>
-                            <option value="url">Custom URL</option>
-                            <option value="external">External Link</option>
-                        </select>
-                    </div>
-                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
                         <input type="number" name="menu_items[${itemCount}][sort_order]" value="${itemCount}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                min="1" required>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Parent (optional)</label>
+                        <select name="menu_items[${itemCount}][parent_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">— Top Level —</option>
+                            @foreach(($allItems ?? collect()) as $parent)
+                                <option value="{{ $parent->id }}">{{ $parent->title }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div class="mb-4">
-                    <div class="link-input-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Link</label>
-                        <input type="text" name="menu_items[${itemCount}][url]"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="Enter URL or select page">
-                    </div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                    <input type="text" name="menu_items[${itemCount}][url]"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Contoh: /tentang-kami atau https://example.com" required>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -259,37 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         menuItemsContainer.insertAdjacentHTML('beforeend', menuItemHtml);
     });
 
-    // Handle link type changes
-    menuItemsContainer.addEventListener('change', function(e) {
-        if (e.target.classList.contains('link-type-select')) {
-            const linkType = e.target.value;
-            const menuItem = e.target.closest('.menu-item');
-            const linkContainer = menuItem.querySelector('.link-input-container');
-            const itemNumber = menuItem.dataset.item;
-
-            let pageOptions = '';
-            availablePages.forEach(page => {
-                pageOptions += `<option value="${page.value}">${page.text}</option>`;
-            });
-
-            if (linkType === 'page') {
-                linkContainer.innerHTML = `
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Select Page</label>
-                    <select name="menu_items[${itemNumber}][url]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select a page</option>
-                        ${pageOptions}
-                    </select>
-                `;
-            } else {
-                linkContainer.innerHTML = `
-                    <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                    <input type="url" name="menu_items[${itemNumber}][url]"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="${linkType === 'external' ? 'https://example.com' : 'Enter URL'}" required>
-                `;
-            }
-        }
-    });
+    // No link-type handling: URLs are entered directly for fully CMS-driven control
 
     // Remove menu item functionality (client-side only for newly added ones)
     menuItemsContainer.addEventListener('click', function(e) {

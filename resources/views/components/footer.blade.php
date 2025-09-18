@@ -24,7 +24,7 @@ $socialMedia = $siteInfo['social'] ?? [];
           </div>
         </div>
         @if(isset($siteInfo['description']) && $siteInfo['description'])
-          <p class="text-sm opacity-90 leading-relaxed">{{ Str::limit($siteInfo['description'], 120) }}</p>
+          <p class="text-sm opacity-90 leading-relaxed">{{ \Illuminate\Support\Str::limit($siteInfo['description'], 120) }}</p>
         @endif
       </div>
 
@@ -83,19 +83,23 @@ $socialMedia = $siteInfo['social'] ?? [];
         <div class="space-y-2">
           @if($footerMenuItems && $footerMenuItems->count() > 0)
             @foreach($footerMenuItems as $item)
-              <a href="{{ $item->url }}"
-                 target="{{ $item->is_external ? '_blank' : '_self' }}"
+              <a href="{{ $item->url ?? '#' }}"
+                 target="{{ $item->target ?? '_self' }}"
                  class="block text-sm hover:text-blue-300 transition-colors py-1">
-                {{ $item->label }}
+                {{ $item->title ?? 'Menu' }}
               </a>
+              @if($item->children->count() > 0)
+                <div class="ml-3 space-y-1">
+                  @foreach($item->children as $child)
+                    <a href="{{ $child->url ?? '#' }}"
+                       target="{{ $child->target ?? '_self' }}"
+                       class="block text-xs opacity-90 hover:text-blue-300 transition-colors py-0.5">
+                      — {{ $child->title ?? 'Submenu' }}
+                    </a>
+                  @endforeach
+                </div>
+              @endif
             @endforeach
-          @else
-            <!-- Fallback links -->
-            <a href="/tentang-kita" class="block text-sm hover:text-blue-300 transition-colors py-1">Tentang Kita</a>
-            <a href="/berita" class="block text-sm hover:text-blue-300 transition-colors py-1">Berita</a>
-            <a href="/agenda" class="block text-sm hover:text-blue-300 transition-colors py-1">Agenda</a>
-            <a href="/galeri" class="block text-sm hover:text-blue-300 transition-colors py-1">Galeri</a>
-            <a href="/kontak" class="block text-sm hover:text-blue-300 transition-colors py-1">Kontak</a>
           @endif
         </div>
       </div>

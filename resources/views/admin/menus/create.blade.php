@@ -30,19 +30,6 @@
                 </div>
 
                 <div>
-                    <label for="slug" class="block text-sm font-medium text-gray-700 mb-2">Menu Slug</label>
-                    <input type="text" id="slug" name="slug" value="{{ old('slug') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="menu-slug" required>
-                    @error('slug')
-                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                    <p class="text-sm text-gray-500 mt-1">URL-friendly identifier for this menu</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-6 mb-6">
-                <div>
                     <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Menu Location</label>
                     <select id="location" name="location" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
                         <option value="">Select Location</option>
@@ -105,26 +92,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuItemsContainer = document.getElementById('menu-items-container');
     const addMenuItemBtn = document.getElementById('add-menu-item');
 
-    // Available pages for linking
-    const availablePages = [
-        { value: '/', text: 'Homepage' },
-        { value: '/about', text: 'About Us' },
-        { value: '/programs', text: 'Programs' },
-        { value: '/facilities', text: 'Facilities' },
-        { value: '/events', text: 'Events' },
-        { value: '/news', text: 'News' },
-        { value: '/contact', text: 'Contact' },
-        { value: '/admissions', text: 'Admissions' },
-        { value: '/gallery', text: 'Gallery' }
-    ];
 
     addMenuItemBtn.addEventListener('click', function() {
         itemCount++;
-
-        let pageOptions = '';
-        availablePages.forEach(page => {
-            pageOptions += `<option value="${page.value}">${page.text}</option>`;
-        });
 
         const menuItemHtml = `
             <div class="menu-item border border-gray-200 rounded-lg p-4" data-item="${itemCount}">
@@ -135,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
                         <input type="text" name="menu_items[${itemCount}][title]"
@@ -143,29 +113,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                placeholder="Enter menu title" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Link Type</label>
-                        <select name="menu_items[${itemCount}][link_type]" class="link-type-select w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                            <option value="">Select Type</option>
-                            <option value="page">Internal Page</option>
-                            <option value="url">Custom URL</option>
-                            <option value="external">External Link</option>
-                        </select>
-                    </div>
-                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
-                        <input type="number" name="menu_items[${itemCount}][order]" value="${itemCount}"
+                        <input type="number" name="menu_items[${itemCount}][sort_order]" value="${itemCount}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                min="1" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Parent (optional)</label>
+                        <select name="menu_items[${itemCount}][parent_id]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 parent-selector">
+                            <option value="">— Top Level —</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Select existing item to make this a submenu</p>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <div class="link-input-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Link</label>
-                        <input type="text" name="menu_items[${itemCount}][url]"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="Enter URL or select page">
-                    </div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                    <input type="text" name="menu_items[${itemCount}][url]"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Contoh: /ppdb atau https://example.com" required>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -195,30 +161,38 @@ document.addEventListener('DOMContentLoaded', function() {
         menuItemsContainer.insertAdjacentHTML('beforeend', menuItemHtml);
     });
 
-    // Handle link type changes
-    menuItemsContainer.addEventListener('change', function(e) {
-        if (e.target.classList.contains('link-type-select')) {
-            const linkType = e.target.value;
-            const menuItem = e.target.closest('.menu-item');
-            const linkContainer = menuItem.querySelector('.link-input-container');
-            const itemNumber = menuItem.dataset.item;
+    // No link-type handling: URLs are entered directly for fully CMS-driven control
 
-            if (linkType === 'page') {
-                linkContainer.innerHTML = `
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Select Page</label>
-                    <select name="menu_items[${itemNumber}][url]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select a page</option>
-                        ${pageOptions}
-                    </select>
-                `;
-            } else {
-                linkContainer.innerHTML = `
-                    <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                    <input type="url" name="menu_items[${itemNumber}][url]"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="${linkType === 'external' ? 'https://example.com' : 'Enter URL'}" required>
-                `;
-            }
+    // Dynamic parent selector population
+    function updateParentSelectors() {
+        const allItems = document.querySelectorAll('.menu-item');
+        const parentSelectors = document.querySelectorAll('.parent-selector');
+
+        parentSelectors.forEach(selector => {
+            const currentItem = selector.closest('.menu-item');
+            const currentItemIndex = currentItem.getAttribute('data-item');
+
+            // Clear existing options except "Top Level"
+            selector.innerHTML = '<option value="">— Top Level —</option>';
+
+            // Add options for all other items (except self)
+            allItems.forEach(item => {
+                const itemIndex = item.getAttribute('data-item');
+                const titleInput = item.querySelector('input[name*="[title]"]');
+                if (itemIndex !== currentItemIndex && titleInput && titleInput.value.trim()) {
+                    const option = document.createElement('option');
+                    option.value = itemIndex;
+                    option.textContent = titleInput.value.trim() || `Item ${itemIndex}`;
+                    selector.appendChild(option);
+                }
+            });
+        });
+    }
+
+    // Update parent selectors when titles change
+    menuItemsContainer.addEventListener('input', function(e) {
+        if (e.target.matches('input[name*="[title]"]')) {
+            updateParentSelectors();
         }
     });
 
@@ -226,11 +200,15 @@ document.addEventListener('DOMContentLoaded', function() {
     menuItemsContainer.addEventListener('click', function(e) {
         if (e.target.closest('.remove-menu-item')) {
             e.target.closest('.menu-item').remove();
+            updateParentSelectors();
         }
     });
 
     // Add initial menu item
     addMenuItemBtn.click();
+
+    // Update parent selectors after adding initial item
+    setTimeout(updateParentSelectors, 10);
 });
 </script>
 @endsection

@@ -34,10 +34,13 @@ class PageController extends Controller
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:pages,slug',
             'body' => 'required|string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'og_image' => 'nullable|string|max:500',
             'is_pinned' => 'sometimes|boolean',
         ]);
 
-        $data = $request->only(['title', 'slug', 'body']);
+        $data = $request->only(['title', 'slug', 'body', 'meta_title', 'meta_description', 'og_image']);
         $data['is_pinned'] = $request->has('is_pinned');
 
         Page::create($data);
@@ -72,10 +75,13 @@ class PageController extends Controller
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:pages,slug,' . $page->id,
             'body' => 'required|string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'og_image' => 'nullable|string|max:500',
             'is_pinned' => 'sometimes|boolean',
         ]);
 
-        $data = $request->only(['title', 'slug', 'body']);
+        $data = $request->only(['title', 'slug', 'body', 'meta_title', 'meta_description', 'og_image']);
         $data['is_pinned'] = $request->has('is_pinned');
 
         $page->update($data);

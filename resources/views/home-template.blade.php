@@ -16,7 +16,15 @@
     @endforeach
 @else
     {{-- Fallback content if no template sections --}}
-    @php $siteInfo = App\Support\Theme::getSiteInfo(); @endphp
+    @php
+        $siteInfo = App\Support\Theme::getSiteInfo();
+        $headerMenu = App\Support\Theme::getMenu('header');
+        $ctaItems = ($headerMenu && $headerMenu->count() > 0) ? $headerMenu->take(3) : collect();
+        // Find a 'Kontak' link for CTA section
+        $contactItem = ($headerMenu && $headerMenu->count() > 0)
+            ? $headerMenu->first(function($item){ return stripos($item->title ?? '', 'kontak') !== false; })
+            : null;
+    @endphp
 
     <!-- Hero Section -->
     <section class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -40,20 +48,23 @@
                     {{ $siteInfo['description'] }}
                 </p>
 
-                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <a href="/tentang-kita" class="btn-primary px-8 py-4 text-lg rounded-lg inline-flex items-center">
-                        <span class="mr-2">📚</span>
-                        Tentang Kita
-                    </a>
-                    <a href="/berita" class="btn-secondary px-8 py-4 text-lg rounded-lg inline-flex items-center">
-                        <span class="mr-2">📰</span>
-                        Berita Terkini
-                    </a>
-                    <a href="/kontak" class="btn-accent px-8 py-4 text-lg rounded-lg inline-flex items-center">
-                        <span class="mr-2">📩</span>
-                        Hubungi Kami
-                    </a>
-                </div>
+                @if($ctaItems->count() > 0)
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        @foreach($ctaItems as $i => $item)
+                            @php
+                                $styleClass = match($i){
+                                    0 => 'btn-primary',
+                                    1 => 'btn-secondary',
+                                    default => 'btn-accent'
+                                };
+                            @endphp
+                            <a href="{{ $item->url ?? '#' }}" target="{{ $item->target ?? '_self' }}" class="{{ $styleClass }} px-8 py-4 text-lg rounded-lg inline-flex items-center">
+                                <span class="mr-2">{{ $i === 0 ? '�' : ($i === 1 ? '📰' : '�📩') }}</span>
+                                {{ $item->title ?? 'Menu' }}
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
 
 
             </div>
@@ -97,14 +108,16 @@
             <div class="max-w-2xl mx-auto">
                 <h2 class="text-3xl font-bold text-white mb-6">Bergabunglah dengan Kami</h2>
                 <p class="text-lg text-blue-100 mb-8">Wujudkan impian karir di bidang teknologi bersama kami</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="/kontak" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                        Hubungi Kami
-                    </a>
-                    <a href="/kontak" class="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
-                        Hubungi Kami
-                    </a>
-                </div>
+                @if($contactItem)
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="{{ $contactItem->url ?? '#' }}" target="{{ $contactItem->target ?? '_self' }}" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                            Hubungi Kami
+                        </a>
+                        <a href="{{ $contactItem->url ?? '#' }}" target="{{ $contactItem->target ?? '_self' }}" class="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+                            Hubungi Kami
+                        </a>
+                    </div>
+                @endif
             </div>
         </div>
     </section>

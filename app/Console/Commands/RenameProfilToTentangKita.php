@@ -9,15 +9,15 @@ use App\Models\Block;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
-class RenameProfilToTentangKita extends Command
+class RenameProfilToTentangKami extends Command
 {
     protected $signature = 'cms:rename-profil {--dry-run : Show changes without applying}';
-    protected $description = 'Rename all occurrences of "profil" to "tentang-kita" in titles, slugs, URLs where appropriate.';
+    protected $description = 'Rename all occurrences of "profil" to "tentang-kami" in titles, slugs, URLs where appropriate.';
 
     public function handle(): int
     {
         $dry = $this->option('dry-run');
-        $this->info(($dry ? '[DRY RUN] ' : '') . 'Renaming "profil" → "tentang-kita"...');
+        $this->info(($dry ? '[DRY RUN] ' : '') . 'Renaming "profil" → "tentang-kami"...');
 
         DB::beginTransaction();
         try {
@@ -28,7 +28,7 @@ class RenameProfilToTentangKita extends Command
                 $origTitle = $item->title;
                 $origUrl = $item->url;
                 $newTitle = $origTitle === 'Profil' ? 'Tentang Kita' : $origTitle;
-                $newUrl = $origUrl ? str_replace('/profil', '/tentang-kita', $origUrl) : $origUrl;
+                $newUrl = $origUrl ? str_replace('/profil', '/tentang-kami', $origUrl) : $origUrl;
 
                 if ($newTitle !== $origTitle || $newUrl !== $origUrl) {
                     $menuUpdates++;
@@ -47,7 +47,7 @@ class RenameProfilToTentangKita extends Command
             foreach ($pages as $page) {
                 $oldSlug = $page->slug;
                 $newSlug = Str::startsWith($oldSlug, 'profil')
-                    ? Str::replaceFirst('profil', 'tentang-kita', $oldSlug)
+                    ? Str::replaceFirst('profil', 'tentang-kami', $oldSlug)
                     : $oldSlug;
                 if ($newSlug !== $oldSlug) {
                     $pageUpdates++;
@@ -66,7 +66,7 @@ class RenameProfilToTentangKita extends Command
                 foreach ($blocks as $block) {
                     $old = $block->data;
                     $json = json_encode($old);
-                    $jsonNew = str_replace('/profil', '/tentang-kita', $json);
+                    $jsonNew = str_replace('/profil', '/tentang-kami', $json);
                     if ($jsonNew !== $json) {
                         $blockUpdates++;
                         $this->line("Block #{$block->id} data updated");

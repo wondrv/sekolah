@@ -7,10 +7,21 @@
     <div>
       <h1 class="text-3xl md:text-5xl font-extrabold leading-tight">Sekolah Unggul, Berkarakter, Berprestasi</h1>
       <p class="mt-4 text-slate-600">Portal informasi sekolah dengan berita terbaru dan agenda kegiatan.</p>
-      <div class="mt-6 flex gap-3">
-        <a href="/berita" class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Berita Terbaru</a>
-        <a href="/agenda" class="px-5 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">Agenda Kegiatan</a>
-      </div>
+      @php $headerMenu = App\Support\Theme::getMenu('header'); @endphp
+      @if($headerMenu && $headerMenu->count() > 0)
+        @php
+          $newsLink = $headerMenu->first(function($it){ return stripos($it->title ?? '', 'berita') !== false; });
+          $agendaLink = $headerMenu->first(function($it){ return stripos($it->title ?? '', 'agenda') !== false; });
+        @endphp
+        <div class="mt-6 flex gap-3">
+          @if($newsLink)
+            <a href="{{ $newsLink->url ?? '#' }}" target="{{ $newsLink->target ?? '_self' }}" class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{{ $newsLink->title }}</a>
+          @endif
+          @if($agendaLink)
+            <a href="{{ $agendaLink->url ?? '#' }}" target="{{ $agendaLink->target ?? '_self' }}" class="px-5 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">{{ $agendaLink->title }}</a>
+          @endif
+        </div>
+      @endif
     </div>
     <div class="aspect-video bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
       <img src="{{ asset('images/sekolah.png') }}" alt="Foto Sekolah" class="object-cover w-full h-full">
@@ -64,16 +75,18 @@
       <div class="p-6">
         <h3 class="text-xl font-semibold mb-2">Judul Berita {{ $i }}</h3>
         <p class="text-gray-600 mb-4">Ringkasan berita singkat yang menjelaskan inti dari artikel berita ini...</p>
-        <a href="/berita/sample-{{ $i }}" class="text-blue-600 hover:text-blue-800 font-medium">Baca selengkapnya →</a>
+  <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Baca selengkapnya →</a>
       </div>
     </article>
     @endfor
   </div>
-  <div class="text-center mt-8">
-    <a href="/berita" class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">
-      Lihat Semua Berita
-    </a>
-  </div>
+  @if(isset($newsLink))
+    <div class="text-center mt-8">
+      <a href="{{ $newsLink->url ?? '#' }}" target="{{ $newsLink->target ?? '_self' }}" class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+        Lihat Semua Berita
+      </a>
+    </div>
+  @endif
 </section>
 
 <section class="bg-gray-50 py-16">
@@ -92,11 +105,13 @@
       </div>
       @endfor
     </div>
-    <div class="text-center mt-8">
-      <a href="/agenda" class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">
-        Lihat Semua Agenda
-      </a>
-    </div>
+    @if(isset($agendaLink))
+      <div class="text-center mt-8">
+        <a href="{{ $agendaLink->url ?? '#' }}" target="{{ $agendaLink->target ?? '_self' }}" class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+          Lihat Semua Agenda
+        </a>
+      </div>
+    @endif
   </div>
 </section>
 @endsection

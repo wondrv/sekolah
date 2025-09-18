@@ -64,6 +64,53 @@
 
             <!-- Sidebar -->
             <div class="space-y-6">
+                <!-- SEO Settings -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">SEO & Meta</h3>
+
+                    <!-- Meta Title -->
+                    <div class="mb-4">
+                        <label for="meta_title" class="block text-sm font-medium text-gray-700 mb-2">
+                            Meta Title
+                        </label>
+                        <input type="text" id="meta_title" name="meta_title" value="{{ old('meta_title') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('meta_title') border-red-500 @enderror"
+                               placeholder="Judul untuk mesin pencari">
+                        <p class="mt-1 text-xs text-gray-500">Maks. 60 karakter untuk hasil pencarian optimal</p>
+                        @error('meta_title')
+                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Meta Description -->
+                    <div class="mb-4">
+                        <label for="meta_description" class="block text-sm font-medium text-gray-700 mb-2">
+                            Meta Description
+                        </label>
+                        <textarea id="meta_description" name="meta_description" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('meta_description') border-red-500 @enderror"
+                                  placeholder="Deskripsi untuk mesin pencari">{{ old('meta_description') }}</textarea>
+                        <p class="mt-1 text-xs text-gray-500">Maks. 160 karakter untuk snippet pencarian optimal</p>
+                        @error('meta_description')
+                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- OG Image -->
+                    <div class="mb-4">
+                        <label for="og_image" class="block text-sm font-medium text-gray-700 mb-2">
+                            Featured Image URL
+                        </label>
+                        <input type="url" id="og_image" name="og_image" value="{{ old('og_image') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('og_image') border-red-500 @enderror"
+                               placeholder="https://example.com/image.jpg">
+                        <p class="mt-1 text-xs text-gray-500">Gambar untuk media sosial dan preview</p>
+                        @error('og_image')
+                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
                 <!-- Publishing Actions -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Publikasi</h3>

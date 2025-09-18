@@ -14,6 +14,9 @@ class Page extends Model
         'title',
         'slug',
         'body',
+        'meta_title',
+        'meta_description',
+        'og_image',
         'is_pinned',
     ];
 

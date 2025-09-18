@@ -90,7 +90,7 @@ class SetupCMS extends Command
 
         // Top-level items
         $home = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Beranda', 'url' => '/', 'sort_order' => 1, 'is_active' => true]);
-    $profil = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Tentang Kita', 'url' => '/tentang-kita', 'sort_order' => 2, 'is_active' => true]);
+    $profil = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Tentang Kita', 'url' => '/tentang-kami', 'sort_order' => 2, 'is_active' => true]);
         $manajemen = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Manajemen', 'url' => '#', 'sort_order' => 3, 'is_active' => true]);
         $layanan = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Layanan', 'url' => '#', 'sort_order' => 4, 'is_active' => true]);
         $resource = MenuItem::create(['menu_id' => $headerMenu->id, 'title' => 'Resource', 'url' => '#', 'sort_order' => 5, 'is_active' => true]);

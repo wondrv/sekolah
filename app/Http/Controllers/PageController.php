@@ -10,12 +10,27 @@ class PageController extends Controller
     /**
      * Display the specified page
      */
-    public function show($slug = 'tentang-kita')
+    public function show($slug = 'tentang-kami')
     {
         $page = Page::where('slug', $slug)->firstOrFail();
         if ($slug === 'ppdb') {
             return view('pages.custom.ppdb', compact('page'));
         }
+        return view('pages.show', compact('page'));
+    }
+
+    /**
+     * Display the specified page by direct slug
+     */
+    public function showSingle($slug)
+    {
+        $page = Page::where('slug', $slug)->firstOrFail();
+
+        // Handle special page templates
+        if ($slug === 'ppdb') {
+            return view('pages.custom.ppdb', compact('page'));
+        }
+
         return view('pages.show', compact('page'));
     }
 

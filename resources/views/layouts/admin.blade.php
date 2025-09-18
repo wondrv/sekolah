@@ -353,8 +353,9 @@
                 if (!(target instanceof HTMLFormElement)) return;
                 // Allow the modal's own form to submit normally
                 if (target.id === 'globalDeleteForm') return;
-                const methodInput = target.querySelector('input[name="_method"][value="DELETE"]');
-                const hasDeleteMethod = methodInput || (target.method && target.method.toUpperCase() === 'DELETE');
+                // Only consider this form's own elements (avoid nested forms)
+                const isDeleteOverride = Array.from(target.elements || []).some(el => el.name === '_method' && (el.value || '').toUpperCase() === 'DELETE');
+                const hasDeleteMethod = isDeleteOverride || (target.method && target.method.toUpperCase() === 'DELETE');
                 if (!hasDeleteMethod) return;
 
                 // Use data-confirm label if present
