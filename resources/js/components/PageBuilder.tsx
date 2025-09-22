@@ -131,6 +131,7 @@ const BlockSettingsModal: React.FC<{
                 return (
                     <input
                         type="text"
+                        id={fieldId}
                         value={value}
                         onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -144,7 +145,7 @@ const BlockSettingsModal: React.FC<{
                     <textarea
                         value={value}
                         onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
-                        rows={4}
+                        id={fieldId}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder={fieldConfig.placeholder || ''}
                     />
@@ -153,7 +154,7 @@ const BlockSettingsModal: React.FC<{
             case 'select':
                 return (
                     <select
-                        id={`block-select-${block?.id || 'new'}-${key}`}
+                        id={fieldId}
                         value={value}
                         onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -186,6 +187,7 @@ const BlockSettingsModal: React.FC<{
                         type="url"
                         value={value}
                         onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
+                        id={fieldId}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="https://example.com"
                     />
@@ -200,6 +202,7 @@ const BlockSettingsModal: React.FC<{
                             onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Image URL or upload"
+                            id={fieldId}
                         />
                         <button
                             type="button"
@@ -219,6 +222,7 @@ const BlockSettingsModal: React.FC<{
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder={fieldConfig.placeholder || fieldConfig.label || key}
                         title={fieldConfig.label || key}
+                        id={fieldId}
                     />
                 );
         }
@@ -244,14 +248,17 @@ const BlockSettingsModal: React.FC<{
 
                 <div className="px-6 py-4 overflow-y-auto max-h-[60vh]">
                     <div className="space-y-6">
-                        {Object.entries(config.settings || {}).map(([key, fieldConfig]) => (
-                            <div key={key}>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {fieldConfig.label || key}
-                                </label>
-                                {renderField(key, fieldConfig)}
-                            </div>
-                        ))}
+                        {Object.entries(config.settings || {}).map(([key, fieldConfig]) => {
+                            const fieldId = `block-${block?.id || 'new'}-${key}`;
+                            return (
+                                <div key={key}>
+                                    <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700 mb-2">
+                                        {fieldConfig.label || key}
+                                    </label>
+                                    {renderField(key, fieldConfig)}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
