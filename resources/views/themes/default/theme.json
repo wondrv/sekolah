@@ -1,0 +1,27 @@
+{
+    "title": "Default Theme",
+    "description": "Default theme for school CMS",
+    "version": "1.0.0",
+    "author": "School CMS Team",
+    "screenshot": "screenshot.png",
+    "supports": {
+        "page_builder": true,
+        "widgets": true,
+        "menus": true
+    },
+    "settings": {
+        "colors": {
+            "primary": "#3b82f6",
+            "secondary": "#64748b",
+            "accent": "#f59e0b"
+        },
+        "typography": {
+            "heading_font": "Inter",
+            "body_font": "Inter"
+        },
+        "layout": {
+            "container_width": "1200px",
+            "sidebar_width": "300px"
+        }
+    }
+}

@@ -13,7 +13,9 @@ class Page extends Model
     protected $fillable = [
         'title',
         'slug',
-        'body',
+        'content',
+        'content_json',
+        'use_page_builder',
         'meta_title',
         'meta_description',
         'og_image',
@@ -22,6 +24,8 @@ class Page extends Model
 
     protected $casts = [
         'is_pinned' => 'boolean',
+        'use_page_builder' => 'boolean',
+        'content_json' => 'array',
     ];
 
     /**
@@ -58,5 +62,25 @@ class Page extends Model
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+
+    /**
+     * Get rendered content
+     */
+    public function getRenderedContentAttribute()
+    {
+        if ($this->use_page_builder && $this->content_json) {
+            return app(\App\Services\PageBuilderService::class)->renderPageContent($this);
+        }
+
+        return $this->content ?? '';
+    }
+
+    /**
+     * Scope for pages using page builder
+     */
+    public function scopeUsingPageBuilder($query)
+    {
+        return $query->where('use_page_builder', true);
     }
 }

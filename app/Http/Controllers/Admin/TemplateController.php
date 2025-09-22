@@ -93,19 +93,60 @@ class TemplateController extends Controller
      */
     public function update(Request $request, Template $template): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
             'active' => 'boolean',
             'slug' => 'nullable|string|max:100',
+            'sections' => 'array',
+            'sections.*.id' => 'nullable|integer|exists:sections,id',
+            'sections.*.name' => 'required|string|max:255',
+            'sections.*.order' => 'required|integer|min:1',
+            'sections.*.is_active' => 'nullable|boolean',
         ]);
 
         $template->update([
-            'name' => $request->name,
-            'description' => $request->description,
-            'slug' => $request->slug,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'slug' => $validated['slug'] ?? null,
             'active' => $request->boolean('active'),
         ]);
+
+        // Optional: Upsert sections provided by the form
+        $sections = $validated['sections'] ?? [];
+        if (!empty($sections)) {
+            // Fetch existing section IDs for this template
+            $existing = $template->sections()->pluck('id')->all();
+
+            foreach ($sections as $payload) {
+                $id = $payload['id'] ?? null;
+                $data = [
+                    'name' => $payload['name'],
+                    'order' => (int) $payload['order'],
+                    'active' => isset($payload['is_active']) ? (bool)$payload['is_active'] : true,
+                ];
+
+                if ($id) {
+                    // Update only if the section belongs to this template
+                    $section = \App\Models\Section::where('id', $id)
+                        ->where('template_id', $template->id)
+                        ->first();
+                    if ($section) {
+                        $section->update($data);
+                    }
+                } else {
+                    // Create new section with a unique key
+                    $base = \Illuminate\Support\Str::slug($payload['name']) ?: 'section';
+                    $key = $base;
+                    $suffix = 1;
+                    while (\App\Models\Section::where('key', $key)->exists()) {
+                        $key = $base.'-'.(++$suffix);
+                    }
+
+                    $template->sections()->create($data + ['key' => $key]);
+                }
+            }
+        }
 
         // Clear theme cache when template is updated
         Theme::clearCache();

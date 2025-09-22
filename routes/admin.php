@@ -47,6 +47,16 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::post('settings/add-agenda-under-tentang-kami', [Admin\SettingsController::class, 'addAgendaUnderProfile'])
         ->name('admin.settings.add_agenda_under_tentang_kita');
 
+    // PPDB Management
+    Route::prefix('ppdb')->name('ppdb.')->group(function () {
+        Route::get('/', [Admin\PpdbController::class, 'index'])->name('index');
+        Route::put('/settings', [Admin\PpdbController::class, 'updateSettings'])->name('settings.update');
+        Route::get('/costs', [Admin\PpdbController::class, 'costs'])->name('costs');
+        Route::post('/costs', [Admin\PpdbController::class, 'storeCost'])->name('costs.store');
+        Route::put('/costs/{cost}', [Admin\PpdbController::class, 'updateCost'])->name('costs.update');
+        Route::delete('/costs/{cost}', [Admin\PpdbController::class, 'destroyCost'])->name('costs.destroy');
+    });
+
     // Posts Management
     Route::resource('posts', Admin\PostController::class)->names([
         'index' => 'admin.posts.index',
@@ -68,6 +78,13 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         'update' => 'admin.pages.update',
         'destroy' => 'admin.pages.destroy',
     ]);
+
+    // Page Builder Routes
+    Route::get('pages/{page}/builder', [Admin\PageBuilderController::class, 'show'])->name('admin.pages.builder');
+    Route::post('pages/{page}/builder/save', [Admin\PageBuilderController::class, 'save'])->name('admin.pages.builder.save');
+    Route::get('page-builder/blocks', [Admin\PageBuilderController::class, 'blocks'])->name('admin.page-builder.blocks');
+    Route::get('page-builder/blocks/{type}/config', [Admin\PageBuilderController::class, 'blockConfig'])->name('admin.page-builder.block-config');
+    Route::post('page-builder/preview', [Admin\PageBuilderController::class, 'preview'])->name('admin.page-builder.preview');
 
     // Events Management
     Route::resource('events', Admin\EventController::class)->names([

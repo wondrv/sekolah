@@ -36,17 +36,11 @@
                 </div>
 
                 <div>
-                    <label for="type" class="block text-sm font-medium text-gray-700 mb-2">Template Type</label>
-                    <select id="type" name="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select Type</option>
-                        <option value="homepage" {{ old('type', $template->type) == 'homepage' ? 'selected' : '' }}>Homepage</option>
-                        <option value="about" {{ old('type', $template->type) == 'about' ? 'selected' : '' }}>About Page</option>
-                        <option value="contact" {{ old('type', $template->type) == 'contact' ? 'selected' : '' }}>Contact Page</option>
-                        <option value="news" {{ old('type', $template->type) == 'news' ? 'selected' : '' }}>News Page</option>
-                        <option value="events" {{ old('type', $template->type) == 'events' ? 'selected' : '' }}>Events Page</option>
-                        <option value="custom" {{ old('type', $template->type) == 'custom' ? 'selected' : '' }}>Custom Page</option>
-                    </select>
-                    @error('type')
+                    <label for="slug" class="block text-sm font-medium text-gray-700 mb-2">Template Slug (optional)</label>
+                    <input type="text" id="slug" name="slug" value="{{ old('slug', $template->slug) }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="e.g. homepage">
+                    @error('slug')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror
                 </div>
@@ -102,28 +96,9 @@
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Section Type</label>
-                            <select name="sections[{{ $index + 1 }}][type]"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                                <option value="">Select Type</option>
-                                <option value="hero" {{ $section->type == 'hero' ? 'selected' : '' }}>Hero Section</option>
-                                <option value="content" {{ $section->type == 'content' ? 'selected' : '' }}>Content Section</option>
-                                <option value="gallery" {{ $section->type == 'gallery' ? 'selected' : '' }}>Gallery Section</option>
-                                <option value="testimonials" {{ $section->type == 'testimonials' ? 'selected' : '' }}>Testimonials</option>
-                                <option value="stats" {{ $section->type == 'stats' ? 'selected' : '' }}>Statistics</option>
-                                <option value="cta" {{ $section->type == 'cta' ? 'selected' : '' }}>Call to Action</option>
-                                <option value="news" {{ $section->type == 'news' ? 'selected' : '' }}>News & Updates</option>
-                                <option value="events" {{ $section->type == 'events' ? 'selected' : '' }}>Events</option>
-                            </select>
-                        </div>
+                        <!-- Removed Section Type (not supported by Section model) -->
 
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Section Settings (JSON)</label>
-                            <textarea name="sections[{{ $index + 1 }}][settings]" rows="3"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                      placeholder='{"background": "white", "text_color": "dark", "padding": "large"}'>{{ is_array($section->settings ?? null) ? json_encode($section->settings, JSON_PRETTY_PRINT) : ($section->settings ?? '') }}</textarea>
-                        </div>
+                        {{-- Settings JSON removed: Section model has no settings column. Keep UI minimal and valid. --}}
 
                         <div class="flex items-center mb-4">
                             <input type="checkbox" name="sections[{{ $index + 1 }}][is_active]" value="1" {{ ($section->is_active ?? $section->active) ? 'checked' : '' }}
@@ -206,28 +181,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Section Type</label>
-                    <select name="sections[${sectionCount}][type]"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select Type</option>
-                        <option value="hero">Hero Section</option>
-                        <option value="content">Content Section</option>
-                        <option value="gallery">Gallery Section</option>
-                        <option value="testimonials">Testimonials</option>
-                        <option value="stats">Statistics</option>
-                        <option value="cta">Call to Action</option>
-                        <option value="news">News & Updates</option>
-                        <option value="events">Events</option>
-                    </select>
-                </div>
+                <!-- Removed Section Type (not supported by Section model) -->
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Section Settings (JSON)</label>
-                    <textarea name="sections[${sectionCount}][settings]" rows="3"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                              placeholder='{"background": "white", "text_color": "dark", "padding": "large"}'></textarea>
-                </div>
+                <!-- Settings JSON removed: not supported by schema -->
 
                 <div class="flex items-center">
                     <input type="checkbox" name="sections[${sectionCount}][is_active]" value="1" checked
