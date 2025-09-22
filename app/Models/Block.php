@@ -15,11 +15,20 @@ class Block extends Model
         'data',
         'order',
         'active',
+        'style_settings',
+        'css_class',
+        'visible_desktop',
+        'visible_tablet',
+        'visible_mobile',
     ];
 
     protected $casts = [
         'data' => 'array',
         'active' => 'boolean',
+        'style_settings' => 'array',
+        'visible_desktop' => 'boolean',
+        'visible_tablet' => 'boolean',
+        'visible_mobile' => 'boolean',
     ];
 
     public function section()

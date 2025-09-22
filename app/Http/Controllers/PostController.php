@@ -4,10 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\Category;
+use App\Services\TemplateRenderService;
 use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
+    protected $templateRenderer;
+
+    public function __construct(TemplateRenderService $templateRenderer)
+    {
+        $this->templateRenderer = $templateRenderer;
+    }
+
     /**
      * Display a listing of posts
      */
@@ -35,13 +43,20 @@ class PostController extends Controller
         $posts = $query->orderBy('published_at', 'desc')->paginate(12);
         $categories = Category::withCount('posts')->get();
 
+        // Try to render using template assignment system
+        $templateView = $this->templateRenderer->renderForRequest('posts.index', compact('posts', 'categories'));
+
+        if ($templateView) {
+            return $templateView;
+        }
+
         return view('posts.index', compact('posts', 'categories'));
     }
 
     /**
      * Display the specified post
      */
-    public function show(Post $post)
+    public function show(Request $request, Post $post)
     {
         // Check if post is published
         if ($post->status !== 'published' || $post->published_at > now()) {
@@ -56,6 +71,13 @@ class PostController extends Controller
             ->where('category_id', $post->category_id)
             ->limit(3)
             ->get();
+
+        // Try to render using template assignment system
+        $templateView = $this->templateRenderer->renderForRequest('posts.show', compact('post', 'relatedPosts'));
+
+        if ($templateView) {
+            return $templateView;
+        }
 
         return view('posts.show', compact('post', 'relatedPosts'));
     }

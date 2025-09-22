@@ -3,17 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
+use App\Services\TemplateRenderService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class ContactController extends Controller
 {
+    protected $templateRenderer;
+
+    public function __construct(TemplateRenderService $templateRenderer)
+    {
+        $this->templateRenderer = $templateRenderer;
+    }
+
     /**
      * Display the contact form
      */
-    public function show(): View
+    public function show(Request $request)
     {
+        // Try to render using template assignment system
+        $templateView = $this->templateRenderer->renderForRequest('pages.kontak', []);
+
+        if ($templateView) {
+            return $templateView;
+        }
+
         return view('pages.kontak');
     }
 

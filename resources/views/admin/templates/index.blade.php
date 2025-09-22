@@ -23,10 +23,17 @@
     <p class="text-gray-600 mt-2">Kelola template dan layout untuk halaman website</p>
 </div>
 
-<div class="bg-white rounded-lg shadow overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+<div class="flex items-center gap-2 mb-4">
+    <form action="{{ route('admin.templates.import') }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+        @csrf
+        <input type="file" name="file" accept="application/json" class="form-input" required>
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Import JSON</button>
+    </form>
+</div>
+
+<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Template
@@ -44,8 +51,8 @@
                         Aksi
                     </th>
                 </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($templates as $template)
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -70,18 +77,14 @@
                         {{ $template->created_at->format('M d, Y') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div class="flex space-x-2">
-                            <a href="{{ route('admin.templates.show', $template) }}"
-                               class="text-blue-600 hover:text-blue-900">View</a>
-                            <a href="{{ route('admin.templates.edit', $template) }}"
-                               class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                                                        <form action="{{ route('admin.templates.destroy', $template) }}"
-                                                                    method="POST" class="inline" data-confirm="template: {{ $template->name }}">
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('admin.templates.show', $template) }}" class="text-blue-600 hover:text-blue-900">View</a>
+                            <a href="{{ route('admin.templates.edit', $template) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                            <a href="{{ route('admin.templates.export', $template) }}" class="text-green-600 hover:text-green-900">Export</a>
+                            <form action="{{ route('admin.templates.destroy', $template) }}" method="POST" class="inline" data-confirm="template: {{ $template->name }}">
                                 @csrf
                                 @method('DELETE')
-                                                                <button type="submit" class="text-red-600 hover:text-red-900">
-                                    Delete
-                                </button>
+                                <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
                             </form>
                         </div>
                     </td>
@@ -106,9 +109,8 @@
                     </td>
                 </tr>
                 @endforelse
-            </tbody>
-        </table>
-    </div>
+        </tbody>
+    </table>
 </div>
 
 <!-- Quick Info Card -->

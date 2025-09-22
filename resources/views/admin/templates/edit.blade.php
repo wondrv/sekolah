@@ -9,8 +9,16 @@
             <h1 class="text-3xl font-bold text-gray-900">Edit Template</h1>
             <p class="text-gray-600 mt-2">Modify template: {{ $template->name }}</p>
         </div>
-        <div class="flex space-x-3">
-            <a href="{{ route('admin.templates.show', $template) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">
+        <div class="flex items-center space-x-3">
+            <form action="{{ route('admin.templates.import_into', $template) }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                @csrf
+                <input type="file" name="file" accept="application/json" class="block text-sm" required>
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition duration-200">Import JSON</button>
+            </form>
+            <a href="{{ route('admin.templates.export', $template) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-download mr-2"></i>Export
+            </a>
+            <a href="{{ route('admin.templates.show', $template) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
                 <i class="fas fa-eye mr-2"></i>Preview
             </a>
             <a href="{{ route('admin.templates.index') }}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200">
@@ -72,12 +80,12 @@
                         <div class="flex items-center justify-between mb-4">
                             <h4 class="text-md font-semibold text-gray-800">{{ $section->name }}</h4>
                             <div class="flex items-center gap-3">
-                                <a href="{{ route('admin.templates.sections.destroy', [$template, $section]) }}" onclick="event.preventDefault(); this.nextElementSibling.submit();" class="text-red-600 hover:text-red-800 hidden">Remove</a>
-                                <form action="{{ route('admin.templates.sections.destroy', [$template, $section]) }}" method="POST" class="inline" data-confirm="hapus section: {{ $section->name }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800 cursor-pointer">Hapus Section</button>
-                                </form>
+                                <button type="button"
+                                        class="text-red-600 hover:text-red-800 cursor-pointer"
+                                        data-delete-url="{{ route('admin.templates.sections.destroy', [$template, $section]) }}"
+                                        data-confirm="hapus section: {{ $section->name }}">
+                                    Hapus Section
+                                </button>
                             </div>
                         </div>
 
@@ -116,11 +124,11 @@
                                             <span class="inline-block text-xs px-2 py-0.5 rounded bg-gray-200 mr-2">#{{ $block->order }}</span>
                                             <span class="font-medium">{{ $block->type }}</span>
                                         </span>
-                                        <form action="{{ route('admin.templates.blocks.destroy', [$template, $block]) }}" method="POST" class="inline" data-confirm="hapus block: {{ $block->type }} (#{{ $block->order }})">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-800 cursor-pointer">Hapus Block</button>
-                                        </form>
+                                        <button type="button" class="text-red-600 hover:text-red-800 cursor-pointer"
+                                                data-delete-url="{{ route('admin.templates.blocks.destroy', [$template, $block]) }}"
+                                                data-confirm="hapus block: {{ $block->type }} (#{{ $block->order }})">
+                                            Hapus Block
+                                        </button>
                                     </li>
                                 @endforeach
                             </ul>
@@ -202,6 +210,34 @@ document.addEventListener('DOMContentLoaded', function() {
             e.target.closest('.section-item').remove();
         }
     });
+});
+ </script>
+<script>
+// Handle delete buttons without nesting forms
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-delete-url]');
+    if (!btn) return;
+    e.preventDefault();
+    const url = btn.getAttribute('data-delete-url');
+    const confirmMsg = btn.getAttribute('data-confirm') || 'Yakin ingin menghapus item ini?';
+    if (!url) return;
+    if (!confirm(confirmMsg)) return;
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = '_token';
+    csrf.value = '{{ csrf_token() }}';
+    form.appendChild(csrf);
+    const method = document.createElement('input');
+    method.type = 'hidden';
+    method.name = '_method';
+    method.value = 'DELETE';
+    form.appendChild(method);
+    document.body.appendChild(form);
+    form.submit();
 });
 </script>
 @endsection

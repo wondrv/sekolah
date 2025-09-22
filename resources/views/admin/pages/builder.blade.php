@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Page Builder - ' . $page->title)
 
@@ -22,8 +22,6 @@ window.pageBuilderData = {
 @endsection
 
 @push('scripts')
-<!-- React and Page Builder -->
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-@vite(['resources/js/page-builder.jsx'])
+<!-- Page Builder bundle (non-Vite) -->
+<script src="/assets/js/page-builder.js" defer></script>
 @endpush

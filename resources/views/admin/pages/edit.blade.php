@@ -13,6 +13,10 @@
                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
                 Lihat Halaman
             </a>
+            <a href="{{ route('admin.pages.builder', $page) }}"
+               class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                Page Builder
+            </a>
             <a href="{{ route('admin.pages.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
                 Kembali
             </a>

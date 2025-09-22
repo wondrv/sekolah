@@ -165,6 +165,10 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         'update' => 'admin.templates.update',
         'destroy' => 'admin.templates.destroy',
     ]);
+    // Template Import/Export (JSON)
+    Route::post('templates/import', [Admin\TemplateController::class, 'import'])->name('admin.templates.import');
+    Route::post('templates/{template}/import', [Admin\TemplateController::class, 'importInto'])->name('admin.templates.import_into');
+    Route::get('templates/{template}/export', [Admin\TemplateController::class, 'export'])->name('admin.templates.export');
     // Per-item deletes within templates
     Route::delete('templates/{template}/sections/{section}', [Admin\TemplateController::class, 'deleteSection'])
         ->name('admin.templates.sections.destroy');
@@ -172,6 +176,21 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         ->name('admin.templates.blocks.destroy');
     Route::post('templates/bootstrap-homepage', [Admin\TemplateController::class, 'bootstrapHomepage'])
         ->name('admin.templates.bootstrap_homepage');
+
+    // Template Assignments
+    Route::resource('template-assignments', Admin\TemplateAssignmentController::class)->names([
+        'index' => 'admin.template-assignments.index',
+        'store' => 'admin.template-assignments.store',
+        'update' => 'admin.template-assignments.update',
+        'destroy' => 'admin.template-assignments.destroy',
+    ])->except(['show', 'create', 'edit']);
+
+    // Theme Management
+    Route::get('theme', [Admin\ThemeController::class, 'index'])->name('admin.theme.index');
+    Route::put('theme', [Admin\ThemeController::class, 'update'])->name('admin.theme.update');
+    Route::post('theme/reset', [Admin\ThemeController::class, 'reset'])->name('admin.theme.reset');
+    Route::get('theme/export', [Admin\ThemeController::class, 'export'])->name('admin.theme.export');
+    Route::post('theme/import', [Admin\ThemeController::class, 'import'])->name('admin.theme.import');
 
     // Menu Management
     Route::resource('menus', Admin\MenuController::class)->names([

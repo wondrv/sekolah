@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use App\Support\Theme;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TemplateController extends Controller
 {
@@ -167,6 +169,160 @@ class TemplateController extends Controller
 
         return redirect()->route('admin.templates.index')
                         ->with('success', 'Template berhasil dihapus.');
+    }
+
+    /**
+     * Export a template (sections + blocks) as JSON
+     */
+    public function export(Template $template): StreamedResponse
+    {
+        $template->load('sections.blocks');
+
+        $payload = [
+            'template' => [
+                'name' => $template->name,
+                'slug' => $template->slug,
+                'description' => $template->description,
+                'active' => (bool) $template->active,
+            ],
+            'sections' => $template->sections->map(function ($s) {
+                return [
+                    'key' => $s->key,
+                    'name' => $s->name,
+                    'order' => (int) $s->order,
+                    'active' => (bool) ($s->is_active ?? $s->active),
+                    'blocks' => $s->blocks->map(function ($b) {
+                        return [
+                            'type' => $b->type,
+                            'order' => (int) $b->order,
+                            'data' => $b->data ?? [],
+                            'active' => (bool) ($b->is_active ?? $b->active ?? true),
+                        ];
+                    })->values()->all(),
+                ];
+            })->values()->all(),
+        ];
+
+        $filename = 'template-'.$template->slug.'-'.date('Ymd_His').'.json';
+
+        return response()->streamDownload(function () use ($payload) {
+            echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        }, $filename, [
+            'Content-Type' => 'application/json',
+        ]);
+    }
+
+    /**
+     * Import a template JSON as a NEW template
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimetypes:application/json,text/plain',
+        ]);
+
+        $data = json_decode(file_get_contents($request->file('file')->getRealPath()), true);
+        if (!is_array($data)) {
+            return back()->with('error', 'File JSON tidak valid.');
+        }
+
+        $tpl = $data['template'] ?? [];
+        $sections = $data['sections'] ?? [];
+        if (empty($tpl) || !is_array($sections)) {
+            return back()->with('error', 'Struktur JSON tidak sesuai.');
+        }
+
+        // Create template with unique slug if needed
+        $baseSlug = Str::slug($tpl['slug'] ?? $tpl['name'] ?? 'template');
+        $slug = $baseSlug;
+        $i = 1;
+        while (\App\Models\Template::where('slug', $slug)->exists()) {
+            $slug = $baseSlug.'-'.(++$i);
+        }
+
+        $template = Template::create([
+            'name' => $tpl['name'] ?? 'Imported Template',
+            'description' => $tpl['description'] ?? null,
+            'slug' => $slug,
+            'active' => (bool) ($tpl['active'] ?? true),
+        ]);
+
+        $this->hydrateSectionsAndBlocks($template, $sections);
+
+        Theme::clearCache();
+
+        return redirect()->route('admin.templates.edit', $template)->with('success', 'Template berhasil diimpor.');
+    }
+
+    /**
+     * Import JSON sections/blocks into an existing template (merge)
+     */
+    public function importInto(Request $request, Template $template): RedirectResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimetypes:application/json,text/plain',
+        ]);
+
+        $data = json_decode(file_get_contents($request->file('file')->getRealPath()), true);
+        if (!is_array($data)) {
+            return back()->with('error', 'File JSON tidak valid.');
+        }
+
+        $sections = $data['sections'] ?? null;
+        if (!is_array($sections)) {
+            return back()->with('error', 'Struktur JSON tidak sesuai: sections tidak ditemukan.');
+        }
+
+        $this->hydrateSectionsAndBlocks($template, $sections, merge: true);
+        Theme::clearCache();
+
+        return redirect()->route('admin.templates.edit', $template)->with('success', 'Template berhasil di‑merge dari JSON.');
+    }
+
+    /**
+     * Helper to create/merge sections & blocks from JSON array
+     */
+    protected function hydrateSectionsAndBlocks(Template $template, array $sections, bool $merge = false): void
+    {
+        foreach ($sections as $s) {
+            $name = $s['name'] ?? 'Section';
+            $order = (int) ($s['order'] ?? 1);
+            $active = isset($s['active']) ? (bool) $s['active'] : true;
+
+            // Generate unique key per template
+            $baseKey = Str::slug($s['key'] ?? $name) ?: 'section';
+            $key = $baseKey;
+            $suffix = 1;
+
+            if ($merge) {
+                // Try to update existing section with same key; if exists, ensure unique by suffixing
+                $existing = Section::where('template_id', $template->id)->where('key', $key)->first();
+                while ($existing) {
+                    $key = $baseKey.'-'.(++$suffix);
+                    $existing = Section::where('template_id', $template->id)->where('key', $key)->first();
+                }
+            } else {
+                while (Section::where('key', $key)->exists()) {
+                    $key = $baseKey.'-'.(++$suffix);
+                }
+            }
+
+            $section = $template->sections()->create([
+                'key' => $key,
+                'name' => $name,
+                'order' => $order,
+                'active' => $active,
+            ]);
+
+            foreach (($s['blocks'] ?? []) as $b) {
+                $section->blocks()->create([
+                    'type' => $b['type'] ?? 'rich_text',
+                    'order' => (int) ($b['order'] ?? 1),
+                    'data' => isset($b['data']) && is_array($b['data']) ? $b['data'] : [],
+                    'active' => isset($b['active']) ? (bool) $b['active'] : true,
+                ]);
+            }
+        }
     }
 
     /**

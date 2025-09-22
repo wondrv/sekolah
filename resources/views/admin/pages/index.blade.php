@@ -87,6 +87,8 @@
                         <div class="flex space-x-2">
                             <a href="{{ route('admin.pages.edit', $page) }}"
                                class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                     <a href="{{ route('admin.pages.builder', $page) }}"
+                                         class="text-blue-600 hover:text-blue-900">Builder</a>
                             <button type="button"
                                     class="text-red-600 hover:text-red-900 js-delete-page"
                                     data-slug="{{ $page->slug }}"

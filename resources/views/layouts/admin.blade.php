@@ -19,7 +19,7 @@
         <div class="w-64 shadow-lg border-r border-gray-800 flex flex-col" style="background-color: #36454F;" x-data="{
                 content: {{ (request()->routeIs('admin.posts.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.events.*') || request()->routeIs('admin.galleries.*')) ? 'true' : 'false' }},
                 school: {{ (request()->routeIs('admin.facilities.*') || request()->routeIs('admin.programs.*') || request()->routeIs('admin.achievements.*') || request()->routeIs('admin.testimonials.*')) ? 'true' : 'false' }},
-                advanced: {{ (request()->routeIs('admin.templates.*') || request()->routeIs('admin.menus.*') || request()->routeIs('admin.settings.*')) ? 'true' : 'false' }},
+                advanced: {{ (request()->routeIs('admin.templates.*') || request()->routeIs('admin.template-assignments.*') || request()->routeIs('admin.theme.*') || request()->routeIs('admin.menus.*') || request()->routeIs('admin.settings.*')) ? 'true' : 'false' }},
                 communication: {{ (request()->routeIs('admin.messages.*')) ? 'true' : 'false' }}
             }">
             <!-- Sidebar Header -->
@@ -117,6 +117,14 @@
                         <a href="{{ route('admin.templates.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.*') ? 'bg-blue-600 text-white' : '' }}">
                             <span class="mr-2">🎨</span>
                             Template Builder
+                        </a>
+                        <a href="{{ route('admin.template-assignments.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.template-assignments.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🔗</span>
+                            Template Assignments
+                        </a>
+                        <a href="{{ route('admin.theme.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.theme.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🎭</span>
+                            Theme Settings
                         </a>
                         <a href="{{ route('admin.menus.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.menus.*') ? 'bg-blue-600 text-white' : '' }}">
                             <span class="mr-2">🧭</span>
@@ -377,5 +385,6 @@
             });
         })();
     </script>
+    @stack('scripts')
 </body>
 </html>

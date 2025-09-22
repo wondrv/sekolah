@@ -39,16 +39,15 @@ const SortableBlockItem: React.FC<{
         isDragging,
     } = useSortable({ id: block.id });
 
-    const styleVars = {
-        '--dnd-transform': CSS.Transform.toString(transform),
-        '--dnd-transition': transition,
-        '--dnd-opacity': isDragging ? 0.5 : 1,
-    } as React.CSSProperties;
-
     return (
         <div
             ref={setNodeRef}
-            className={`group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow dnd-transform`}
+            className={`group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow`}
+            style={{
+                transform: CSS.Transform.toString(transform),
+                transition: transition,
+                opacity: isDragging ? 0.5 : 1,
+            }}
         >
             {/* Drag Handle */}
             <div
@@ -123,7 +122,9 @@ const BlockSettingsModal: React.FC<{
     };
 
     const renderField = (key: string, fieldConfig: any) => {
-        const value = settings[key] || '';
+        // Preserve boolean false with nullish coalescing; default empty string for text-like fields
+        const rawValue = settings[key];
+        const value = rawValue ?? (fieldConfig.type === 'checkbox' ? false : '');
         const fieldId = `block-${block?.id || 'new'}-${key}`;
 
         switch (fieldConfig.type) {
@@ -160,12 +161,23 @@ const BlockSettingsModal: React.FC<{
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         title={fieldConfig.label || key}
                     >
-                        <option value="">Select an option</option>
-                        {fieldConfig.options?.map((option: any) => (
-                            <option key={option} value={option}>
-                                {option}
-                            </option>
-                        ))}
+                        <option value="" disabled={!!fieldConfig.required}>
+                            {fieldConfig.placeholder || 'Select an option'}
+                        </option>
+                        {fieldConfig.options?.map((option: any, idx: number) => {
+                            const isObject = option && typeof option === 'object';
+                            const optValue = isObject
+                                ? (option.value ?? option.id ?? option.key ?? '')
+                                : option;
+                            const optLabel = isObject
+                                ? (option.label ?? option.name ?? String(optValue))
+                                : option;
+                            return (
+                                <option key={String(optValue) || idx} value={optValue}>
+                                    {optLabel}
+                                </option>
+                            );
+                        })}
                     </select>
                 );
 
@@ -174,7 +186,7 @@ const BlockSettingsModal: React.FC<{
                     <input
                         type="checkbox"
                         id={fieldId}
-                        checked={value}
+                        checked={Boolean(value)}
                         onChange={(e) => setSettings({ ...settings, [key]: e.target.checked })}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         aria-label={fieldConfig.label || key}
@@ -358,6 +370,45 @@ const PageBuilder: React.FC<PageBuilderProps> = ({
         onSave(blocks);
     };
 
+    // Import/Export helpers
+    const exportBlocks = () => {
+        const blob = new Blob([JSON.stringify(blocks, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `page-blocks-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    };
+
+    const importBlocks = async () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = async () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                if (!Array.isArray(data)) throw new Error('Invalid format');
+                // Ensure blocks have ids; regenerate missing ones
+                const normalized = data.map((b: any) => ({
+                    id: b.id || `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    type: b.type,
+                    settings: b.settings || {},
+                }));
+                setBlocks(normalized);
+            } catch (e) {
+                console.error('Import failed', e);
+                alert('Gagal mengimpor JSON. Pastikan format benar.');
+            }
+        };
+        input.click();
+    };
+
     return (
         <div className="h-screen flex bg-gray-100">
             {/* Sidebar */}
@@ -407,6 +458,22 @@ const PageBuilder: React.FC<PageBuilderProps> = ({
                 <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
                     <h1 className="text-xl font-semibold text-gray-900">Page Builder</h1>
                     <div className="flex items-center space-x-4">
+                        <button
+                            onClick={exportBlocks}
+                            className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors"
+                            title="Export blocks as JSON"
+                        >
+                            <i className="fas fa-file-export mr-2"></i>
+                            Export
+                        </button>
+                        <button
+                            onClick={importBlocks}
+                            className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors"
+                            title="Import blocks from JSON"
+                        >
+                            <i className="fas fa-file-import mr-2"></i>
+                            Import
+                        </button>
                         <button
                             onClick={handleSave}
                             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

@@ -3,10 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Services\TemplateRenderService;
 use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
+    protected $templateRenderer;
+
+    public function __construct(TemplateRenderService $templateRenderer)
+    {
+        $this->templateRenderer = $templateRenderer;
+    }
+
     /**
      * Display a listing of events
      */
@@ -31,14 +39,28 @@ class EventController extends Controller
 
         $events = $query->orderBy('starts_at', 'asc')->paginate(20);
 
+        // Try to render using template assignment system
+        $templateView = $this->templateRenderer->renderForRequest('events.index', compact('events'));
+
+        if ($templateView) {
+            return $templateView;
+        }
+
         return view('events.index', compact('events'));
     }
 
     /**
      * Display the specified event
      */
-    public function show(Event $event)
+    public function show(Request $request, Event $event)
     {
+        // Try to render using template assignment system
+        $templateView = $this->templateRenderer->renderForRequest('events.show', compact('event'));
+
+        if ($templateView) {
+            return $templateView;
+        }
+
         return view('events.show', compact('event'));
     }
 
