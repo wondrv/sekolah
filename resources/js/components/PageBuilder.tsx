@@ -42,42 +42,53 @@ const SortableBlockItem: React.FC<{
     return (
         <div
             ref={setNodeRef}
-            className={`group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow`}
+            className={`group relative bg-white border-2 rounded-lg p-4 transition-all duration-200 ${
+                isDragging 
+                    ? 'border-blue-400 shadow-lg bg-blue-50 opacity-75 transform rotate-2' 
+                    : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+            }`}
             style={{
                 transform: CSS.Transform.toString(transform),
                 transition: transition,
-                opacity: isDragging ? 0.5 : 1,
             }}
         >
             {/* Drag Handle */}
             <div
                 {...attributes}
                 {...listeners}
-                className="absolute top-2 left-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+                className="absolute top-2 left-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                title="Drag to reorder"
             >
-                <i className="fas fa-grip-vertical"></i>
+                <i className="fas fa-grip-vertical text-sm"></i>
             </div>
 
             {/* Block Content */}
-            <div className="ml-6">
+            <div className="ml-8">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                         <i className={`${config.icon} text-blue-500`}></i>
                         <span className="font-medium text-gray-900">{config.name}</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            {config.category}
+                        </span>
                     </div>
                     
-                    <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             onClick={() => onEdit(block)}
-                            className="text-blue-600 hover:text-blue-800 text-sm"
-                            title="Edit block"
+                            className="text-blue-600 hover:text-blue-800 text-sm p-2 rounded hover:bg-blue-50 transition-colors"
+                            title="Edit block settings"
                         >
                             <i className="fas fa-edit"></i>
                         </button>
                         <button
-                            onClick={() => onDelete(block.id)}
-                            className="text-red-600 hover:text-red-800 text-sm"
-                            title="Delete block"
+                            onClick={() => {
+                                if (confirm('Are you sure you want to remove this block?')) {
+                                    onDelete(block.id);
+                                }
+                            }}
+                            className="text-red-600 hover:text-red-800 text-sm p-2 rounded hover:bg-red-50 transition-colors"
+                            title="Remove block"
                         >
                             <i className="fas fa-trash"></i>
                         </button>
@@ -87,10 +98,18 @@ const SortableBlockItem: React.FC<{
                 {/* Block Preview */}
                 <div className="text-sm text-gray-600">
                     {block.settings.title && (
-                        <div>Title: {block.settings.title}</div>
+                        <div className="font-medium">Title: {block.settings.title}</div>
+                    )}
+                    {block.settings.subtitle && (
+                        <div>Subtitle: {block.settings.subtitle}</div>
                     )}
                     {Object.keys(block.settings).length === 0 && (
-                        <div className="text-gray-400 italic">No settings configured</div>
+                        <div className="text-gray-400 italic">Click edit to configure settings</div>
+                    )}
+                    {Object.keys(block.settings).length > 0 && (
+                        <div className="text-xs text-gray-400 mt-1">
+                            {Object.keys(block.settings).length} setting(s) configured
+                        </div>
                     )}
                 </div>
             </div>
@@ -113,6 +132,25 @@ const BlockSettingsModal: React.FC<{
             setSettings(block.settings || {});
         }
     }, [block]);
+
+    // Add keyboard escape handler and body scroll lock
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isOpen) {
+                onClose();
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('keydown', handleEscape);
+            document.body.style.overflow = 'hidden'; // Prevent body scroll
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = 'unset'; // Restore body scroll
+        };
+    }, [isOpen, onClose]);
 
     if (!isOpen || !block || !config) return null;
 
@@ -147,7 +185,8 @@ const BlockSettingsModal: React.FC<{
                         value={value}
                         onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
                         id={fieldId}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[100px]"
                         placeholder={fieldConfig.placeholder || ''}
                     />
                 );
@@ -241,52 +280,77 @@ const BlockSettingsModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
+        <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-2 overflow-y-auto"
+            onClick={(e) => {
+                // Close modal when clicking on backdrop
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}
+        >
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl my-4 flex flex-col max-h-[95vh]">
+                <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0 sticky top-0 bg-white rounded-t-lg z-10">
                     <div className="flex items-center justify-between">
                         <h3 className="text-lg font-medium text-gray-900">
-                            Block Settings
+                            Block Settings - {config?.name}
                         </h3>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600"
-                            title="Close modal"
+                            className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            title="Close modal (ESC)"
                         >
-                            <i className="fas fa-times"></i>
+                            <i className="fas fa-times text-lg"></i>
                         </button>
                     </div>
                 </div>
 
-                <div className="px-6 py-4 overflow-y-auto max-h-[60vh]">
+                <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 min-h-0">
                     <div className="space-y-6">
                         {Object.entries(config.settings || {}).map(([key, fieldConfig]) => {
                             const fieldId = `block-${block?.id || 'new'}-${key}`;
                             return (
-                                <div key={key}>
-                                    <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700 mb-2">
+                                <div key={key} className="space-y-2">
+                                    <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
                                         {fieldConfig.label || key}
+                                        {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
                                     </label>
+                                    {fieldConfig.description && (
+                                        <p className="text-xs text-gray-500">{fieldConfig.description}</p>
+                                    )}
                                     {renderField(key, fieldConfig)}
                                 </div>
                             );
                         })}
+                        
+                        {Object.keys(config.settings || {}).length === 0 && (
+                            <div className="text-center py-8 text-gray-500">
+                                <i className="fas fa-cog text-3xl mb-2"></i>
+                                <p>This block has no configurable settings.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-                    >
-                        Save Changes
-                    </button>
+                <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex justify-between items-center flex-shrink-0 bg-gray-50 rounded-b-lg sticky bottom-0">
+                    <div className="text-sm text-gray-500">
+                        Block ID: {block?.id}
+                    </div>
+                    <div className="flex space-x-3">
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                            <i className="fas fa-save mr-2"></i>
+                            Save Changes
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -503,25 +567,40 @@ const PageBuilder: React.FC<PageBuilderProps> = ({
                             <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                                 <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                                     <div className="space-y-4">
-                                        {blocks.map((block) => (
-                                            <SortableBlockItem
-                                                key={block.id}
-                                                block={block}
-                                                config={availableBlocks[block.type]}
-                                                onEdit={setEditingBlock}
-                                                onDelete={deleteBlock}
-                                            />
+                                        {activeId && (
+                                            <div className="h-2 bg-blue-200 rounded-full opacity-50 animate-pulse border-2 border-dashed border-blue-400">
+                                                <div className="text-center text-xs text-blue-600 mt-1">Drop zone</div>
+                                            </div>
+                                        )}
+                                        {blocks.map((block, index) => (
+                                            <div key={block.id}>
+                                                <SortableBlockItem
+                                                    block={block}
+                                                    config={availableBlocks[block.type]}
+                                                    onEdit={setEditingBlock}
+                                                    onDelete={deleteBlock}
+                                                />
+                                                {activeId && index === blocks.length - 1 && (
+                                                    <div className="h-2 bg-blue-200 rounded-full opacity-50 animate-pulse border-2 border-dashed border-blue-400 mt-4">
+                                                        <div className="text-center text-xs text-blue-600 mt-1">Drop zone</div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
                                     </div>
                                 </SortableContext>
                                 
                                 <DragOverlay>
                                     {activeId ? (
-                                        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-lg opacity-75">
-                                            <div className="flex items-center space-x-2">
-                                                <i className="fas fa-grip-vertical text-gray-400"></i>
-                                                <span className="font-medium">
+                                        <div className="bg-white border-2 border-blue-400 rounded-lg p-4 shadow-2xl opacity-90 transform rotate-3 scale-105">
+                                            <div className="flex items-center space-x-3">
+                                                <i className="fas fa-grip-vertical text-blue-400"></i>
+                                                <i className={`${availableBlocks[blocks.find(b => b.id === activeId)?.type || '']?.icon} text-blue-500`}></i>
+                                                <span className="font-medium text-gray-900">
                                                     {availableBlocks[blocks.find(b => b.id === activeId)?.type || '']?.name}
+                                                </span>
+                                                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                                                    Dragging...
                                                 </span>
                                             </div>
                                         </div>

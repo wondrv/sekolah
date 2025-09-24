@@ -27,8 +27,8 @@ Route::get('/tentang-kami/{slug?}', function ($slug = null) {
     if ($slug) {
         return redirect('/' . $slug, 301);
     }
-    // For /tentang-kami without slug, use PageController to show the tentang-kami page
-    return app(\App\Http\Controllers\PageController::class)->showSingle('tentang-kami');
+    // For /tentang-kami without slug, redirect to the clean URL
+    return redirect('/tentang-kami', 301);
 })->name('pages.show');
 // Backward compatibility for old URLs
 Route::get('/profil/{slug?}', function ($slug = null) {
@@ -80,14 +80,18 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 
 // Specific named routes for important pages (before universal route)
-Route::get('/ppdb', function() {
-    return app(\App\Http\Controllers\PageController::class)->showSingle('ppdb');
-})->name('ppdb');
+Route::get('/tentang-kami', [PageController::class, 'showSingle'])->defaults('slug', 'tentang-kami')->name('tentang-kami');
+Route::get('/ppdb', [PageController::class, 'showSingle'])->defaults('slug', 'ppdb')->name('ppdb');
+
+// Backward compatibility route with tentang-kami prefix - redirects to clean URLs
+Route::get('/tentang-kami/{slug}', function ($slug) {
+    return redirect('/' . $slug, 301);
+});
 
 // Universal single page route - MUST be last to avoid conflicts with other routes
 // This allows ANY page to be accessed directly by slug without prefix
 Route::get('/{slug}', [PageController::class, 'showSingle'])
     ->where('slug', '[a-zA-Z0-9\-_]+')
-    ->name('pages.single');
+    ->name('pages.show');
 
 require __DIR__.'/auth.php';

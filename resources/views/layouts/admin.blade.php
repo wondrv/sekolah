@@ -384,6 +384,81 @@
                 openModal(url, text);
             });
         })();
+
+        // Emergency Modal Escape System
+        // This provides a failsafe to close any stuck modal
+        (() => {
+            let escapeKeyCount = 0;
+            let lastEscapeTime = 0;
+
+            // Triple ESC key to force close any modal
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const now = Date.now();
+                    
+                    if (now - lastEscapeTime < 1000) {
+                        escapeKeyCount++;
+                    } else {
+                        escapeKeyCount = 1;
+                    }
+                    
+                    lastEscapeTime = now;
+
+                    // If user presses ESC 3 times within 3 seconds, force close all modals
+                    if (escapeKeyCount >= 3) {
+                        console.log('Emergency modal escape triggered');
+                        
+                        // Close all modals with common patterns
+                        const modals = document.querySelectorAll(
+                            '.fixed.inset-0, [class*="modal"], [id*="modal"], [class*="overlay"], .z-50'
+                        );
+                        
+                        modals.forEach(modal => {
+                            if (modal.style.display !== 'none' && !modal.classList.contains('hidden')) {
+                                modal.style.display = 'none';
+                                modal.classList.add('hidden');
+                            }
+                        });
+
+                        // Restore body scroll
+                        document.body.style.overflow = 'unset';
+                        
+                        // Clear any React modal states by dispatching close events
+                        window.dispatchEvent(new CustomEvent('forceCloseAllModals'));
+                        
+                        escapeKeyCount = 0;
+                        
+                        // Show notification
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('All modals have been closed', 'info');
+                        } else {
+                            alert('Emergency escape: All modals have been closed');
+                        }
+                    }
+                }
+            });
+
+            // Ctrl+Alt+X to force close all modals
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.altKey && e.key === 'x') {
+                    e.preventDefault();
+                    console.log('Emergency hotkey triggered');
+                    
+                    // Force close everything
+                    const allOverlays = document.querySelectorAll(
+                        '.fixed, [style*="position: fixed"], [class*="modal"], [class*="overlay"], .z-50, .z-40'
+                    );
+                    
+                    allOverlays.forEach(el => {
+                        el.style.display = 'none';
+                        el.classList.add('hidden');
+                    });
+                    
+                    document.body.style.overflow = 'unset';
+                    window.location.href = '/admin/dashboard'; // Navigate back to safety
+                }
+            });
+        })();
     </script>
     @stack('scripts')
 </body>

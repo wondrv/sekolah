@@ -23433,43 +23433,47 @@
       transition,
       isDragging
     } = useSortable({ id: block.id });
-    const styleVars = {
-      "--dnd-transform": CSS.Transform.toString(transform),
-      "--dnd-transition": transition,
-      "--dnd-opacity": isDragging ? 0.5 : 1
-    };
     return /* @__PURE__ */ import_react5.default.createElement(
       "div",
       {
         ref: setNodeRef,
-        className: `group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow dnd-transform`
+        className: `group relative bg-white border-2 rounded-lg p-4 transition-all duration-200 ${isDragging ? "border-blue-400 shadow-lg bg-blue-50 opacity-75 transform rotate-2" : "border-gray-200 hover:border-blue-300 hover:shadow-md"}`,
+        style: {
+          transform: CSS.Transform.toString(transform),
+          transition
+        }
       },
       /* @__PURE__ */ import_react5.default.createElement(
         "div",
         {
           ...attributes,
           ...listeners,
-          className: "absolute top-2 left-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+          className: "absolute top-2 left-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100",
+          title: "Drag to reorder"
         },
-        /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-grip-vertical" })
+        /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-grip-vertical text-sm" })
       ),
-      /* @__PURE__ */ import_react5.default.createElement("div", { className: "ml-6" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center justify-between mb-2" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center space-x-2" }, /* @__PURE__ */ import_react5.default.createElement("i", { className: `${config.icon} text-blue-500` }), /* @__PURE__ */ import_react5.default.createElement("span", { className: "font-medium text-gray-900" }, config.name)), /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity" }, /* @__PURE__ */ import_react5.default.createElement(
+      /* @__PURE__ */ import_react5.default.createElement("div", { className: "ml-8" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center justify-between mb-2" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center space-x-2" }, /* @__PURE__ */ import_react5.default.createElement("i", { className: `${config.icon} text-blue-500` }), /* @__PURE__ */ import_react5.default.createElement("span", { className: "font-medium text-gray-900" }, config.name), /* @__PURE__ */ import_react5.default.createElement("span", { className: "text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded" }, config.category)), /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity" }, /* @__PURE__ */ import_react5.default.createElement(
         "button",
         {
           onClick: () => onEdit(block),
-          className: "text-blue-600 hover:text-blue-800 text-sm",
-          title: "Edit block"
+          className: "text-blue-600 hover:text-blue-800 text-sm p-2 rounded hover:bg-blue-50 transition-colors",
+          title: "Edit block settings"
         },
         /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-edit" })
       ), /* @__PURE__ */ import_react5.default.createElement(
         "button",
         {
-          onClick: () => onDelete(block.id),
-          className: "text-red-600 hover:text-red-800 text-sm",
-          title: "Delete block"
+          onClick: () => {
+            if (confirm("Are you sure you want to remove this block?")) {
+              onDelete(block.id);
+            }
+          },
+          className: "text-red-600 hover:text-red-800 text-sm p-2 rounded hover:bg-red-50 transition-colors",
+          title: "Remove block"
         },
         /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-trash" })
-      ))), /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-sm text-gray-600" }, block.settings.title && /* @__PURE__ */ import_react5.default.createElement("div", null, "Title: ", block.settings.title), Object.keys(block.settings).length === 0 && /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-gray-400 italic" }, "No settings configured")))
+      ))), /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-sm text-gray-600" }, block.settings.title && /* @__PURE__ */ import_react5.default.createElement("div", { className: "font-medium" }, "Title: ", block.settings.title), block.settings.subtitle && /* @__PURE__ */ import_react5.default.createElement("div", null, "Subtitle: ", block.settings.subtitle), Object.keys(block.settings).length === 0 && /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-gray-400 italic" }, "Click edit to configure settings"), Object.keys(block.settings).length > 0 && /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-xs text-gray-400 mt-1" }, Object.keys(block.settings).length, " setting(s) configured")))
     );
   };
   var BlockSettingsModal = ({ block, config, isOpen, onClose, onSave }) => {
@@ -23479,6 +23483,21 @@
         setSettings(block.settings || {});
       }
     }, [block]);
+    (0, import_react5.useEffect)(() => {
+      const handleEscape = (e) => {
+        if (e.key === "Escape" && isOpen) {
+          onClose();
+        }
+      };
+      if (isOpen) {
+        document.addEventListener("keydown", handleEscape);
+        document.body.style.overflow = "hidden";
+      }
+      return () => {
+        document.removeEventListener("keydown", handleEscape);
+        document.body.style.overflow = "unset";
+      };
+    }, [isOpen, onClose]);
     if (!isOpen || !block || !config) return null;
     const handleSave = () => {
       onSave(settings);
@@ -23486,7 +23505,8 @@
     };
     const renderField = (key2, fieldConfig) => {
       var _a;
-      const value = settings[key2] || "";
+      const rawValue = settings[key2];
+      const value = rawValue != null ? rawValue : fieldConfig.type === "checkbox" ? false : "";
       const fieldId = `block-${(block == null ? void 0 : block.id) || "new"}-${key2}`;
       switch (fieldConfig.type) {
         case "text":
@@ -23509,7 +23529,8 @@
               value,
               onChange: (e) => setSettings({ ...settings, [key2]: e.target.value }),
               id: fieldId,
-              className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+              rows: 4,
+              className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[100px]",
               placeholder: fieldConfig.placeholder || ""
             }
           );
@@ -23523,8 +23544,14 @@
               className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500",
               title: fieldConfig.label || key2
             },
-            /* @__PURE__ */ import_react5.default.createElement("option", { value: "" }, "Select an option"),
-            (_a = fieldConfig.options) == null ? void 0 : _a.map((option) => /* @__PURE__ */ import_react5.default.createElement("option", { key: option, value: option }, option))
+            /* @__PURE__ */ import_react5.default.createElement("option", { value: "", disabled: !!fieldConfig.required }, fieldConfig.placeholder || "Select an option"),
+            (_a = fieldConfig.options) == null ? void 0 : _a.map((option, idx) => {
+              var _a2, _b, _c, _d, _e;
+              const isObject = option && typeof option === "object";
+              const optValue = isObject ? (_c = (_b = (_a2 = option.value) != null ? _a2 : option.id) != null ? _b : option.key) != null ? _c : "" : option;
+              const optLabel = isObject ? (_e = (_d = option.label) != null ? _d : option.name) != null ? _e : String(optValue) : option;
+              return /* @__PURE__ */ import_react5.default.createElement("option", { key: String(optValue) || idx, value: optValue }, optLabel);
+            })
           );
         case "checkbox":
           return /* @__PURE__ */ import_react5.default.createElement(
@@ -23532,7 +23559,7 @@
             {
               type: "checkbox",
               id: fieldId,
-              checked: value,
+              checked: Boolean(value),
               onChange: (e) => setSettings({ ...settings, [key2]: e.target.checked }),
               className: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded",
               "aria-label": fieldConfig.label || key2
@@ -23584,39 +23611,51 @@
           );
       }
     };
-    return /* @__PURE__ */ import_react5.default.createElement("div", { className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "px-6 py-4 border-b border-gray-200" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center justify-between" }, /* @__PURE__ */ import_react5.default.createElement("h3", { className: "text-lg font-medium text-gray-900" }, "Block Settings"), /* @__PURE__ */ import_react5.default.createElement(
-      "button",
+    return /* @__PURE__ */ import_react5.default.createElement(
+      "div",
       {
-        onClick: onClose,
-        className: "text-gray-400 hover:text-gray-600",
-        title: "Close modal"
+        className: "fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-2 overflow-y-auto",
+        onClick: (e) => {
+          if (e.target === e.currentTarget) {
+            onClose();
+          }
+        }
       },
-      /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-times" })
-    ))), /* @__PURE__ */ import_react5.default.createElement("div", { className: "px-6 py-4 overflow-y-auto max-h-[60vh]" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "space-y-6" }, Object.entries(config.settings || {}).map(([key2, fieldConfig]) => {
-      const fieldId = `block-${(block == null ? void 0 : block.id) || "new"}-${key2}`;
-      return /* @__PURE__ */ import_react5.default.createElement("div", { key: key2 }, /* @__PURE__ */ import_react5.default.createElement("label", { htmlFor: fieldId, className: "block text-sm font-medium text-gray-700 mb-2" }, fieldConfig.label || key2), renderField(key2, fieldConfig));
-    }))), /* @__PURE__ */ import_react5.default.createElement("div", { className: "px-6 py-4 border-t border-gray-200 flex justify-end space-x-3" }, /* @__PURE__ */ import_react5.default.createElement(
-      "button",
-      {
-        onClick: onClose,
-        className: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-      },
-      "Cancel"
-    ), /* @__PURE__ */ import_react5.default.createElement(
-      "button",
-      {
-        onClick: handleSave,
-        className: "px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-      },
-      "Save Changes"
-    ))));
+      /* @__PURE__ */ import_react5.default.createElement("div", { className: "bg-white rounded-lg shadow-xl w-full max-w-2xl my-4 flex flex-col max-h-[95vh]" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0 sticky top-0 bg-white rounded-t-lg z-10" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center justify-between" }, /* @__PURE__ */ import_react5.default.createElement("h3", { className: "text-lg font-medium text-gray-900" }, "Block Settings - ", config == null ? void 0 : config.name), /* @__PURE__ */ import_react5.default.createElement(
+        "button",
+        {
+          onClick: onClose,
+          className: "text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors",
+          title: "Close modal (ESC)"
+        },
+        /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-times text-lg" })
+      ))), /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex-1 overflow-y-auto px-4 sm:px-6 py-4 min-h-0" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "space-y-6" }, Object.entries(config.settings || {}).map(([key2, fieldConfig]) => {
+        const fieldId = `block-${(block == null ? void 0 : block.id) || "new"}-${key2}`;
+        return /* @__PURE__ */ import_react5.default.createElement("div", { key: key2, className: "space-y-2" }, /* @__PURE__ */ import_react5.default.createElement("label", { htmlFor: fieldId, className: "block text-sm font-medium text-gray-700" }, fieldConfig.label || key2, fieldConfig.required && /* @__PURE__ */ import_react5.default.createElement("span", { className: "text-red-500 ml-1" }, "*")), fieldConfig.description && /* @__PURE__ */ import_react5.default.createElement("p", { className: "text-xs text-gray-500" }, fieldConfig.description), renderField(key2, fieldConfig));
+      }), Object.keys(config.settings || {}).length === 0 && /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-center py-8 text-gray-500" }, /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-cog text-3xl mb-2" }), /* @__PURE__ */ import_react5.default.createElement("p", null, "This block has no configurable settings.")))), /* @__PURE__ */ import_react5.default.createElement("div", { className: "px-4 sm:px-6 py-4 border-t border-gray-200 flex justify-between items-center flex-shrink-0 bg-gray-50 rounded-b-lg sticky bottom-0" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-sm text-gray-500" }, "Block ID: ", block == null ? void 0 : block.id), /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex space-x-3" }, /* @__PURE__ */ import_react5.default.createElement(
+        "button",
+        {
+          onClick: onClose,
+          className: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        },
+        "Cancel"
+      ), /* @__PURE__ */ import_react5.default.createElement(
+        "button",
+        {
+          onClick: handleSave,
+          className: "px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 transition-colors"
+        },
+        /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-save mr-2" }),
+        "Save Changes"
+      ))))
+    );
   };
   var PageBuilder = ({
     initialBlocks = [],
     availableBlocks,
     onSave
   }) => {
-    var _a, _b;
+    var _a, _b, _c, _d;
     const [blocks, setBlocks] = (0, import_react5.useState)(initialBlocks);
     const [activeId, setActiveId] = (0, import_react5.useState)(null);
     const [editingBlock, setEditingBlock] = (0, import_react5.useState)(null);
@@ -23747,16 +23786,15 @@
       },
       /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-save mr-2" }),
       "Save Page"
-    ))), /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex-1 overflow-y-auto p-6" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "max-w-4xl mx-auto" }, blocks.length === 0 ? /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-gray-400 text-6xl mb-4" }, /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-plus-circle" })), /* @__PURE__ */ import_react5.default.createElement("h3", { className: "text-lg font-medium text-gray-900 mb-2" }, "No blocks added yet"), /* @__PURE__ */ import_react5.default.createElement("p", { className: "text-gray-500" }, "Select a block from the sidebar to get started")) : /* @__PURE__ */ import_react5.default.createElement(DndContext, { onDragStart: handleDragStart, onDragEnd: handleDragEnd }, /* @__PURE__ */ import_react5.default.createElement(SortableContext, { items: blocks.map((b) => b.id), strategy: verticalListSortingStrategy }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "space-y-4" }, blocks.map((block) => /* @__PURE__ */ import_react5.default.createElement(
+    ))), /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex-1 overflow-y-auto p-6" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "max-w-4xl mx-auto" }, blocks.length === 0 ? /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-gray-400 text-6xl mb-4" }, /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-plus-circle" })), /* @__PURE__ */ import_react5.default.createElement("h3", { className: "text-lg font-medium text-gray-900 mb-2" }, "No blocks added yet"), /* @__PURE__ */ import_react5.default.createElement("p", { className: "text-gray-500" }, "Select a block from the sidebar to get started")) : /* @__PURE__ */ import_react5.default.createElement(DndContext, { onDragStart: handleDragStart, onDragEnd: handleDragEnd }, /* @__PURE__ */ import_react5.default.createElement(SortableContext, { items: blocks.map((b) => b.id), strategy: verticalListSortingStrategy }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "space-y-4" }, activeId && /* @__PURE__ */ import_react5.default.createElement("div", { className: "h-2 bg-blue-200 rounded-full opacity-50 animate-pulse border-2 border-dashed border-blue-400" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-center text-xs text-blue-600 mt-1" }, "Drop zone")), blocks.map((block, index) => /* @__PURE__ */ import_react5.default.createElement("div", { key: block.id }, /* @__PURE__ */ import_react5.default.createElement(
       SortableBlockItem,
       {
-        key: block.id,
         block,
         config: availableBlocks[block.type],
         onEdit: setEditingBlock,
         onDelete: deleteBlock
       }
-    )))), /* @__PURE__ */ import_react5.default.createElement(DragOverlay, null, activeId ? /* @__PURE__ */ import_react5.default.createElement("div", { className: "bg-white border border-gray-200 rounded-lg p-4 shadow-lg opacity-75" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center space-x-2" }, /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-grip-vertical text-gray-400" }), /* @__PURE__ */ import_react5.default.createElement("span", { className: "font-medium" }, (_b = availableBlocks[((_a = blocks.find((b) => b.id === activeId)) == null ? void 0 : _a.type) || ""]) == null ? void 0 : _b.name))) : null))))), /* @__PURE__ */ import_react5.default.createElement(
+    ), activeId && index === blocks.length - 1 && /* @__PURE__ */ import_react5.default.createElement("div", { className: "h-2 bg-blue-200 rounded-full opacity-50 animate-pulse border-2 border-dashed border-blue-400 mt-4" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "text-center text-xs text-blue-600 mt-1" }, "Drop zone")))))), /* @__PURE__ */ import_react5.default.createElement(DragOverlay, null, activeId ? /* @__PURE__ */ import_react5.default.createElement("div", { className: "bg-white border-2 border-blue-400 rounded-lg p-4 shadow-2xl opacity-90 transform rotate-3 scale-105" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "flex items-center space-x-3" }, /* @__PURE__ */ import_react5.default.createElement("i", { className: "fas fa-grip-vertical text-blue-400" }), /* @__PURE__ */ import_react5.default.createElement("i", { className: `${(_b = availableBlocks[((_a = blocks.find((b) => b.id === activeId)) == null ? void 0 : _a.type) || ""]) == null ? void 0 : _b.icon} text-blue-500` }), /* @__PURE__ */ import_react5.default.createElement("span", { className: "font-medium text-gray-900" }, (_d = availableBlocks[((_c = blocks.find((b) => b.id === activeId)) == null ? void 0 : _c.type) || ""]) == null ? void 0 : _d.name), /* @__PURE__ */ import_react5.default.createElement("span", { className: "text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded" }, "Dragging..."))) : null))))), /* @__PURE__ */ import_react5.default.createElement(
       BlockSettingsModal,
       {
         block: editingBlock,
