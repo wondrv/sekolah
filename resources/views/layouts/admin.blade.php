@@ -101,6 +101,38 @@
                     </div>
                 </div>
 
+                <!-- Template System Dropdown -->
+                <div class="space-y-1" x-data="{ templates: {{ (request()->routeIs('templates.*')) ? 'true' : 'false' }} }">
+                    <button @click="templates = !templates"
+                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
+                        <div class="flex items-center">
+                            <span class="mr-3">🎨</span>
+                            Template System
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="templates ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div x-show="templates" x-transition class="ml-6 space-y-1">
+                        <a href="{{ route('templates.gallery.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('templates.gallery.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🎨</span>
+                            Template Gallery
+                        </a>
+                        <a href="{{ route('templates.my-templates') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('templates.my-templates*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">📱</span>
+                            My Templates
+                        </a>
+                        <a href="{{ route('templates.builder.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('templates.builder.*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🔧</span>
+                            Template Builder
+                        </a>
+                        <a href="{{ route('templates.exports') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('templates.exports*') ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">📦</span>
+                            Export/Import
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Advanced Features Dropdown -->
                 <div class="space-y-1">
                     <button @click="advanced = !advanced"
@@ -115,8 +147,8 @@
                     </button>
                     <div x-show="advanced" x-transition class="ml-6 space-y-1">
                         <a href="{{ route('admin.templates.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🎨</span>
-                            Template Builder
+                            <span class="mr-2">�️</span>
+                            Legacy Templates
                         </a>
                         <a href="{{ route('admin.template-assignments.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.template-assignments.*') ? 'bg-blue-600 text-white' : '' }}">
                             <span class="mr-2">🔗</span>
@@ -395,24 +427,24 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     const now = Date.now();
-                    
+
                     if (now - lastEscapeTime < 1000) {
                         escapeKeyCount++;
                     } else {
                         escapeKeyCount = 1;
                     }
-                    
+
                     lastEscapeTime = now;
 
                     // If user presses ESC 3 times within 3 seconds, force close all modals
                     if (escapeKeyCount >= 3) {
                         console.log('Emergency modal escape triggered');
-                        
+
                         // Close all modals with common patterns
                         const modals = document.querySelectorAll(
                             '.fixed.inset-0, [class*="modal"], [id*="modal"], [class*="overlay"], .z-50'
                         );
-                        
+
                         modals.forEach(modal => {
                             if (modal.style.display !== 'none' && !modal.classList.contains('hidden')) {
                                 modal.style.display = 'none';
@@ -422,12 +454,12 @@
 
                         // Restore body scroll
                         document.body.style.overflow = 'unset';
-                        
+
                         // Clear any React modal states by dispatching close events
                         window.dispatchEvent(new CustomEvent('forceCloseAllModals'));
-                        
+
                         escapeKeyCount = 0;
-                        
+
                         // Show notification
                         if (typeof window.showToast === 'function') {
                             window.showToast('All modals have been closed', 'info');
@@ -443,17 +475,17 @@
                 if (e.ctrlKey && e.altKey && e.key === 'x') {
                     e.preventDefault();
                     console.log('Emergency hotkey triggered');
-                    
+
                     // Force close everything
                     const allOverlays = document.querySelectorAll(
                         '.fixed, [style*="position: fixed"], [class*="modal"], [class*="overlay"], .z-50, .z-40'
                     );
-                    
+
                     allOverlays.forEach(el => {
                         el.style.display = 'none';
                         el.classList.add('hidden');
                     });
-                    
+
                     document.body.style.overflow = 'unset';
                     window.location.href = '/admin/dashboard'; // Navigate back to safety
                 }

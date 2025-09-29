@@ -10,7 +10,20 @@ class Gallery extends Model
         'title',
         'slug',
         'description',
+        'active',
     ];
+
+    protected $casts = [
+        'active' => 'boolean',
+    ];
+
+    /**
+     * Scope for active galleries
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
 
     /**
      * Photos in this gallery

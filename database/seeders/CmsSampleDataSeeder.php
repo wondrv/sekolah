@@ -17,11 +17,11 @@ class CmsSampleDataSeeder extends Seeder
     {
         // Create default theme settings
         $this->createThemeSettings();
-        
+
         // Create template assignments if templates exist
         $this->createTemplateAssignments();
     }
-    
+
     /**
      * Create default theme settings
      */
@@ -54,13 +54,18 @@ class CmsSampleDataSeeder extends Seeder
         ];
 
         foreach ($themeSettings as $category => $settings) {
-            ThemeSetting::updateOrCreate(
-                ['key' => $category],
-                ['value' => json_encode($settings)]
-            );
+            foreach ($settings as $key => $value) {
+                ThemeSetting::updateOrCreate(
+                    ['key' => $key, 'category' => $category],
+                    [
+                        'value' => $value ?: '', // Ensure no null values
+                        'description' => "Default {$category} setting for {$key}"
+                    ]
+                );
+            }
         }
     }
-    
+
     /**
      * Create sample template assignments
      */
@@ -68,7 +73,7 @@ class CmsSampleDataSeeder extends Seeder
     {
         // Check if we have any templates
         $homeTemplate = Template::where('name', 'like', '%Home%')->first();
-        
+
         if ($homeTemplate) {
             TemplateAssignment::updateOrCreate(
                 ['route_pattern' => 'home'],
@@ -80,10 +85,10 @@ class CmsSampleDataSeeder extends Seeder
                 ]
             );
         }
-        
+
         // Create a wildcard assignment for any template
         $defaultTemplate = Template::first();
-        
+
         if ($defaultTemplate) {
             TemplateAssignment::updateOrCreate(
                 ['route_pattern' => '*'],

@@ -10,6 +10,7 @@ class Template extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_template_id',
         'name',
         'slug',
         'description',
@@ -18,12 +19,15 @@ class Template extends Model
         'layout_settings',
         'is_global',
         'sort_order',
+        'template_version',
+        'metadata',
     ];
 
     protected $casts = [
         'active' => 'boolean',
         'is_global' => 'boolean',
         'layout_settings' => 'array',
+        'metadata' => 'array',
     ];
 
     public function sections()
@@ -34,6 +38,11 @@ class Template extends Model
     public function assignments()
     {
         return $this->hasMany(TemplateAssignment::class);
+    }
+
+    public function userTemplate()
+    {
+        return $this->belongsTo(UserTemplate::class);
     }
 
     /**

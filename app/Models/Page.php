@@ -20,12 +20,15 @@ class Page extends Model
         'meta_description',
         'og_image',
         'is_pinned',
+        'status',
+        'published_at',
     ];
 
     protected $casts = [
         'is_pinned' => 'boolean',
         'use_page_builder' => 'boolean',
         'content_json' => 'array',
+        'published_at' => 'datetime',
     ];
 
     /**
@@ -54,6 +57,15 @@ class Page extends Model
     public function scopePinned($query)
     {
         return $query->where('is_pinned', true);
+    }
+
+    /**
+     * Scope for published pages
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published')
+                    ->where('published_at', '<=', now());
     }
 
     /**

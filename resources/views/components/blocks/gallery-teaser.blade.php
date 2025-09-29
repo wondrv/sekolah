@@ -1,4 +1,9 @@
-@props(['data'])
+@props(['block', 'content', 'settings', 'style_settings'])
+
+@php
+    // Merge content and settings for backward compatibility
+    $data = array_merge($content ?? [], $settings ?? [], $style_settings ?? []);
+@endphp
 
 <section class="gallery-teaser-block py-16 {{ $data['background_color'] ?? 'bg-white' }}">
   <div class="container mx-auto px-4">

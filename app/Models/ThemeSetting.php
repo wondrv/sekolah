@@ -16,9 +16,10 @@ class ThemeSetting extends Model
         'description',
     ];
 
-    protected $casts = [
-        'value' => 'array',
-    ];
+    // Remove array casting since we're storing individual key-value pairs
+    // protected $casts = [
+    //     'value' => 'array',
+    // ];
 
     /**
      * Get a theme setting by key
@@ -34,6 +35,11 @@ class ThemeSetting extends Model
      */
     public static function set(string $key, $value, string $category = 'general', ?string $description = null): self
     {
+        // Ensure value is never null - use empty array as default
+        if ($value === null) {
+            $value = [];
+        }
+
         return static::updateOrCreate(
             ['key' => $key],
             [
@@ -62,32 +68,32 @@ class ThemeSetting extends Model
         $colors = static::getByCategory('colors');
         $typography = static::getByCategory('typography');
         $spacing = static::getByCategory('spacing');
-        
+
         $css = ":root {\n";
-        
-        // Colors
+
+        // Colors - use key directly since we're storing individual settings
         foreach ($colors as $key => $value) {
-            if (is_string($value)) {
+            if (!empty($value)) {
                 $css .= "  --color-{$key}: {$value};\n";
             }
         }
-        
+
         // Typography
         foreach ($typography as $key => $value) {
-            if (is_string($value)) {
+            if (!empty($value)) {
                 $css .= "  --font-{$key}: {$value};\n";
             }
         }
-        
+
         // Spacing
         foreach ($spacing as $key => $value) {
-            if (is_string($value) || is_numeric($value)) {
+            if (!empty($value)) {
                 $css .= "  --spacing-{$key}: {$value};\n";
             }
         }
-        
+
         $css .= "}\n";
-        
+
         return $css;
     }
 }

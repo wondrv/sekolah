@@ -18,12 +18,14 @@ class Post extends Model
         'category_id',
         'cover_path',
         'status',
+        'featured',
         'published_at',
         'user_id',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
+        'featured' => 'boolean',
     ];
 
     /**
@@ -56,6 +58,14 @@ class Post extends Model
     {
         return $query->where('status', 'published')
                     ->where('published_at', '<=', now());
+    }
+
+    /**
+     * Scope for featured posts
+     */
+    public function scopeFeatured($query)
+    {
+        return $query->where('featured', true);
     }
 
     /**

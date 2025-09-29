@@ -1,4 +1,9 @@
-@props(['data'])
+@props(['block', 'content', 'settings', 'style_settings'])
+
+@php
+    // Merge content and settings for backward compatibility
+    $data = array_merge($content ?? [], $settings ?? [], $style_settings ?? []);
+@endphp
 
 @php
   $limit = $data['limit'] ?? \App\Models\Setting::get('agenda_items_home', 3);

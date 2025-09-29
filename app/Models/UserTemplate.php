@@ -1,0 +1,227 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Storage;
+
+class UserTemplate extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'gallery_template_id',
+        'name',
+        'slug',
+        'description',
+        'preview_image',
+        'template_data',
+        'source',
+        'is_active',
+        'customizations',
+    ];
+
+    protected $casts = [
+        'template_data' => 'array',
+        'is_active' => 'boolean',
+        'customizations' => 'array',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function galleryTemplate()
+    {
+        return $this->belongsTo(TemplateGallery::class);
+    }
+
+    public function templates()
+    {
+        return $this->hasMany(Template::class);
+    }
+
+    public function exports()
+    {
+        return $this->hasMany(TemplateExport::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeByUser($query, $userId = null)
+    {
+                if (!$userId) {
+            $userId = \Illuminate\Support\Facades\Auth::id();
+        }
+
+        if (!$userId) {
+            return $query->whereRaw('1 = 0'); // Return empty result
+        }
+        return $query->where('user_id', $userId);
+    }
+
+    public function scopeCustom($query)
+    {
+        return $query->where('source', 'custom');
+    }
+
+    public function scopeFromGallery($query)
+    {
+        return $query->where('source', 'gallery');
+    }
+
+    public function scopeImported($query)
+    {
+        return $query->where('source', 'imported');
+    }
+
+    public function getPreviewImageUrlAttribute()
+    {
+        if (!$this->preview_image) {
+            return asset('images/template-placeholder.jpg');
+        }
+
+        if (str_starts_with($this->preview_image, 'http')) {
+            return $this->preview_image;
+        }
+
+        return Storage::url($this->preview_image);
+    }
+
+    public function activate()
+    {
+        // Deactivate all other templates for this user
+        static::where('user_id', $this->user_id)
+            ->where('id', '!=', $this->id)
+            ->update(['is_active' => false]);
+
+        // Activate this template
+        $this->update(['is_active' => true]);
+
+        // Apply template to site
+        $this->applyToSite();
+    }
+
+    public function applyToSite()
+    {
+        // Delete existing templates for this user
+        Template::whereHas('userTemplate', function ($query) {
+            $query->where('user_id', $this->user_id);
+        })->delete();
+
+        // Create templates from template data
+        $this->createTemplatesFromData();
+    }
+
+    protected function createTemplatesFromData()
+    {
+        if (!$this->template_data || !isset($this->template_data['templates'])) {
+            return;
+        }
+
+        foreach ($this->template_data['templates'] as $templateData) {
+            $template = Template::create([
+                'user_template_id' => $this->id,
+                'name' => $templateData['name'],
+                'slug' => $templateData['slug'],
+                'description' => $templateData['description'] ?? null,
+                'active' => $templateData['active'] ?? true,
+                'type' => $templateData['type'] ?? 'page',
+                'layout_settings' => $templateData['layout_settings'] ?? null,
+                'is_global' => $templateData['is_global'] ?? false,
+                'sort_order' => $templateData['sort_order'] ?? 0,
+                'template_version' => $this->galleryTemplate?->version ?? '1.0.0',
+                'metadata' => $templateData['metadata'] ?? null,
+            ]);
+
+            // Create sections and blocks
+            if (isset($templateData['sections'])) {
+                $this->createSectionsFromData($template, $templateData['sections']);
+            }
+
+            // Create template assignments
+            if (isset($templateData['assignments'])) {
+                $this->createAssignmentsFromData($template, $templateData['assignments']);
+            }
+        }
+    }
+
+    protected function createSectionsFromData($template, $sectionsData)
+    {
+        foreach ($sectionsData as $sectionData) {
+            $section = Section::create([
+                'template_id' => $template->id,
+                'name' => $sectionData['name'],
+                'order' => $sectionData['order'],
+                'settings' => $sectionData['settings'] ?? null,
+            ]);
+
+            if (isset($sectionData['blocks'])) {
+                $this->createBlocksFromData($section, $sectionData['blocks']);
+            }
+        }
+    }
+
+    protected function createBlocksFromData($section, $blocksData)
+    {
+        foreach ($blocksData as $blockData) {
+            Block::create([
+                'section_id' => $section->id,
+                'type' => $blockData['type'],
+                'name' => $blockData['name'],
+                'order' => $blockData['order'],
+                'content' => $blockData['content'] ?? null,
+                'settings' => $blockData['settings'] ?? null,
+                'style_settings' => $blockData['style_settings'] ?? null,
+                'css_class' => $blockData['css_class'] ?? null,
+                'visible_desktop' => $blockData['visible_desktop'] ?? true,
+                'visible_tablet' => $blockData['visible_tablet'] ?? true,
+                'visible_mobile' => $blockData['visible_mobile'] ?? true,
+                'active' => $blockData['active'] ?? true,
+            ]);
+        }
+    }
+
+    protected function createAssignmentsFromData($template, $assignmentsData)
+    {
+        foreach ($assignmentsData as $assignmentData) {
+            TemplateAssignment::create([
+                'route_pattern' => $assignmentData['route_pattern'],
+                'page_slug' => $assignmentData['page_slug'] ?? null,
+                'template_id' => $template->id,
+                'priority' => $assignmentData['priority'] ?? 0,
+                'active' => $assignmentData['active'] ?? true,
+            ]);
+        }
+    }
+
+    public function duplicate($newName = null)
+    {
+        $duplicate = $this->replicate();
+        $duplicate->name = $newName ?? $this->name . ' Copy';
+        $duplicate->slug = $this->slug . '-copy-' . time();
+        $duplicate->is_active = false;
+        $duplicate->save();
+
+        return $duplicate;
+    }
+
+    public function exportToArray()
+    {
+        return [
+            'name' => $this->name,
+            'description' => $this->description,
+            'version' => $this->galleryTemplate?->version ?? '1.0.0',
+            'source' => $this->source,
+            'template_data' => $this->template_data,
+            'customizations' => $this->customizations,
+            'exported_at' => now()->toISOString(),
+        ];
+    }
+}

@@ -44,6 +44,11 @@
     -moz-appearance: none;
     appearance: none;
   }
+
+    /* Standard clamp property alongside vendor-prefixed one from preflight */
+    .line-clamp-3 {
+        line-clamp: 3;
+    }
 }
 
 /* Base styles */
@@ -81,6 +86,18 @@
     -moz-appearance: none;
     appearance: none;
   }
+  
+    /* Ensure standard appearance declarations for vendor-prefixed preflight rules */
+    button,
+    input[type='button'],
+    input[type='reset'],
+    input[type='submit'] {
+        appearance: button;
+    }
+  
+    [type='search'] {
+        appearance: textfield;
+    }
 }
 
 /* Component styles */

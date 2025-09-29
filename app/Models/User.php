@@ -73,6 +73,22 @@ class User extends Authenticatable
     }
 
     /**
+     * User templates relationship
+     */
+    public function userTemplates()
+    {
+        return $this->hasMany(UserTemplate::class);
+    }
+
+    /**
+     * Template exports relationship
+     */
+    public function templateExports()
+    {
+        return $this->hasMany(TemplateExport::class);
+    }
+
+    /**
      * Check if this user is the admin
      */
     public function isAdmin(): bool

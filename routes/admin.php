@@ -216,6 +216,50 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::patch('messages/{message}/reply', [Admin\MessageController::class, 'reply'])->name('admin.messages.reply');
 
+    // Template System Routes
+    Route::prefix('template-system')->name('admin.templates.')->group(function () {
+        // Template Gallery
+        Route::get('gallery', [Admin\Template\TemplateGalleryController::class, 'index'])->name('gallery.index');
+        Route::get('gallery/categories', [Admin\Template\TemplateGalleryController::class, 'categories'])->name('gallery.categories');
+        Route::get('gallery/category/{category:slug}', [Admin\Template\TemplateGalleryController::class, 'byCategory'])->name('gallery.category');
+        Route::get('gallery/{template}', [Admin\Template\TemplateGalleryController::class, 'show'])->name('gallery.show');
+        Route::get('gallery/{template}/preview', [Admin\Template\TemplateGalleryController::class, 'preview'])->name('gallery.preview');
+        Route::post('gallery/{template}/install', [Admin\Template\TemplateGalleryController::class, 'install'])->name('gallery.install');
+
+        // My Templates
+        Route::get('my-templates', [Admin\Template\MyTemplatesController::class, 'index'])->name('my-templates');
+        Route::get('my-templates/{userTemplate}', [Admin\Template\MyTemplatesController::class, 'show'])->name('my-templates.show');
+        Route::post('my-templates/{userTemplate}/activate', [Admin\Template\MyTemplatesController::class, 'activate'])->name('my-templates.activate');
+        Route::post('my-templates/{userTemplate}/deactivate', [Admin\Template\MyTemplatesController::class, 'deactivate'])->name('my-templates.deactivate');
+        Route::post('my-templates/{userTemplate}/duplicate', [Admin\Template\MyTemplatesController::class, 'duplicate'])->name('my-templates.duplicate');
+        Route::delete('my-templates/{userTemplate}', [Admin\Template\MyTemplatesController::class, 'destroy'])->name('my-templates.destroy');
+
+        // Template Export/Import
+        Route::post('my-templates/{userTemplate}/export', [Admin\Template\MyTemplatesController::class, 'export'])->name('my-templates.export');
+        Route::post('import', [Admin\Template\MyTemplatesController::class, 'import'])->name('import');
+
+        // Template Builder
+        Route::get('builder', [Admin\Template\TemplateBuilderController::class, 'index'])->name('builder.index');
+        Route::get('builder/create', [Admin\Template\TemplateBuilderController::class, 'create'])->name('builder.create');
+        Route::post('builder', [Admin\Template\TemplateBuilderController::class, 'store'])->name('builder.store');
+        Route::get('builder/{userTemplate}/edit', [Admin\Template\TemplateBuilderController::class, 'edit'])->name('builder.edit');
+        Route::put('builder/{userTemplate}', [Admin\Template\TemplateBuilderController::class, 'update'])->name('builder.update');
+        Route::get('builder/{userTemplate}/preview', [Admin\Template\TemplateBuilderController::class, 'preview'])->name('builder.preview');
+
+        // Builder API endpoints
+        Route::post('builder/{userTemplate}/sections', [Admin\Template\TemplateBuilderController::class, 'saveSection'])->name('builder.save-section');
+        Route::post('builder/{userTemplate}/blocks', [Admin\Template\TemplateBuilderController::class, 'addBlock'])->name('builder.add-block');
+        Route::put('builder/{userTemplate}/blocks', [Admin\Template\TemplateBuilderController::class, 'updateBlock'])->name('builder.update-block');
+        Route::delete('builder/{userTemplate}/blocks', [Admin\Template\TemplateBuilderController::class, 'deleteBlock'])->name('builder.delete-block');
+
+        // Export Management
+        Route::get('exports', [Admin\Template\TemplateExportController::class, 'index'])->name('exports');
+        Route::get('exports/{export}/download', [Admin\Template\TemplateExportController::class, 'download'])->name('exports.download');
+        Route::delete('exports/{export}', [Admin\Template\TemplateExportController::class, 'destroy'])->name('exports.destroy');
+        Route::post('exports/cleanup-expired', [Admin\Template\TemplateExportController::class, 'cleanupExpired'])->name('exports.cleanup-expired');
+        Route::post('exports/bulk-download', [Admin\Template\TemplateExportController::class, 'bulkDownload'])->name('exports.bulk-download');
+    });
+
     // Cache Management
     Route::post('cache/clear', function() {
         try {

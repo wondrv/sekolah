@@ -31,8 +31,9 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Styles -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+    <link href="{{ asset('assets/css/app.css') }}" rel="stylesheet">
+    <script src="{{ asset('assets/js/app.js') }}" defer></script>
+
     <!-- Theme Custom Styles -->
     <style>
         :root {

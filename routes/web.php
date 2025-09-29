@@ -14,12 +14,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 // Public routes (no login required)
-Route::get('/', [HomeController::class, 'index'])->name('home');
-
-// CMS Test route (for development/testing)
-Route::get('/test-cms', function () {
-    return view('test-cms');
-})->name('test-cms');
+Route::get('/', [App\Http\Controllers\PureCMSController::class, 'handleRequest'])->defaults('path', '/')->name('home');
 
 // Dynamic content routes
 // Backward compatibility route with tentang-kami prefix - redirects to clean URLs
@@ -58,6 +53,11 @@ Route::get('/program/{program:slug}', [ProgramController::class, 'show'])->name(
 Route::get('/kontak', [ContactController::class, 'show'])->name('contact');
 Route::post('/kontak', [ContactController::class, 'store'])->name('contact.store');
 
+// Redirect old contact URL to Indonesian version
+Route::get('/contact', function () {
+    return redirect('/kontak', 301);
+});
+
 
 // Dashboard route - redirects to admin
 Route::get('/dashboard', function () {
@@ -88,10 +88,10 @@ Route::get('/tentang-kami/{slug}', function ($slug) {
     return redirect('/' . $slug, 301);
 });
 
-// Universal single page route - MUST be last to avoid conflicts with other routes
-// This allows ANY page to be accessed directly by slug without prefix
-Route::get('/{slug}', [PageController::class, 'showSingle'])
-    ->where('slug', '[a-zA-Z0-9\-_]+')
-    ->name('pages.show');
+// Pure CMS Routes - Handle all dynamic content
+// This should be the LAST route to catch all unmatched paths
+Route::get('/{path?}', [App\Http\Controllers\PureCMSController::class, 'handleRequest'])
+    ->where('path', '.*')
+    ->name('cms.dynamic');
 
 require __DIR__.'/auth.php';

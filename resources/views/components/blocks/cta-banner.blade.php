@@ -1,4 +1,9 @@
-@props(['data'])
+@props(['block', 'content', 'settings', 'style_settings'])
+
+@php
+    // Merge content and settings for backward compatibility
+    $data = array_merge($content ?? [], $settings ?? [], $style_settings ?? []);
+@endphp
 
 <section class="cta-banner-block py-16 {{ $data['background_color'] ?? 'bg-gradient-to-r from-blue-600 to-blue-800' }} text-white">
   <div class="container mx-auto px-4">
