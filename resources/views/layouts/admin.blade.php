@@ -19,7 +19,8 @@
         <div class="w-64 shadow-lg border-r border-gray-800 flex flex-col" style="background-color: #36454F;" x-data="{
                 content: {{ (request()->routeIs('admin.posts.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.events.*') || request()->routeIs('admin.galleries.*')) ? 'true' : 'false' }},
                 school: {{ (request()->routeIs('admin.facilities.*') || request()->routeIs('admin.programs.*') || request()->routeIs('admin.achievements.*') || request()->routeIs('admin.testimonials.*')) ? 'true' : 'false' }},
-                advanced: {{ (request()->routeIs('admin.templates.*') || request()->routeIs('admin.template-assignments.*') || request()->routeIs('admin.theme.*') || request()->routeIs('admin.menus.*') || request()->routeIs('admin.settings.*')) ? 'true' : 'false' }},
+                templates: {{ (request()->routeIs('admin.templates.gallery.*') || request()->routeIs('admin.templates.my-templates*') || request()->routeIs('admin.templates.builder.*') || request()->routeIs('admin.templates.exports*')) ? 'true' : 'false' }},
+                advanced: {{ (request()->routeIs('admin.templates.index') || request()->routeIs('admin.templates.show') || request()->routeIs('admin.templates.edit') || request()->routeIs('admin.templates.create') || request()->routeIs('admin.template-assignments.*') || request()->routeIs('admin.theme.*') || request()->routeIs('admin.menus.*') || request()->routeIs('admin.settings.*')) ? 'true' : 'false' }},
                 communication: {{ (request()->routeIs('admin.messages.*')) ? 'true' : 'false' }}
             }">
             <!-- Sidebar Header -->
@@ -102,9 +103,9 @@
                 </div>
 
                 <!-- Template System Dropdown -->
-                <div class="space-y-1" x-data="{ templates: {{ (request()->routeIs('templates.*')) ? 'true' : 'false' }} }">
+                <div class="space-y-1">
                     <button @click="templates = !templates"
-                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
+                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg {{ (request()->routeIs('admin.templates.gallery.*') || request()->routeIs('admin.templates.my-templates*') || request()->routeIs('admin.templates.builder.*') || request()->routeIs('admin.templates.exports*')) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
                             <span class="mr-3">🎨</span>
                             Template System
@@ -114,19 +115,19 @@
                         </svg>
                     </button>
                     <div x-show="templates" x-transition class="ml-6 space-y-1">
-                        <a href="{{ route('templates.gallery.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('templates.gallery.*') ? 'bg-blue-600 text-white' : '' }}">
+                        <a href="{{ route('admin.templates.gallery.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.gallery.*') ? 'bg-blue-600 text-white' : '' }}">
                             <span class="mr-2">🎨</span>
                             Template Gallery
                         </a>
-                        <a href="{{ route('templates.my-templates') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('templates.my-templates*') ? 'bg-blue-600 text-white' : '' }}">
+                        <a href="{{ route('admin.templates.my-templates') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.my-templates*') ? 'bg-blue-600 text-white' : '' }}">
                             <span class="mr-2">📱</span>
                             My Templates
                         </a>
-                        <a href="{{ route('templates.builder.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('templates.builder.*') ? 'bg-blue-600 text-white' : '' }}">
+                        <a href="{{ route('admin.templates.builder.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.builder.*') ? 'bg-blue-600 text-white' : '' }}">
                             <span class="mr-2">🔧</span>
                             Template Builder
                         </a>
-                        <a href="{{ route('templates.exports') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('templates.exports*') ? 'bg-blue-600 text-white' : '' }}">
+                        <a href="{{ route('admin.templates.exports') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.exports*') ? 'bg-blue-600 text-white' : '' }}">
                             <span class="mr-2">📦</span>
                             Export/Import
                         </a>
@@ -136,7 +137,7 @@
                 <!-- Advanced Features Dropdown -->
                 <div class="space-y-1">
                     <button @click="advanced = !advanced"
-                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
+                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg {{ (request()->routeIs('admin.templates.index') || request()->routeIs('admin.templates.show') || request()->routeIs('admin.templates.edit') || request()->routeIs('admin.templates.create') || request()->routeIs('admin.template-assignments.*') || request()->routeIs('admin.theme.*') || request()->routeIs('admin.menus.*') || request()->routeIs('admin.settings.*')) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
                             <span class="mr-3">🛠️</span>
                             Advanced Features
@@ -146,8 +147,8 @@
                         </svg>
                     </button>
                     <div x-show="advanced" x-transition class="ml-6 space-y-1">
-                        <a href="{{ route('admin.templates.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">�️</span>
+                        <a href="{{ route('admin.templates.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ (request()->routeIs('admin.templates.index') || request()->routeIs('admin.templates.show') || request()->routeIs('admin.templates.edit') || request()->routeIs('admin.templates.create')) ? 'bg-blue-600 text-white' : '' }}">
+                            <span class="mr-2">🛠️</span>
                             Legacy Templates
                         </a>
                         <a href="{{ route('admin.template-assignments.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.template-assignments.*') ? 'bg-blue-600 text-white' : '' }}">

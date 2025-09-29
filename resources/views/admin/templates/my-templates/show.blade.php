@@ -8,7 +8,7 @@
         <nav class="flex" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-4">
                 <li>
-                    <a href="{{ route('templates.my-templates') }}" class="text-gray-400 hover:text-gray-500">
+                    <a href="{{ route('admin.templates.my-templates') }}" class="text-gray-400 hover:text-gray-500">
                         My Templates
                     </a>
                 </li>
@@ -37,7 +37,7 @@
 
         <div class="flex space-x-2">
             @if(!$userTemplate->is_active)
-            <form method="POST" action="{{ route('templates.my-templates.activate', $userTemplate) }}" class="inline">
+            <form method="POST" action="{{ route('admin.templates.my-templates.activate', $userTemplate) }}" class="inline">
                 @csrf
                 <button type="submit"
                         class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
@@ -47,7 +47,7 @@
                 </button>
             </form>
             @else
-            <form method="POST" action="{{ route('templates.my-templates.deactivate', $userTemplate) }}" class="inline">
+            <form method="POST" action="{{ route('admin.templates.my-templates.deactivate', $userTemplate) }}" class="inline">
                 @csrf
                 <button type="submit"
                         class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -58,13 +58,13 @@
             </form>
             @endif
 
-            <a href="{{ route('templates.builder.edit', $userTemplate) }}"
+            <a href="{{ route('admin.templates.builder.edit', $userTemplate) }}"
                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 <span class="mr-2">✏️</span>
                 Edit
             </a>
 
-            <form method="POST" action="{{ route('templates.my-templates.duplicate', $userTemplate) }}" class="inline">
+            <form method="POST" action="{{ route('admin.templates.my-templates.duplicate', $userTemplate) }}" class="inline">
                 @csrf
                 <button type="submit"
                         class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
@@ -210,7 +210,7 @@
     <!-- Export Options -->
     <div class="bg-white shadow rounded-lg p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Export Template</h3>
-        <form method="POST" action="{{ route('templates.my-templates.export', $userTemplate) }}" class="space-y-4">
+        <form method="POST" action="{{ route('admin.templates.my-templates.export', $userTemplate) }}" class="space-y-4">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -259,7 +259,7 @@
         <p class="text-sm text-red-700 mb-4">
             Once you delete a template, there is no going back. Please be certain.
         </p>
-        <form method="POST" action="{{ route('templates.my-templates.destroy', $userTemplate) }}" class="inline">
+        <form method="POST" action="{{ route('admin.templates.my-templates.destroy', $userTemplate) }}" class="inline">
             @csrf
             @method('DELETE')
             <button type="submit"

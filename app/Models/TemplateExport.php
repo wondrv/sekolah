@@ -6,6 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Class TemplateExport
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int $user_template_id
+ * @property string $filename
+ * @property string $format
+ * @property array|null $export_options
+ * @property string $file_path
+ * @property int|null $file_size
+ * @property \Illuminate\Support\Carbon|null $expires_at
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ *
+ * @property-read User $user
+ * @property-read UserTemplate $userTemplate
+ */
 class TemplateExport extends Model
 {
     use HasFactory;

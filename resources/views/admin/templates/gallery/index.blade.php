@@ -83,12 +83,12 @@
         </div>
         <div class="p-6">
             <div class="flex flex-wrap gap-3">
-                <a href="{{ route('templates.gallery.index') }}"
+                <a href="{{ route('admin.templates.gallery.index') }}"
                    class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium {{ !request('category') ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }} transition-colors">
                     Semua Template
                 </a>
                 @foreach($categories as $category)
-                    <a href="{{ route('templates.gallery.index', ['category' => $category->slug]) }}"
+                    <a href="{{ route('admin.templates.gallery.index', ['category' => $category->slug]) }}"
                        class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium {{ request('category') === $category->slug ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }} transition-colors">
                         <div class="w-3 h-3 rounded-full mr-2" style="background-color: {{ $category->color }}"></div>
                         {{ $category->name }}
@@ -142,7 +142,7 @@
                         Filter
                     </button>
                     @if(request()->hasAny(['search', 'type', 'sort', 'category']))
-                        <a href="{{ route('templates.gallery.index') }}" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                        <a href="{{ route('admin.templates.gallery.index') }}" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
                             Reset
                         </a>
                     @endif
@@ -265,7 +265,7 @@
 
                     <!-- Actions -->
                     <div class="flex gap-2">
-                        <a href="{{ route('templates.gallery.show', $template) }}"
+                        <a href="{{ route('admin.templates.gallery.show', $template) }}"
                            class="flex-1 inline-flex items-center justify-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -298,7 +298,7 @@
                     </p>
                     @if(request()->hasAny(['search', 'type', 'sort', 'category']))
                         <div class="mt-6">
-                            <a href="{{ route('templates.gallery.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <a href="{{ route('admin.templates.gallery.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 Lihat Semua Template
                             </a>
                         </div>

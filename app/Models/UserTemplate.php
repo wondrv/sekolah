@@ -6,6 +6,34 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Class UserTemplate
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int|null $gallery_template_id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property string|null $preview_image
+ * @property array|null $template_data
+ * @property string $source  // gallery|custom|imported
+ * @property bool $is_active
+ * @property array|null $customizations
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ *
+ * @property-read User $user
+ * @property-read TemplateGallery|null $galleryTemplate
+ * @property-read \Illuminate\Database\Eloquent\Collection|Template[] $templates
+ * @property-read \Illuminate\Database\Eloquent\Collection|TemplateExport[] $exports
+ *
+ * @method static static byUser($userId = null)
+ * @method static static active()
+ * @method static static custom()
+ * @method static static fromGallery()
+ * @method static static imported()
+ */
 class UserTemplate extends Model
 {
     use HasFactory;
@@ -56,13 +84,14 @@ class UserTemplate extends Model
 
     public function scopeByUser($query, $userId = null)
     {
-                if (!$userId) {
+        if (!$userId) {
             $userId = \Illuminate\Support\Facades\Auth::id();
         }
 
         if (!$userId) {
             return $query->whereRaw('1 = 0'); // Return empty result
         }
+
         return $query->where('user_id', $userId);
     }
 

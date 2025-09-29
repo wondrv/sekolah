@@ -6,6 +6,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Class TemplateGallery
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property int|null $category_id
+ * @property string|null $preview_image
+ * @property array|null $preview_images
+ * @property array|null $template_data
+ * @property array|null $demo_content
+ * @property string|null $author
+ * @property string|null $version
+ * @property array|null $features
+ * @property array|null $color_schemes
+ * @property int $downloads
+ * @property float|null $rating
+ * @property bool $featured
+ * @property bool $premium
+ * @property bool $active
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ *
+ * @property-read TemplateCategory|null $category
+ * @property-read \Illuminate\Database\Eloquent\Collection|UserTemplate[] $userTemplates
+ * @property-read string $preview_image_url
+ * @property-read array $preview_images_urls
+ */
 class TemplateGallery extends Model
 {
     use HasFactory;
@@ -122,7 +151,9 @@ class TemplateGallery extends Model
 
         if (!$userId) {
             return false;
-        }        return $this->userTemplates()
+        }
+
+        return $this->userTemplates()
             ->where('user_id', $userId)
             ->exists();
     }

@@ -54,39 +54,78 @@
 @section('content')
 <div id="templateBuilder" class="h-screen flex">
     <!-- Sidebar - Block Library -->
-    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div class="flex-shrink-0 px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Block Library</h3>
-            <p class="text-sm text-gray-500">Drag blocks to build your template</p>
+    <div class="w-96 bg-gradient-to-br from-gray-50 to-gray-100 border-r border-gray-200 flex flex-col shadow-lg">
+        <div class="flex-shrink-0 px-6 py-6 border-b border-gray-200 bg-white">
+            <div class="flex items-center mb-2">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <span class="text-white text-lg font-bold">🧱</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">Block Library</h3>
+                    <p class="text-sm text-gray-600">Drag & drop to build your page</p>
+                </div>
+            </div>
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p class="text-xs text-blue-700 flex items-center">
+                    <span class="mr-2">💡</span>
+                    <strong>Tip:</strong> Click and drag any block below to your template
+                </p>
+            </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto">
-            <div class="px-6 py-4 space-y-6">
+        <div class="flex-1 overflow-y-auto px-4 py-6">
+            <div class="space-y-8">
                 @foreach($blockTypes as $category => $blocks)
-                <div>
-                    <h4 class="text-sm font-medium text-gray-900 mb-3">{{ ucfirst($category) }} Blocks</h4>
-                    <div class="space-y-2">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <!-- Light header bar so only text appears dark -->
+                    <div class="px-4 py-3 bg-white/80 backdrop-blur-sm category-bar">
+                        <h4 class="text-sm font-bold text-gray-900 flex items-center no-select-highlight">
+                            <span class="mr-2">
+                                @switch($category)
+                                    @case('header') 🎯 @break
+                                    @case('content') 📝 @break
+                                    @case('info') 📊 @break
+                                    @case('marketing') 📢 @break
+                                    @case('media') 🖼️ @break
+                                    @default 🔧
+                                @endswitch
+                            </span>
+                            {{ ucfirst($category) }} Blocks
+                        </h4>
+                    </div>
+                    <div class="p-4 space-y-3">
                         @foreach($blocks as $type => $config)
-                        <div class="block-item border border-gray-200 rounded-lg p-3 cursor-move hover:border-blue-300 hover:shadow-sm transition-all"
+                        <div class="block-item bg-gradient-to-r from-white to-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-4 cursor-move hover:border-blue-400 hover:shadow-lg hover:from-blue-50 hover:to-blue-100 transition-all duration-300 transform hover:scale-105"
                              data-block-type="{{ $type }}"
                              data-block-config="{{ json_encode($config) }}"
                              draggable="true">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3">
-                                    <span class="text-blue-600 text-sm">
-                                        @switch($config['category'])
-                                            @case('header') 🎯 @break
-                                            @case('content') 📝 @break
-                                            @case('info') 📊 @break
-                                            @case('marketing') 📢 @break
-                                            @case('media') 🖼️ @break
-                                            @default 🔧
-                                        @endswitch
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                                    <span class="text-white text-lg">
+                                        @if(is_array($config) && isset($config['category']))
+                                            @switch($config['category'])
+                                                @case('header') 🎯 @break
+                                                @case('content') 📝 @break
+                                                @case('info') 📊 @break
+                                                @case('marketing') 📢 @break
+                                                @case('media') 🖼️ @break
+                                                @default 🔧
+                                            @endswitch
+                                        @else
+                                            🔧
+                                        @endif
                                     </span>
                                 </div>
-                                <div class="flex-1">
-                                    <h5 class="text-sm font-medium text-gray-900">{{ $config['name'] }}</h5>
-                                    <p class="text-xs text-gray-500">{{ $config['description'] }}</p>
+                                <div class="flex-1 min-w-0">
+                                    <h5 class="text-sm font-bold text-gray-900 mb-1">
+                                        {{ is_array($config) && isset($config['name']) ? $config['name'] : ucfirst($type) }}
+                                    </h5>
+                                    <p class="text-xs text-gray-600 leading-relaxed">
+                                        {{ is_array($config) && isset($config['description']) ? $config['description'] : 'Block component' }}
+                                    </p>
+                                    <div class="mt-2 flex items-center">
+                                        <span class="text-xs text-blue-600 font-medium">✋ Drag me to canvas</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -99,17 +138,27 @@
     </div>
 
     <!-- Main Builder Area -->
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col bg-gray-50">
         <!-- Builder Toolbar -->
-        <div class="flex-shrink-0 bg-gray-50 border-b border-gray-200 px-6 py-3">
+        <div class="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center space-x-2">
-                        <label class="text-sm font-medium text-gray-700">Device:</label>
-                        <select id="devicePreview" class="border-gray-300 rounded-md text-sm">
-                            <option value="desktop">Desktop</option>
-                            <option value="tablet">Tablet</option>
-                            <option value="mobile">Mobile</option>
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white text-sm font-bold">🎨</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Canvas</h3>
+                            <p class="text-xs text-gray-600">Build your template here</p>
+                        </div>
+                    </div>
+                    <div class="h-8 w-px bg-gray-300"></div>
+                    <div class="flex items-center space-x-3">
+                        <label class="text-sm font-semibold text-gray-700">Device Preview:</label>
+                        <select id="devicePreview" class="border-gray-300 rounded-lg text-sm px-3 py-2 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="desktop">🖥️ Desktop</option>
+                            <option value="tablet">📱 Tablet</option>
+                            <option value="mobile">📱 Mobile</option>
                         </select>
                     </div>
 
@@ -133,93 +182,145 @@
         </div>
 
         <!-- Template Canvas -->
-        <div class="flex-1 overflow-y-auto bg-gray-100">
-            <div class="py-8">
-                <div id="templateCanvas" class="mx-auto bg-white shadow-lg" style="width: 1200px; min-height: 800px;">
+        <div class="flex-1 overflow-y-auto bg-gradient-to-br from-gray-100 to-gray-200 p-8">
+            <div class="flex justify-center">
+                <div id="templateCanvas" class="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden" style="width: 1200px; min-height: 900px;">
+                    <!-- Canvas Header -->
+                    <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                                    <span class="text-blue-600 font-bold">📄</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-black font-bold">{{ $userTemplate->name }}</h4>
+                                    <p class="text-blue-100 text-sm">Template Preview</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-black text-sm">🔴 Live Edit Mode</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Template sections will be rendered here -->
-                    <div id="templateSections" class="divide-y divide-gray-200">
-                        @if(isset($templateStructure['templates'][0]['sections']))
+                    <div id="templateSections" class="divide-y divide-gray-100">
+                        @if(is_array($templateStructure) && isset($templateStructure['templates']) && is_array($templateStructure['templates']) && isset($templateStructure['templates'][0]) && isset($templateStructure['templates'][0]['sections']))
                             @foreach($templateStructure['templates'][0]['sections'] as $sectionIndex => $section)
-                            <div class="section-container" data-section-index="{{ $sectionIndex }}">
-                                <div class="section-header bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
-                                    <h4 class="text-sm font-medium text-gray-900">{{ $section['name'] }}</h4>
-                                    <div class="flex items-center space-x-2">
-                                        <button class="section-settings text-gray-400 hover:text-gray-600">
-                                            ⚙️
+                            <div class="section-container border border-gray-200 bg-white mb-1" data-section-index="{{ $sectionIndex }}">
+                                <div class="section-header bg-gray-50 px-6 py-4 flex items-center justify-between border-b border-gray-200">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                                            <span class="text-gray-800 text-sm font-bold">📋</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-lg font-bold text-black force-black-text no-select-highlight">{{ $section['name'] }}</h4>
+                                            <p class="text-gray-300 text-xs">Section {{ $sectionIndex + 1 }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <button class="section-settings px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                                            ⚙️ Settings
                                         </button>
-                                        <button class="delete-section text-red-400 hover:text-red-600">
-                                            🗑️
+                                        <button class="delete-section px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
+                                            🗑️ Delete
                                         </button>
                                     </div>
                                 </div>
 
-                                <div class="section-content min-h-24 p-4 bg-white drop-zone"
+                                <div class="section-content min-h-32 p-6 bg-gradient-to-br from-gray-50 to-white drop-zone border-t border-gray-200"
                                      data-section-index="{{ $sectionIndex }}">
-                                    @if(isset($section['blocks']) && count($section['blocks']) > 0)
+                                    @if(isset($section['blocks']) && is_array($section['blocks']) && count($section['blocks']) > 0)
                                         @foreach($section['blocks'] as $blockIndex => $block)
-                                        <div class="block-element border border-dashed border-gray-300 rounded p-4 mb-4 relative group"
+                                        <div class="block-element bg-white border-2 border-gray-200 rounded-xl p-6 mb-4 relative group hover:border-blue-400 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                                              data-block-index="{{ $blockIndex }}"
-                                             data-block-type="{{ $block['type'] }}">
+                                             data-block-type="{{ is_array($block) && isset($block['type']) ? $block['type'] : 'unknown' }}">
                                             <div class="block-content">
                                                 <!-- Block content will be rendered based on type -->
-                                                <div class="text-center text-gray-500">
-                                                    <span class="text-2xl">
-                                                        @switch($block['type'])
-                                                            @case('hero') 🎯 @break
-                                                            @case('card-grid') 📋 @break
-                                                            @case('rich-text') 📝 @break
-                                                            @case('stats') 📊 @break
-                                                            @case('cta-banner') 📢 @break
-                                                            @case('gallery-teaser') 🖼️ @break
-                                                            @case('events-teaser') 📅 @break
-                                                            @default 🔧
-                                                        @endswitch
-                                                    </span>
-                                                    <h5 class="text-sm font-medium mt-2">{{ ucfirst(str_replace('-', ' ', $block['type'])) }} Block</h5>
-                                                    <p class="text-xs text-gray-400">Click to edit content</p>
+                                                <div class="text-center text-gray-600">
+                                                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                                        <span class="text-white text-2xl">
+                                                            @php $blockType = is_array($block) && isset($block['type']) ? $block['type'] : 'unknown' @endphp
+                                                            @switch($blockType)
+                                                                @case('hero') 🎯 @break
+                                                                @case('card-grid') 📋 @break
+                                                                @case('rich-text') 📝 @break
+                                                                @case('stats') 📊 @break
+                                                                @case('cta-banner') 📢 @break
+                                                                @case('gallery-teaser') 🖼️ @break
+                                                                @case('events-teaser') 📅 @break
+                                                                @default 🔧
+                                                            @endswitch
+                                                        </span>
+                                                    </div>
+                                                    <h5 class="text-lg font-bold text-gray-800 mb-2">{{ ucfirst(str_replace('-', ' ', $blockType)) }} Block</h5>
+                                                    <p class="text-sm text-gray-500 mb-4">Click to edit content and customize this block</p>
+                                                    <div class="inline-flex items-center px-4 py-2 bg-blue-100 rounded-full">
+                                                        <span class="text-blue-600 text-sm font-medium">✏️ Click to edit</span>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div class="block-controls absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <div class="flex space-x-1">
-                                                    <button class="edit-block w-6 h-6 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">
-                                                        ✏️
+                                            <div class="block-controls absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                <div class="flex space-x-2">
+                                                    <button class="edit-block px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-lg transform hover:scale-105 transition-all">
+                                                        ✏️ Edit
                                                     </button>
-                                                    <button class="delete-block w-6 h-6 bg-red-500 text-white rounded text-xs hover:bg-red-600">
-                                                        🗑️
+                                                    <button class="delete-block px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 shadow-lg transform hover:scale-105 transition-all">
+                                                        🗑️ Delete
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
                                         @endforeach
                                     @else
-                                        <div class="empty-section text-center py-12 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">
-                                            <span class="text-4xl block mb-2">📦</span>
-                                            <p class="text-sm">Drop blocks here to build your section</p>
+                                        <div class="empty-section text-center py-16 text-gray-500 border-2 border-dashed border-blue-300 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-300">
+                                            <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                                <span class="text-white text-2xl">📦</span>
+                                            </div>
+                                            <h4 class="text-lg font-bold text-gray-700 mb-2">Empty Section</h4>
+                                            <p class="text-sm text-gray-600 mb-4">Drag blocks from the library to build your content</p>
+                                            <div class="inline-flex items-center px-4 py-2 bg-blue-100 rounded-full">
+                                                <span class="text-blue-600 text-sm font-medium">👈 Start by dragging a block here</span>
+                                            </div>
                                         </div>
                                     @endif
                                 </div>
                             </div>
                             @endforeach
                         @else
-                            <div class="section-container" data-section-index="0">
-                                <div class="section-header bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
-                                    <h4 class="text-sm font-medium text-gray-900">Header Section</h4>
-                                    <div class="flex items-center space-x-2">
-                                        <button class="section-settings text-gray-400 hover:text-gray-600">
-                                            ⚙️
+                            <div class="section-container border border-gray-200 bg-white mb-1" data-section-index="0">
+                                <div class="section-header bg-gray-50 px-6 py-4 flex items-center justify-between border-b border-gray-200">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                                            <span class="text-gray-800 text-sm font-bold">📋</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-lg font-bold text-black force-black-text no-select-highlight">Header Section</h4>
+                                            <p class="text-gray-300 text-xs">Section 1</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <button class="section-settings px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                                            ⚙️ Settings
                                         </button>
-                                        <button class="delete-section text-red-400 hover:text-red-600">
-                                            🗑️
+                                        <button class="delete-section px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
+                                            🗑️ Delete
                                         </button>
                                     </div>
                                 </div>
 
-                                <div class="section-content min-h-24 p-4 bg-white drop-zone"
+                                <div class="section-content min-h-32 p-6 bg-gradient-to-br from-gray-50 to-white drop-zone border-t border-gray-200"
                                      data-section-index="0">
-                                    <div class="empty-section text-center py-12 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">
-                                        <span class="text-4xl block mb-2">📦</span>
-                                        <p class="text-sm">Drop blocks here to build your section</p>
+                                    <div class="empty-section text-center py-16 text-gray-500 border-2 border-dashed border-blue-300 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-300">
+                                        <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                            <span class="text-white text-2xl">📦</span>
+                                        </div>
+                                        <h4 class="text-lg font-bold text-gray-700 mb-2">Empty Section</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Drag blocks from the library to build your content</p>
+                                        <div class="inline-flex items-center px-4 py-2 bg-blue-100 rounded-full">
+                                            <span class="text-blue-600 text-sm font-medium">👈 Start by dragging a block here</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -227,10 +328,13 @@
                     </div>
 
                     <!-- Add Section Button -->
-                    <div class="p-4 border-t border-gray-200 bg-gray-50">
-                        <button id="addSection" class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors">
-                            <span class="text-2xl block mb-1">➕</span>
-                            Add New Section
+                    <div class="p-6 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+                        <button id="addSection" class="w-full border-2 border-dashed border-green-300 rounded-xl p-6 text-gray-600 hover:border-green-500 hover:text-green-700 hover:bg-green-50 transition-all duration-300 transform hover:scale-105">
+                            <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                                <span class="text-white text-xl font-bold">➕</span>
+                            </div>
+                            <span class="text-lg font-bold block mb-1">Add New Section</span>
+                            <p class="text-sm text-gray-500">Create another section for your template</p>
                         </button>
                     </div>
                 </div>
@@ -265,7 +369,7 @@
         <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-medium text-gray-900" id="blockModalTitle">Edit Block</h3>
-                <button id="closeBlockModal" class="text-gray-400 hover:text-gray-600">
+                <button type="button" id="closeBlockModal" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors">
                     <span class="sr-only">Close</span>
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -278,16 +382,186 @@
             </div>
 
             <div class="mt-6 flex justify-end space-x-3">
-                <button id="cancelBlockEdit" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <button type="button" id="cancelBlockEdit" class="px-6 py-3 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all">
                     Cancel
                 </button>
-                <button id="saveBlockEdit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+                <button type="button" id="saveBlockEdit" class="px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-lg transform hover:scale-105 transition-all">
                     Save Changes
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* Custom CSS for Template Builder */
+/* Force black text utility without altering parent background */
+.force-black-text { color: #111827 !important; }
+.category-bar h4 span { filter: drop-shadow(0 0 1px rgba(0,0,0,0.15)); }
+.no-select-highlight { background: transparent !important; }
+.no-select-highlight::selection { background: transparent; color:#111827; }
+
+/* Remove inadvertent selection background that showed as blue in screenshots */
+.force-black-text::selection { background: rgba(0,0,0,0.05); color:#111827; }
+body ::selection { background: rgba(59,130,246,0.15); }
+.block-item {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px dashed #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.block-item:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.block-item:active {
+    transform: scale(0.98);
+}
+
+.drop-zone {
+    transition: all 0.3s ease;
+}
+
+.drop-zone.dragover {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-color: #3b82f6 !important;
+    transform: scale(1.02);
+}
+
+.section-container {
+    transition: all 0.3s ease;
+}
+
+.section-container:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.block-element {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.block-element:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.empty-section {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.empty-section:hover {
+    background: linear-gradient(135deg, #dbeafe 0%, #c7d2fe 100%);
+    transform: scale(1.01);
+}
+
+/* Smooth scrollbar */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+    #templateCanvas {
+        width: 100% !important;
+        max-width: 1200px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .w-96 {
+        width: 20rem;
+    }
+
+    #templateCanvas {
+        width: 100% !important;
+        max-width: 900px;
+    }
+}
+
+@media (max-width: 768px) {
+    .w-96 {
+        width: 100%;
+        position: fixed;
+        left: -100%;
+        z-index: 50;
+        transition: left 0.3s ease;
+    }
+
+    .w-96.open {
+        left: 0;
+    }
+
+    #templateCanvas {
+        width: 100% !important;
+        max-width: none;
+        margin: 1rem;
+    }
+}
+
+/* Gradient borders */
+.gradient-border {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2px;
+    border-radius: 12px;
+}
+
+.gradient-border-content {
+    background: white;
+    border-radius: 10px;
+}
+
+/* Interactive elements */
+button:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.interactive-bounce:hover {
+    animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translate3d(0, 0, 0);
+    }
+    40%, 43% {
+        transform: translate3d(0, -8px, 0);
+    }
+    70% {
+        transform: translate3d(0, -4px, 0);
+    }
+    90% {
+        transform: translate3d(0, -1px, 0);
+    }
+}
+</style>
 
 <script>
 // Template Builder JavaScript
@@ -312,6 +586,26 @@ document.addEventListener('DOMContentLoaded', function() {
             item.addEventListener('dragstart', function(e) {
                 e.dataTransfer.setData('text/plain', this.dataset.blockType);
                 e.dataTransfer.setData('application/json', this.dataset.blockConfig);
+
+                // Add visual feedback
+                this.style.opacity = '0.5';
+                this.style.transform = 'scale(0.95)';
+
+                // Create drag preview
+                const dragPreview = this.cloneNode(true);
+                dragPreview.style.transform = 'rotate(5deg)';
+                dragPreview.style.opacity = '0.9';
+                document.body.appendChild(dragPreview);
+                e.dataTransfer.setDragImage(dragPreview, 50, 25);
+
+                setTimeout(() => {
+                    document.body.removeChild(dragPreview);
+                }, 1);
+            });
+
+            item.addEventListener('dragend', function(e) {
+                this.style.opacity = '';
+                this.style.transform = '';
             });
         });
 
@@ -319,24 +613,46 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.drop-zone').forEach(zone => {
             zone.addEventListener('dragover', function(e) {
                 e.preventDefault();
-                this.classList.add('bg-blue-50', 'border-blue-300');
+                e.dataTransfer.dropEffect = 'copy';
+                this.classList.add('dragover');
+
+                // Add pulsing animation
+                this.style.animation = 'pulse 1s infinite';
             });
 
             zone.addEventListener('dragleave', function(e) {
-                this.classList.remove('bg-blue-50', 'border-blue-300');
+                // Only remove if we're leaving the zone entirely
+                if (!this.contains(e.relatedTarget)) {
+                    this.classList.remove('dragover');
+                    this.style.animation = '';
+                }
             });
 
             zone.addEventListener('drop', function(e) {
                 e.preventDefault();
-                this.classList.remove('bg-blue-50', 'border-blue-300');
+                this.classList.remove('dragover');
+                this.style.animation = '';
 
                 const blockType = e.dataTransfer.getData('text/plain');
                 const blockConfig = JSON.parse(e.dataTransfer.getData('application/json'));
                 const sectionIndex = parseInt(this.dataset.sectionIndex);
 
-                addBlockToSection(sectionIndex, blockType, blockConfig);
+                // Add success animation
+                this.style.background = '#10b981';
+                this.style.transform = 'scale(1.05)';
+
+                setTimeout(() => {
+                    this.style.background = '';
+                    this.style.transform = '';
+                    addBlockToSection(sectionIndex, blockType, blockConfig);
+                }, 300);
             });
         });
+
+        // Add mobile touch support
+        if ('ontouchstart' in window) {
+            initializeTouchDragDrop();
+        }
     }
 
     function initializeBlockEditing() {
@@ -487,27 +803,227 @@ document.addEventListener('DOMContentLoaded', function() {
         return defaults[blockType] || {};
     }
 
+    function initializeTouchDragDrop() {
+        let dragElement = null;
+        let touchStartPos = { x: 0, y: 0 };
+
+        document.querySelectorAll('.block-item').forEach(item => {
+            item.addEventListener('touchstart', function(e) {
+                dragElement = this;
+                const touch = e.touches[0];
+                touchStartPos = { x: touch.clientX, y: touch.clientY };
+
+                this.style.opacity = '0.7';
+                this.style.transform = 'scale(0.95) rotate(2deg)';
+            });
+
+            item.addEventListener('touchmove', function(e) {
+                if (!dragElement) return;
+                e.preventDefault();
+
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - touchStartPos.x;
+                const deltaY = touch.clientY - touchStartPos.y;
+
+                // Move element
+                this.style.position = 'fixed';
+                this.style.left = touch.clientX - 50 + 'px';
+                this.style.top = touch.clientY - 25 + 'px';
+                this.style.zIndex = '1000';
+
+                // Check drop zones
+                const dropZone = document.elementFromPoint(touch.clientX, touch.clientY);
+                document.querySelectorAll('.drop-zone').forEach(zone => {
+                    zone.classList.remove('dragover');
+                });
+
+                if (dropZone && dropZone.classList.contains('drop-zone')) {
+                    dropZone.classList.add('dragover');
+                }
+            });
+
+            item.addEventListener('touchend', function(e) {
+                if (!dragElement) return;
+
+                const touch = e.changedTouches[0];
+                const dropZone = document.elementFromPoint(touch.clientX, touch.clientY);
+
+                // Reset styles
+                this.style.opacity = '';
+                this.style.transform = '';
+                this.style.position = '';
+                this.style.left = '';
+                this.style.top = '';
+                this.style.zIndex = '';
+
+                document.querySelectorAll('.drop-zone').forEach(zone => {
+                    zone.classList.remove('dragover');
+                });
+
+                if (dropZone && dropZone.classList.contains('drop-zone')) {
+                    const blockType = this.dataset.blockType;
+                    const blockConfig = JSON.parse(this.dataset.blockConfig);
+                    const sectionIndex = parseInt(dropZone.dataset.sectionIndex);
+
+                    addBlockToSection(sectionIndex, blockType, blockConfig);
+                }
+
+                dragElement = null;
+            });
+        });
+    }
+
+    function showSuccessNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+        notification.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <span class="text-xl">✅</span>
+                <span class="font-medium">${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+
+        // Animate out
+        setTimeout(() => {
+            notification.style.transform = 'translateX(full)';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    function showErrorNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+        notification.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <span class="text-xl">❌</span>
+                <span class="font-medium">${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+
+        setTimeout(() => {
+            notification.style.transform = 'translateX(full)';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
     function renderSection(sectionIndex) {
         // Implementation to re-render a section
         // This would update the DOM with the current template data
         console.log('Rendering section', sectionIndex);
+        showSuccessNotification('Section updated successfully!');
     }
 
     function loadBlockEditForm(block) {
         // Implementation to load the appropriate form for the block type
         // This would generate form fields based on the block configuration
         console.log('Loading edit form for block', block);
+
+        const formContent = `
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Block Title</label>
+                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="${block.name || ''}" placeholder="Enter block title">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Block Content</label>
+                    <textarea class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="4" placeholder="Enter block content">${block.content || ''}</textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                        <input type="color" class="w-full h-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="#ffffff">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
+                        <input type="color" class="w-full h-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="#000000">
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('blockEditForm').innerHTML = formContent;
     }
+
+    // Modal control functions
+    window.closeModal = function() {
+        document.getElementById('blockEditModal').classList.add('hidden');
+        selectedBlock = null;
+        selectedSection = null;
+    };
+
+    window.saveBlockChanges = function() {
+        if (selectedSection !== null && selectedBlock !== null) {
+            // Get form values
+            const formInputs = document.querySelectorAll('#blockEditForm input, #blockEditForm textarea');
+            const updatedData = {};
+
+            formInputs.forEach(input => {
+                if (input.type === 'color') {
+                    updatedData[input.previousElementSibling.textContent.toLowerCase().replace(' ', '_')] = input.value;
+                } else {
+                    updatedData[input.placeholder.toLowerCase().replace('enter ', '').replace(' ', '_')] = input.value;
+                }
+            });
+
+            // Update block data
+            if (currentTemplate.templates[0].sections[selectedSection] &&
+                currentTemplate.templates[0].sections[selectedSection].blocks[selectedBlock]) {
+                Object.assign(currentTemplate.templates[0].sections[selectedSection].blocks[selectedBlock].data, updatedData);
+            }
+
+            showSuccessNotification('Block updated successfully!');
+            closeModal();
+            renderSection(selectedSection);
+        }
+    };
 
     // Event listeners
     document.getElementById('saveTemplate').addEventListener('click', saveTemplate);
 
-    document.getElementById('closeBlockModal').addEventListener('click', function() {
-        document.getElementById('blockEditModal').classList.add('hidden');
+    document.getElementById('closeBlockModal').addEventListener('click', function(e) {
+        e.preventDefault();
+        closeModal();
     });
 
-    document.getElementById('cancelBlockEdit').addEventListener('click', function() {
-        document.getElementById('blockEditModal').classList.add('hidden');
+    document.getElementById('cancelBlockEdit').addEventListener('click', function(e) {
+        e.preventDefault();
+        closeModal();
+    });
+
+    document.getElementById('saveBlockEdit').addEventListener('click', function(e) {
+        e.preventDefault();
+        saveBlockChanges();
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('blockEditModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !document.getElementById('blockEditModal').classList.contains('hidden')) {
+            closeModal();
+        }
     });
 
     document.getElementById('addSection').addEventListener('click', function() {

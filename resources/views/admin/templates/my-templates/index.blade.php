@@ -9,12 +9,12 @@
         <p class="text-gray-600">Kelola template yang telah Anda install atau buat</p>
     </div>
     <div class="flex space-x-2">
-        <a href="{{ route('templates.gallery.index') }}"
+        <a href="{{ route('admin.templates.gallery.index') }}"
            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
             <span class="mr-2">🎨</span>
             Browse Gallery
         </a>
-        <a href="{{ route('templates.builder.create') }}"
+        <a href="{{ route('admin.templates.builder.create') }}"
            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
             <span class="mr-2">➕</span>
             Create New Template
@@ -135,7 +135,7 @@
             </button>
 
             @if($request->search || $request->source)
-            <a href="{{ route('templates.my-templates') }}"
+            <a href="{{ route('admin.templates.my-templates') }}"
                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 Clear
             </a>
@@ -193,12 +193,12 @@
                     <!-- Actions -->
                     <div class="flex items-center justify-between">
                         <div class="flex space-x-2">
-                            <a href="{{ route('templates.my-templates.show', $template) }}"
+                            <a href="{{ route('admin.templates.my-templates.show', $template) }}"
                                class="text-blue-600 hover:text-blue-900 text-sm">
                                 View Details
                             </a>
                             @if(!$template->is_active)
-                            <form method="POST" action="{{ route('templates.my-templates.activate', $template) }}" class="inline">
+                            <form method="POST" action="{{ route('admin.templates.my-templates.activate', $template) }}" class="inline">
                                 @csrf
                                 <button type="submit"
                                         class="text-green-600 hover:text-green-900 text-sm"
@@ -224,11 +224,11 @@
                                  x-transition
                                  class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
                                 <div class="py-1">
-                                    <a href="{{ route('templates.builder.edit', $template) }}"
+                                    <a href="{{ route('admin.templates.builder.edit', $template) }}"
                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         Edit Template
                                     </a>
-                                    <form method="POST" action="{{ route('templates.my-templates.duplicate', $template) }}" class="inline w-full">
+                                    <form method="POST" action="{{ route('admin.templates.my-templates.duplicate', $template) }}" class="inline w-full">
                                         @csrf
                                         <button type="submit"
                                                 class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -236,7 +236,7 @@
                                         </button>
                                     </form>
                                     @if($template->is_active)
-                                    <form method="POST" action="{{ route('templates.my-templates.deactivate', $template) }}" class="inline w-full">
+                                    <form method="POST" action="{{ route('admin.templates.my-templates.deactivate', $template) }}" class="inline w-full">
                                         @csrf
                                         <button type="submit"
                                                 class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -246,7 +246,7 @@
                                     </form>
                                     @endif
                                     @if(!$template->is_active)
-                                    <form method="POST" action="{{ route('templates.my-templates.destroy', $template) }}" class="inline w-full">
+                                    <form method="POST" action="{{ route('admin.templates.my-templates.destroy', $template) }}" class="inline w-full">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
@@ -287,12 +287,12 @@
                 @endif
             </p>
             <div class="flex justify-center space-x-4">
-                <a href="{{ route('templates.gallery.index') }}"
+                <a href="{{ route('admin.templates.gallery.index') }}"
                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
                     <span class="mr-2">🎨</span>
                     Browse Template Gallery
                 </a>
-                <a href="{{ route('templates.builder.create') }}"
+                <a href="{{ route('admin.templates.builder.create') }}"
                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                     <span class="mr-2">➕</span>
                     Create Custom Template
@@ -305,7 +305,7 @@
     <!-- Import Section -->
     <div class="bg-white shadow rounded-lg p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Import Template</h3>
-        <form method="POST" action="{{ route('templates.import') }}" enctype="multipart/form-data" class="space-y-4">
+        <form method="POST" action="{{ route('admin.templates.import') }}" enctype="multipart/form-data" class="space-y-4">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

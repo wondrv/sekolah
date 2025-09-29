@@ -74,20 +74,25 @@ class TemplateBuilderController extends Controller
     {
         $this->authorize('update', $userTemplate);
 
-        $userTemplate->load(['templates.sections.blocks']);
+        try {
+            $userTemplate->load(['templates.sections.blocks']);
 
-        $blockTypes = $this->getAvailableBlockTypes();
-        $categories = TemplateCategory::active()->ordered()->get();
+            $blockTypes = $this->getAvailableBlockTypes();
+            $categories = TemplateCategory::active()->ordered()->get();
 
-        // Get template structure for builder
-        $templateStructure = $this->buildTemplateStructure($userTemplate);
+            // Get template structure for builder
+            $templateStructure = $this->buildTemplateStructure($userTemplate);
 
-        return view('admin.templates.builder.edit', compact(
-            'userTemplate',
-            'blockTypes',
-            'categories',
-            'templateStructure'
-        ));
+            return view('admin.templates.builder.edit', compact(
+                'userTemplate',
+                'blockTypes',
+                'categories',
+                'templateStructure'
+            ));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.templates.my-templates')
+                ->with('error', 'Error loading template builder: ' . $e->getMessage());
+        }
     }
 
     public function update(Request $request, UserTemplate $userTemplate)
@@ -320,7 +325,7 @@ class TemplateBuilderController extends Controller
 
     protected function getAvailableBlockTypes()
     {
-        return [
+        $blockTypes = [
             'hero' => [
                 'name' => 'Hero Section',
                 'description' => 'Header besar dengan judul, subjudul, dan tombol',
@@ -409,6 +414,15 @@ class TemplateBuilderController extends Controller
                 ],
             ],
         ];
+
+        // Group blocks by category
+        $grouped = [];
+        foreach ($blockTypes as $type => $config) {
+            $category = $config['category'] ?? 'other';
+            $grouped[$category][$type] = $config;
+        }
+
+        return $grouped;
     }
 
     protected function getDefaultTemplateStructure()
@@ -451,7 +465,15 @@ class TemplateBuilderController extends Controller
     {
         $templateData = $userTemplate->template_data;
 
-        if (!isset($templateData['templates'])) {
+        // Handle case where template_data might be a string (JSON)
+        if (is_string($templateData)) {
+            $templateData = json_decode($templateData, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return $this->getDefaultTemplateStructure();
+            }
+        }
+
+        if (!is_array($templateData) || !isset($templateData['templates'])) {
             return $this->getDefaultTemplateStructure();
         }
 
