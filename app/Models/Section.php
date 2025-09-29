@@ -30,4 +30,24 @@ class Section extends Model
     {
         return $this->hasMany(Block::class)->where('active', true)->orderBy('order');
     }
+
+    /**
+     * Auto-generate unique key if not provided.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->key)) {
+                $base = \Illuminate\Support\Str::slug($model->name ?? 'section') ?: 'section';
+                $candidate = $base;
+                $i = 1;
+                while (self::where('key', $candidate)->exists()) {
+                    $candidate = $base.'-'.(++$i);
+                }
+                $model->key = $candidate;
+            }
+        });
+    }
 }

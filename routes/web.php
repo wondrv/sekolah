@@ -12,9 +12,15 @@ use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\Admin;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PublicTemplatePreviewController;
 
 // Public routes (no login required)
 Route::get('/', [App\Http\Controllers\PureCMSController::class, 'handleRequest'])->defaults('path', '/')->name('home');
+
+// Signed public template preview (no auth). This sets session flags then redirects to desired path with preview query.
+Route::get('/preview/template/{userTemplate}', [PublicTemplatePreviewController::class, 'show'])
+    ->middleware('signed')
+    ->name('public.template-preview');
 
 // Dynamic content routes
 // Backward compatibility route with tentang-kami prefix - redirects to clean URLs

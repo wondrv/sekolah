@@ -181,6 +181,13 @@
                             {{ ucfirst($template->source) }}
                         </span>
                     </div>
+                                @if($template->draft_template_data)
+                                <div class="mb-2">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        📝 Draft Changes
+                                    </span>
+                                </div>
+                                @endif
 
                     @if($template->description)
                     <p class="text-sm text-gray-600 mb-3">{{ Str::limit($template->description, 100) }}</p>
@@ -197,6 +204,20 @@
                                class="text-blue-600 hover:text-blue-900 text-sm">
                                 View Details
                             </a>
+                                        @if(!$template->is_active)
+                                        <form method="POST" action="{{ route('admin.templates.my-templates.preview-start', $template) }}" class="inline">
+                                            @csrf
+                                            <input type="hidden" name="path" value="/">
+                                            <button type="submit" class="text-yellow-600 hover:text-yellow-800 text-sm">Preview</button>
+                                        </form>
+                                        @if($template->draft_template_data)
+                                        <form method="POST" action="{{ route('admin.templates.my-templates.draft.preview', $template) }}" class="inline">
+                                            @csrf
+                                            <input type="hidden" name="path" value="/">
+                                            <button type="submit" class="text-amber-600 hover:text-amber-800 text-sm">Preview Draft</button>
+                                        </form>
+                                        @endif
+                                        @endif
                             @if(!$template->is_active)
                             <form method="POST" action="{{ route('admin.templates.my-templates.activate', $template) }}" class="inline">
                                 @csrf

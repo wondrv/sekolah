@@ -46,6 +46,42 @@
                     Activate
                 </button>
             </form>
+            <form method="POST" action="{{ route('admin.templates.my-templates.preview-start', $userTemplate) }}" class="inline">
+                @csrf
+                <input type="hidden" name="path" value="/">
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-yellow-800 bg-yellow-100 hover:bg-yellow-200">
+                    <span class="mr-2">👁️</span>
+                    Preview
+                </button>
+            </form>
+            @if($userTemplate->draft_template_data)
+            <form method="POST" action="{{ route('admin.templates.my-templates.draft.preview', $userTemplate) }}" class="inline">
+                @csrf
+                <input type="hidden" name="path" value="/">
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-amber-300 rounded-md shadow-sm text-sm font-medium text-amber-800 bg-amber-100 hover:bg-amber-200">
+                    <span class="mr-2">📝</span>
+                    Preview Draft
+                </button>
+            </form>
+            <form method="POST" action="{{ route('admin.templates.my-templates.draft.publish', $userTemplate) }}" class="inline" onsubmit="return confirm('Publish draft changes?')">
+                @csrf
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-orange-300 rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+                    <span class="mr-2">🚀</span>
+                    Publish Draft
+                </button>
+            </form>
+            <form method="POST" action="{{ route('admin.templates.my-templates.draft.discard', $userTemplate) }}" class="inline" onsubmit="return confirm('Discard draft changes?')">
+                @csrf
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-800 bg-red-100 hover:bg-red-200">
+                    <span class="mr-2">🗑️</span>
+                    Discard Draft
+                </button>
+            </form>
+            @endif
             @else
             <form method="POST" action="{{ route('admin.templates.my-templates.deactivate', $userTemplate) }}" class="inline">
                 @csrf
@@ -252,6 +288,51 @@
         </form>
     </div>
 
+    <!-- Signed Public Preview Link -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Signed Public Preview Link</h3>
+        <p class="text-sm text-gray-600 mb-4">Generate a temporary, shareable link so others can preview this template {{ $userTemplate->draft_template_data ? ' (optionally including current draft)' : '' }} without logging in. Link automatically expires.</p>
+        <form method="POST" action="{{ route('admin.templates.my-templates.signed-preview-link', $userTemplate) }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            @csrf
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Expires In (Minutes)</label>
+                <select name="expires_minutes" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="30">30 m</option>
+                    <option value="60">1 h</option>
+                    <option value="120" selected>2 h</option>
+                    <option value="360">6 h</option>
+                    <option value="720">12 h</option>
+                    <option value="1440">24 h</option>
+                    <option value="2880">2 d</option>
+                    <option value="4320">3 d (max)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Start Path (optional)</label>
+                <input type="text" name="path" placeholder="/" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            @if($userTemplate->draft_template_data)
+            <div class="flex items-center space-x-2 mt-6 md:mt-0">
+                <input id="include_draft" type="checkbox" name="include_draft" value="1" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                <label for="include_draft" class="text-sm font-medium text-gray-700">Include Draft</label>
+            </div>
+            @endif
+            <div>
+                <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">Generate Link</button>
+            </div>
+        </form>
+        @if(session('signed_preview_link'))
+            <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+                <p class="text-sm text-green-700 font-medium mb-1">Generated Link:</p>
+                <div class="flex items-center justify-between">
+                    <code class="text-xs break-all text-green-800">{{ session('signed_preview_link') }}</code>
+                    <button type="button" onclick="navigator.clipboard.writeText('{{ session('signed_preview_link') }}')" class="ml-4 px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">Copy</button>
+                </div>
+                <p class="text-xs text-green-600 mt-2">Anyone with this link can preview until it expires. They will see a banner indicating shared preview.</p>
+            </div>
+        @endif
+    </div>
+
     @if(!$userTemplate->is_active)
     <!-- Danger Zone -->
     <div class="bg-white shadow rounded-lg p-6 border-l-4 border-red-400">
@@ -271,6 +352,77 @@
         </form>
     </div>
     @endif
+
+    <!-- Revisions Section -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Revisions</h3>
+            <span class="text-xs text-gray-500">Showing latest {{ min(($userTemplate->revisions->count() ?? 0), 20) }} entries</span>
+        </div>
+        @if($userTemplate->revisions && $userTemplate->revisions->count() > 0)
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left font-medium text-gray-600">Time</th>
+                        <th class="px-4 py-2 text-left font-medium text-gray-600">Type</th>
+                        <th class="px-4 py-2 text-left font-medium text-gray-600">Note</th>
+                        <th class="px-4 py-2 text-left font-medium text-gray-600">Blocks</th>
+                        <th class="px-4 py-2 text-left font-medium text-gray-600">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 bg-white">
+                    @foreach($userTemplate->revisions as $rev)
+                        @php
+                            $tplData = $rev->snapshot['template_data']['templates'] ?? [];
+                            $blockCount = 0;
+                            foreach($tplData as $t){
+                                if(isset($t['sections'])){
+                                    foreach($t['sections'] as $s){
+                                        $blockCount += isset($s['blocks']) ? count($s['blocks']) : 0;
+                                    }
+                                }
+                            }
+                        @endphp
+                        <tr>
+                            <td class="px-4 py-2 whitespace-nowrap text-gray-700">{{ $rev->created_at->format('Y-m-d H:i:s') }}</td>
+                            <td class="px-4 py-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                    @switch($rev->type)
+                                        @case('activate') bg-blue-100 text-blue-800 @break
+                                        @case('after_activate') bg-indigo-100 text-indigo-800 @break
+                                        @case('publish_draft') bg-amber-100 text-amber-800 @break
+                                        @case('after_publish_draft') bg-yellow-100 text-yellow-800 @break
+                                        @case('pre_restore') bg-purple-100 text-purple-800 @break
+                                        @case('post_restore') bg-green-100 text-green-800 @break
+                                        @default bg-gray-100 text-gray-700
+                                    @endswitch">
+                                    {{ str_replace('_',' ',$rev->type) }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-gray-600 max-w-xs truncate" title="{{ $rev->note }}">{{ $rev->note ?? '—' }}</td>
+                            <td class="px-4 py-2 text-gray-700">{{ $blockCount }}</td>
+                            <td class="px-4 py-2 space-x-2">
+                                <form method="POST" action="{{ route('admin.templates.my-templates.revisions.restore', [$userTemplate, $rev]) }}" class="inline" onsubmit="return confirm('Restore this revision? Current state will be snapshotted.')">
+                                    @csrf
+                                    <button class="px-3 py-1 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700">Restore</button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.templates.my-templates.revisions.delete', [$userTemplate, $rev]) }}" class="inline" onsubmit="return confirm('Delete this revision?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="px-3 py-1 text-xs font-semibold rounded bg-red-600 text-white hover:bg-red-700">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+            <p class="text-sm text-gray-500">No revisions recorded yet. Activations and draft publishes will create revisions automatically.</p>
+        @endif
+        <p class="mt-3 text-xs text-gray-400">Revisions auto-created on activation, draft publish, and restore operations (pre & post). Limit visible: 20 latest.</p>
+    </div>
 </div>
 
 <script>

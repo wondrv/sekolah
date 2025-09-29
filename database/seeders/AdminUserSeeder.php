@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -14,18 +13,25 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Delete any existing admin users to ensure only one exists
-        User::where('email', 'admin@sekolah.local')->delete();
-
-        // Create the single admin user for CMS
-        User::create([
-            'name' => 'Admin Sekolah',
-            'email' => 'admin@sekolah.local',
-            'email_verified_at' => now(),
-            'password' => Hash::make('password123'),
-            'is_admin' => true,
-        ]);
-
-        $this->command->info('Single admin user created: admin@sekolah.local');
+        $email = 'admin@school.local';
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            $user = User::create([
+                'name' => 'Administrator',
+                'email' => $email,
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'), // default password
+                'is_admin' => true,
+                'role' => 'admin',
+            ]);
+            $this->command?->info("Admin user created: {$email} / password");
+        } else {
+            // Ensure admin flags consistent
+            $user->update([
+                'is_admin' => true,
+                'role' => $user->role ?? 'admin',
+            ]);
+            $this->command?->warn('Admin user already exists; ensuring flags are set.');
+        }
     }
 }

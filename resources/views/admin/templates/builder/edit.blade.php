@@ -41,6 +41,19 @@
                 Preview
             </a>
 
+            @if($userTemplate->draft_template_data)
+            <span class="inline-flex items-center px-3 py-2 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                📝 Draft Exists
+            </span>
+            @endif
+
+            <button id="saveDraft"
+                    type="button"
+                    class="inline-flex items-center px-4 py-2 border border-amber-300 rounded-md shadow-sm text-sm font-medium text-amber-900 bg-amber-100 hover:bg-amber-200">
+                <span class="mr-2">📝</span>
+                Save Draft
+            </button>
+
             <button id="saveTemplate"
                     class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
                 <span class="mr-2">💾</span>
@@ -53,6 +66,26 @@
 
 @section('content')
 <div id="templateBuilder" class="h-screen flex">
+    @if($userTemplate->draft_template_data)
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 z-40 mt-2">
+        <div class="px-4 py-2 rounded-lg bg-amber-500 text-black text-xs shadow font-semibold flex items-center space-x-3 border border-amber-600">
+            <span>📝 You are editing a template that has unpublished draft changes.</span>
+            <form method="POST" action="{{ route('admin.templates.my-templates.draft.preview', $userTemplate) }}" class="inline">
+                @csrf
+                <input type="hidden" name="path" value="/">
+                <button class="underline hover:text-black/70" type="submit">Preview Draft</button>
+            </form>
+            <form method="POST" action="{{ route('admin.templates.my-templates.draft.publish', $userTemplate) }}" class="inline" onsubmit="return confirm('Publish draft changes now?')">
+                @csrf
+                <button class="underline hover:text-black/70" type="submit">Publish Draft</button>
+            </form>
+            <form method="POST" action="{{ route('admin.templates.my-templates.draft.discard', $userTemplate) }}" class="inline" onsubmit="return confirm('Discard draft changes? This cannot be undone.')">
+                @csrf
+                <button class="underline text-red-800 hover:text-red-600" type="submit">Discard</button>
+            </form>
+        </div>
+    </div>
+    @endif
     <!-- Sidebar - Block Library -->
     <div class="w-96 bg-gradient-to-br from-gray-50 to-gray-100 border-r border-gray-200 flex flex-col shadow-lg">
         <div class="flex-shrink-0 px-6 py-6 border-b border-gray-200 bg-white">
@@ -742,7 +775,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderSection(sectionIndex);
     }
 
-    function saveTemplate() {
+    function saveTemplate(saveAsDraft = false) {
         fetch(`{{ route('admin.templates.builder.update', $userTemplate) }}`, {
             method: 'PUT',
             headers: {
@@ -752,22 +785,28 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({
                 name: '{{ $userTemplate->name }}',
                 description: '{{ $userTemplate->description }}',
-                template_data: currentTemplate
+                template_data: currentTemplate,
+                save_as_draft: saveAsDraft
             })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                document.getElementById('autoSaveStatus').textContent = 'All changes saved';
+                document.getElementById('autoSaveStatus').textContent = saveAsDraft ? 'Draft saved' : 'All changes saved';
                 document.getElementById('autoSaveIndicator').classList.add('hidden');
+                if (saveAsDraft) {
+                    showSuccessNotification('Draft saved successfully!');
+                }
             } else {
                 document.getElementById('autoSaveStatus').textContent = 'Save failed';
                 console.error('Save failed:', data.message);
+                showErrorNotification(data.message || 'Save failed');
             }
         })
         .catch(error => {
             document.getElementById('autoSaveStatus').textContent = 'Save failed';
             console.error('Save error:', error);
+            showErrorNotification('Save error occurred');
         });
     }
 
@@ -995,7 +1034,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Event listeners
-    document.getElementById('saveTemplate').addEventListener('click', saveTemplate);
+    document.getElementById('saveTemplate').addEventListener('click', () => saveTemplate(false));
+    document.getElementById('saveDraft').addEventListener('click', () => saveTemplate(true));
 
     document.getElementById('closeBlockModal').addEventListener('click', function(e) {
         e.preventDefault();

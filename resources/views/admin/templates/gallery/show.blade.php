@@ -68,7 +68,17 @@
                         class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                         onclick="return confirm('Install this template?')">
                     <span class="mr-2">📥</span>
-                    Install Template
+                    Install
+                </button>
+            </form>
+            <form method="POST" action="{{ route('admin.templates.gallery.install', $template) }}" class="inline">
+                @csrf
+                <input type="hidden" name="activate" value="1" />
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                        onclick="return confirm('Install dan langsung aktifkan template ini?')">
+                    <span class="mr-2">⚡</span>
+                    Install & Aktifkan
                 </button>
             </form>
             @endif
@@ -78,6 +88,11 @@
                 <span class="mr-2">👁️</span>
                 Preview
             </button>
+            <a href="{{ route('admin.templates.gallery.live-preview', $template) }}"
+               class="inline-flex items-center px-4 py-2 border border-indigo-300 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                <span class="mr-2">⚡</span>
+                Live Preview
+            </a>
         </div>
     </div>
 </div>

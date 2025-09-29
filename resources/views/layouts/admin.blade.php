@@ -223,6 +223,39 @@
                     <div class="flex items-center space-x-4">
                         @yield('header-actions')
 
+                        <!-- Quick Template Switcher -->
+                        @php
+                            try {
+                                $quickTemplates = \App\Models\UserTemplate::byUser()->orderByDesc('is_active')->orderBy('name')->get(['id','name','is_active']);
+                            } catch (Exception $e) { $quickTemplates = collect(); }
+                        @endphp
+                        @if(isset($quickTemplates) && $quickTemplates->count() > 0)
+                        <div x-data="{ open:false }" class="relative">
+                            <button @click="open=!open" class="inline-flex items-center px-3 py-1.5 text-sm rounded-lg border {{ $quickTemplates->first(fn($t)=>$t->is_active)?'border-green-300 bg-green-50 text-green-700':'border-gray-300 bg-gray-50 text-gray-700' }} hover:bg-white shadow-sm">
+                                🎨 <span class="ml-2">{{ optional($quickTemplates->first(fn($t)=>$t->is_active))->name ?? 'Pilih Template' }}</span>
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="open" @click.away="open=false" x-transition class="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-2 space-y-1">
+                                @foreach($quickTemplates as $qt)
+                                    <div class="flex items-center justify-between group {{ $qt->is_active ? 'bg-green-50 border border-green-200 rounded-md px-2 py-1' : 'px-2 py-1 rounded-md hover:bg-gray-50' }}">
+                                        <div class="text-xs font-medium truncate max-w-[120px] {{ $qt->is_active ? 'text-green-700' : 'text-gray-700' }}" title="{{ $qt->name }}">
+                                            {{ $qt->name }}
+                                        </div>
+                                        @if(!$qt->is_active)
+                                            <form method="POST" action="{{ route('admin.templates.my-templates.activate', $qt->id) }}" onsubmit="open=false" class="inline">
+                                                @csrf
+                                                <button class="text-[10px] px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Aktifkan</button>
+                                            </form>
+                                        @else
+                                            <span class="text-[10px] px-2 py-0.5 rounded bg-green-600 text-white">Active</span>
+                                        @endif
+                                    </div>
+                                @endforeach
+                                <a href="{{ route('admin.templates.my-templates') }}" class="block mt-2 text-center text-[11px] text-blue-600 hover:underline">Kelola Template »</a>
+                            </div>
+                        </div>
+                        @endif
+
                         <!-- Clear Cache Button -->
                         <form method="POST" action="{{ route('admin.cache.clear') }}" class="inline">
                             @csrf

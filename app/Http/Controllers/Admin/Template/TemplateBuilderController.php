@@ -103,23 +103,36 @@ class TemplateBuilderController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'template_data' => 'required|array',
+            'save_as_draft' => 'sometimes|boolean',
         ]);
 
         try {
-            $userTemplate->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'template_data' => $request->template_data,
-            ]);
+            $saveAsDraft = $request->boolean('save_as_draft');
 
-            // Rebuild templates from data if this is the active template
-            if ($userTemplate->is_active) {
-                $userTemplate->applyToSite();
+            if ($saveAsDraft) {
+                // Initialize draft if none
+                $userTemplate->ensureDraftInitialized();
+                $userTemplate->update([
+                    'name' => $request->name,
+                    'description' => $request->description,
+                    'draft_template_data' => $request->template_data,
+                ]);
+            } else {
+                $userTemplate->update([
+                    'name' => $request->name,
+                    'description' => $request->description,
+                    'template_data' => $request->template_data,
+                ]);
+                // Apply only if active
+                if ($userTemplate->is_active) {
+                    $userTemplate->applyToSite();
+                }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Template berhasil disimpan!',
+                'message' => $saveAsDraft ? 'Draft berhasil disimpan!' : 'Template berhasil disimpan!',
+                'draft' => $saveAsDraft,
             ]);
 
         } catch (\Exception $e) {

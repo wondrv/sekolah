@@ -28,7 +28,7 @@ class TemplateRenderService
     public function renderForRequest($defaultView = null, $data = [])
     {
         $template = $this->findTemplateForRequest();
-        
+
         if (!$template) {
             // Fall back to default view if no template assigned
             return $defaultView ? view($defaultView, $data) : null;
@@ -46,6 +46,14 @@ class TemplateRenderService
         $routeName = $currentRoute ? $currentRoute->getName() : null;
         $routePath = $this->request->path();
 
+        // Preview mode: build from in-session user template (no DB Template query needed)
+        if (app()->bound('preview.user_template')) {
+            $previewTemplate = $this->buildPreviewTemplate(app('preview.user_template'), $routePath, $routeName);
+            if ($previewTemplate) {
+                return $previewTemplate;
+            }
+        }
+
         // Get all active assignments ordered by priority
         $assignments = TemplateAssignment::with('template')
             ->where('active', true)
@@ -62,6 +70,100 @@ class TemplateRenderService
     }
 
     /**
+     * Build an in-memory Template model (not persisted) from a UserTemplate's template_data for preview
+     */
+    protected function buildPreviewTemplate($userTemplate, string $routePath, ?string $routeName)
+    {
+        if (!$userTemplate->template_data || !isset($userTemplate->template_data['templates'])) {
+            return null;
+        }
+
+        // Determine slug candidates for matching (home, route name, last segment)
+        $segments = explode('/', trim($routePath, '/'));
+        $lastSegment = $segments && $segments[0] !== '' ? end($segments) : 'home';
+        $candidates = array_filter(array_unique([
+            $routeName,
+            $lastSegment,
+            $routePath === '/' || $routePath === '' ? 'home' : null,
+        ]));
+
+        $matchedTemplateData = null;
+        foreach ($userTemplate->template_data['templates'] as $tpl) {
+            if (!isset($tpl['slug'])) continue;
+            if (in_array($tpl['slug'], $candidates)) {
+                $matchedTemplateData = $tpl;
+                break;
+            }
+        }
+
+        // Fallback: first active template
+        if (!$matchedTemplateData) {
+            $matchedTemplateData = collect($userTemplate->template_data['templates'])
+                ->first(fn($t) => ($t['active'] ?? true) === true);
+        }
+
+        if (!$matchedTemplateData) {
+            return null;
+        }
+
+        // Create in-memory Template instance
+        $template = new \App\Models\Template([
+            'user_template_id' => $userTemplate->id,
+            'name' => $matchedTemplateData['name'] ?? 'Preview Template',
+            'slug' => $matchedTemplateData['slug'] ?? 'preview',
+            'description' => $matchedTemplateData['description'] ?? null,
+            'active' => true,
+            'type' => $matchedTemplateData['type'] ?? 'page',
+            'layout_settings' => $matchedTemplateData['layout_settings'] ?? null,
+            'is_global' => $matchedTemplateData['is_global'] ?? false,
+            'sort_order' => $matchedTemplateData['sort_order'] ?? 0,
+            'template_version' => $userTemplate->galleryTemplate->version ?? 'preview',
+            'metadata' => $matchedTemplateData['metadata'] ?? null,
+        ]);
+
+        // Build sections and blocks collections
+        $sections = collect();
+        if (isset($matchedTemplateData['sections'])) {
+            foreach ($matchedTemplateData['sections'] as $sectionData) {
+                $section = new \App\Models\Section([
+                    'name' => $sectionData['name'] ?? 'Section',
+                    'order' => $sectionData['order'] ?? 0,
+                    'settings' => $sectionData['settings'] ?? null,
+                    'active' => $sectionData['active'] ?? true,
+                ]);
+
+                $blocks = collect();
+                if (isset($sectionData['blocks'])) {
+                    foreach ($sectionData['blocks'] as $blockData) {
+                        $block = new \App\Models\Block([
+                            'type' => $blockData['type'] ?? 'unknown',
+                            'name' => $blockData['name'] ?? ($blockData['type'] ?? 'Block'),
+                            'order' => $blockData['order'] ?? 0,
+                            'content' => $blockData['content'] ?? null,
+                            'settings' => $blockData['settings'] ?? null,
+                            'style_settings' => $blockData['style_settings'] ?? null,
+                            'css_class' => $blockData['css_class'] ?? null,
+                            'visible_desktop' => $blockData['visible_desktop'] ?? true,
+                            'visible_tablet' => $blockData['visible_tablet'] ?? true,
+                            'visible_mobile' => $blockData['visible_mobile'] ?? true,
+                            'active' => $blockData['active'] ?? true,
+                        ]);
+                        $blocks->push($block);
+                    }
+                }
+
+                // Attach blocks relation (unsaved) via setRelation
+                $section->setRelation('blocks', $blocks->sortBy('order')->values());
+                $sections->push($section);
+            }
+        }
+
+        $template->setRelation('sections', $sections->sortBy('order')->values());
+
+        return $template;
+    }
+
+    /**
      * Check if the current request matches a template assignment
      */
     protected function matchesAssignment(TemplateAssignment $assignment, $routeName, $routePath)
@@ -73,7 +175,7 @@ class TemplateRenderService
             }
         }
 
-        // Check page slug match  
+        // Check page slug match
         if ($assignment->page_slug) {
             $segments = explode('/', trim($routePath, '/'));
             $lastSegment = end($segments);
@@ -105,7 +207,7 @@ class TemplateRenderService
     public function renderPage(string $routePattern, ?string $pageSlug = null, array $data = []): string
     {
         $template = TemplateAssignment::findTemplateFor($routePattern, $pageSlug);
-        
+
         if (!$template) {
             return $this->renderFallback($data);
         }
@@ -119,26 +221,26 @@ class TemplateRenderService
     public function renderTemplate(Template $template, array $data = []): string
     {
         $template->load('sections.blocks');
-        
+
         $renderedSections = [];
-        
+
         foreach ($template->sections as $section) {
             if (!$section->active) continue;
-            
+
             $renderedBlocks = [];
-            
+
             foreach ($section->blocks as $block) {
                 if (!$block->active) continue;
-                
+
                 $renderedBlocks[] = $this->renderBlock($block, $data);
             }
-            
+
             $renderedSections[] = [
                 'section' => $section,
                 'blocks' => $renderedBlocks,
             ];
         }
-        
+
         return View::make('templates.render', [
             'template' => $template,
             'sections' => $renderedSections,
@@ -153,10 +255,10 @@ class TemplateRenderService
     {
         $blockData = array_merge($block->data ?? [], $data);
         $viewName = "components.blocks.{$block->type}";
-        
+
         // Check if block should be visible on current device
         // This would typically be handled by CSS, but we can also do server-side filtering
-        
+
         if (View::exists($viewName)) {
             return View::make($viewName, [
                 'block' => $block,
@@ -165,7 +267,7 @@ class TemplateRenderService
                 'cssClass' => $block->css_class ?? '',
             ])->render();
         }
-        
+
         // Fallback for unknown block types
         return View::make('components.blocks.default', [
             'block' => $block,
@@ -280,7 +382,7 @@ class TemplateRenderService
     {
         $this->themeSettings = Cache::remember('theme_settings', 3600, function () {
             $settings = ThemeSetting::pluck('value', 'key')->toArray();
-            
+
             // Parse JSON values
             foreach ($settings as $key => $value) {
                 $decoded = json_decode($value, true);
@@ -307,7 +409,7 @@ class TemplateRenderService
     public function generateCssVariables()
     {
         $css = ':root {';
-        
+
         if (isset($this->themeSettings['colors'])) {
             foreach ($this->themeSettings['colors'] as $name => $value) {
                 $css .= "--color-{$name}: {$value};";
@@ -327,7 +429,7 @@ class TemplateRenderService
         }
 
         $css .= '}';
-        
+
         return $css;
     }
 

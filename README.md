@@ -248,14 +248,8 @@ sekolah/
 │   │   └── Public/             # Public-facing controllers
 │   ├── Models/                 # Eloquent models
 │   │   ├── Setting.php         # CMS settings
-│   │   ├── Template.php        # Homepage templates
-│   │   ├── Block.php           # Content blocks
-│   │   └── [content models]    # Posts, Pages, Events, etc.
 │   └── Support/
 │       └── Theme.php           # Theme helper class
-├── database/
-│   ├── migrations/             # Database schema
-│   └── seeders/
 │       └── DefaultThemeSeeder.php # CMS setup
 ├── resources/
 │   ├── views/
@@ -273,10 +267,6 @@ sekolah/
 
 ## 🧪 Testing Your CMS
 
-After installation, test these key features:
-
-1. **Homepage Customization**
-   - Access admin dashboard
    - Navigate to Templates → Homepage
    - Add/remove sections and blocks
    - Verify changes appear on homepage
@@ -290,10 +280,6 @@ After installation, test these key features:
    - Create a test news post
    - Add an upcoming event
    - Upload photos to a gallery
-
-4. **Menu Management**
-   - Edit the primary menu
-   - Add/remove menu items
    - Verify changes in navigation
 
 ## 🔧 Customization Guide
@@ -301,18 +287,12 @@ After installation, test these key features:
 ### Adding New Block Types
 1. Create a new Blade component in `resources/views/components/blocks/`
 2. Define the block configuration in the Block model
-3. Add the block type to the template builder
-
 ### Custom CSS Modifications
 ```css
 /* In resources/css/app.css */
-@layer components {
-  .custom-school-button {
     @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded;
   }
 }
-```
-
 ### Adding New Content Types
 1. Create migration: `php artisan make:migration create_new_content_table`
 2. Create model: `php artisan make:model NewContent`
@@ -348,31 +328,303 @@ We welcome contributions! Please follow these steps:
 - Custom field builder for content types
 - Advanced user roles and permissions
 - E-commerce integration for school merchandise
-- Learning Management System (LMS) features
-
-## 📄 License
 
 This project is open-sourced software licensed under the [MIT License](LICENSE).
-
-## 💬 Support & Community
-
-### Getting Help
 - 📚 **Documentation**: This README covers most use cases
 - 🐛 **Bug Reports**: Open an issue on GitHub
-- 💡 **Feature Requests**: Suggest improvements via GitHub issues
-- 💬 **Community**: Join our Discord server for discussions
-
+-  **Community**: Join our Discord server for discussions
 ### Professional Support
-For schools needing custom development or professional support:
 - Custom theme development
-- Advanced feature implementation
 - Training for non-technical staff
-- Hosting and maintenance services
 
----
 
 **Built with ❤️ for schools worldwide**
+
+## 🧪 Live Preview & Draft Workflow
+
+The CMS includes a WordPress‑style live preview system plus a draft layer for safe iteration.
+
+### 🔍 Live Preview (Non-Destructive)
+Use this when you want to see an installed (but not active) template applied to the frontend without affecting visitors.
+
+Flow:
+1. Admin → Template System → My Templates
+2. Klik tombol Preview pada template yang belum aktif
+3. Frontend terbuka dengan `?preview=1` + banner kuning “Preview Mode”
+4. Jelajahi halaman; sistem mencocokkan slug/route otomatis
+5. Klik Keluar Preview untuk kembali normal
+6. Klik Activate jika ingin menerapkan
+
+### ✏️ Draft Editing (Safe Iteration)
+- `template_data` = versi LIVE (ditampilkan publik)
+- `draft_template_data` = versi DRAFT (belum diterapkan)
+- Preview Draft = render draft di frontend (banner amber) tanpa publish
+
+Tindakan:
+- Preview Draft → Lihat hasil perubahan
+- Publish Draft → Terapkan ke live & hapus draft
+### 🧠 Internal Flow
+| Feature | Mechanism |
+|---------|-----------|
+| Preview Template | Session: `preview_user_template_id` |
+| Preview Draft | Session tambahan: `preview_use_draft` |
+| Banner | Variabel view: `$isPreviewMode`, `$isDraftPreview` |
+| Rendering | Build in-memory (tanpa insert DB) |
+| SEO Safety | `<meta name="robots" content="noindex,nofollow">` selama preview |
+
+### 🪪 Session Keys
+| Key | Meaning |
+|-----|---------|
+| `preview_user_template_id` | ID template yang dipreview |
+| `preview_use_draft` | Gunakan draft vs live saat preview |
+
+### 🚩 Edge Cases
+- Tidak ada draft → tombol Preview Draft error ramah
+- Publish tanpa draft → diblokir
+- Template aktif publish draft → langsung rebuild struktur live
+- Stop preview menghapus kedua session preview
+
+### API Draft Save (Builder)
+Kirim payload JSON dengan flag:
+```json
+{
+   "name": "Modern School Theme",
+   "description": "Update hero & stats",
+   "template_data": { "templates": [] },
+   "save_as_draft": true
+}
+```
+
+### Rekomendasi Pengembangan Lanjut
+- Revisions (snapshot sebelum publish)
+- Signed public preview link (kepala sekolah)
+- Child template inheritance
+- UI mapping route → template eksplisit
+
+## 🗂 Template Revisions
+
+Setiap kali Anda:
+- Activate template
+- Publish Draft
+- Restore revision
+
+Sistem otomatis membuat snapshot (revision) yang bisa dipulihkan.
+
+Fitur utama:
+| Aksi | Revisions yang Dibuat |
+|------|------------------------|
+| Activate | `activate` + `after_activate` |
+| Publish Draft | `publish_draft` + `after_publish_draft` |
+| Restore | `pre_restore` + `post_restore` |
+
+Cara pakai:
+1. Buka: Admin → Template System → My Templates → pilih template
+2. Scroll ke bagian Revisions
+3. Klik Restore pada revision yang ingin dikembalikan
+4. Snapshot state sekarang akan otomatis tersimpan sebelum restore
+
+Catatan:
+- Maksimal 20 revisi terbaru ditampilkan (bisa diperluas nanti)
+- Draft ikut tersimpan dalam snapshot (`draft_template_data`)
+- Revisions tidak memblokir jika proses gagal (fail-silent logging)
+
 
 *Transforming education through technology, one school website at a time.*
 
 **Powered by [Laravel](https://laravel.com) • [Tailwind CSS](https://tailwindcss.com) • [SQLite](https://sqlite.org)**
+
+## ⚡ Template Quick Start Enhancements
+
+Untuk mempercepat proses "tinggal pakai", sistem kini memiliki beberapa fitur tambahan:
+
+### 1. Install & Activate Sekali Klik
+Di halaman Gallery (grid & detail), setiap template yang belum terpasang memiliki tombol:
+- Install → hanya menyalin ke koleksi Anda
+- Install & Aktifkan → langsung menjadi template aktif (swap theme)
+
+### 2. Bulk Install (Install Semua Starter)
+Tombol "Install Semua Starter" di bagian atas halaman Gallery:
+- Mengkloning semua template aktif di gallery ke My Templates
+- Mengaktifkan satu (pertama) secara otomatis jika belum ada yang aktif
+
+### 3. Quick Template Switcher
+Dropdown di header admin (kanan atas) menampilkan semua template Anda:
+- Template aktif diberi label Active
+- Klik tombol Aktifkan pada template lain untuk instant swap (tanpa membuka halaman detail)
+
+### 4. Seeder Starter Templates
+Jika ingin memulai dari kondisi kosong dan mengisi gallery dengan template dasar:
+```powershell
+php artisan db:seed --class=StarterTemplatesSeeder
+```
+Setelah itu buka: Admin → Template System → Template Gallery → Install & Aktifkan.
+
+### 5. Alur Paling Cepat (Baru Install Project)
+```text
+php artisan migrate
+php artisan db:seed --class=DefaultThemeSeeder
+php artisan db:seed --class=StarterTemplatesSeeder   # (opsional, isi gallery)
+Masuk admin → Template Gallery → Install & Aktifkan salah satu
+Atau klik Install Semua Starter → pilih tema via Quick Switch Dropdown
+```
+
+### 6. FAQ Singkat
+| Pertanyaan | Jawaban |
+|------------|---------|
+| Apakah gallery langsung tampil ke publik? | Tidak, harus di-install dulu ke My Templates. |
+| Bisa hapus template yang sudah diinstall? | Bisa, kecuali yang sedang aktif. |
+| Apa bedanya draft & preview? | Draft menyimpan perubahan belum publish; preview hanya menampilkan tanpa mengubah live. |
+| Apakah bulk install menimpa yang sudah ada? | Tidak, hanya menambah yang belum terpasang. |
+
+### 7. Gallery Live Preview (Seperti WordPress Theme Preview)
+Sekarang setiap template di Gallery bisa dibuka dalam mode "Live Preview" sebelum diinstall.
+
+Cara pakai:
+1. Buka: Admin → Template System → Template Gallery
+2. Klik tombol "Live" (ikon petir) di kartu template ATAU tombol "Live Preview" di halaman detail
+3. Anda akan melihat halaman preview komposisi section & block dari `template_data` (belum mempengaruhi situs)
+4. Klik "Install & Aktifkan" langsung dari halaman preview jika cocok
+
+Catatan:
+- Preview ini tidak memakai session preview user template (berbeda dari My Templates preview)
+- Hanya menampilkan struktur block dasar (tanpa dynamic query ke konten nyata)
+- Aman: tidak memodifikasi database user templates sampai Anda klik install
+
+Enhanced Preview:
+- Mendukung sebagian besar block melalui auto-include `components.blocks.{type}`
+- Viewport switcher: Mobile / Tablet / Desktop
+- Navigasi cepat Next / Prev antar template gallery
+- Auto sample data injeksi untuk block kosong (card-grid, stats)
+
+## 🌐 Real-Time External Template Discovery
+
+The CMS now features **WordPress-like external template discovery** that automatically finds compatible templates from external sources in real-time.
+
+### ✨ Key Features
+- **Real-Time Discovery**: Automatically searches GitHub and other sources for school/education templates
+- **WordPress-Like Preview**: Preview external templates before installation with live preview  
+- **One-Click Install**: Seamless installation that converts external templates to CMS format
+- **Template Conversion**: Automatically maps external structures to CMS blocks/sections
+- **Smart Filtering**: Only shows school/education-related templates
+- **Performance Optimized**: 1-hour caching, graceful error handling
+
+### 🎯 Supported Sources
+| Source | Description | Template Types |
+|--------|-------------|----------------|
+| **GitHub Repos** | School/education templates from open-source repositories | HTML, CSS, JS templates with school keywords |
+| **Free CSS** | Curated school website templates | Professional education themes |
+| *Future: WordPress.org* | WordPress school themes (planned) | WP themes converted to CMS format |
+
+### 🚀 Usage
+
+#### View External Templates
+Visit: **Admin → Template System → Template Gallery**  
+External templates appear in "External Templates Discovery" section with live discovery badge.
+
+#### Preview External Template  
+- Click **"Preview"** on any external template
+- Opens WordPress-like live preview in new tab
+- See how template would look with your content/branding
+
+#### Install External Template
+- Click **"Install"** button (green ✚)
+- Template automatically converted to CMS format  
+- Installed to "My Templates" and ready for activation
+
+#### Test Discovery
+```powershell
+php artisan cms:test-external-templates
+```
+
+### 🛠 Technical Implementation
+
+**Discovery Service:**
+```php
+$service = new ExternalTemplateService();
+$templates = $service->discoverTemplates('all', 20);
+```
+
+**Template Conversion:**
+External templates converted to CMS `template_data` format with automatic block mapping:
+```json
+{
+  "templates": [{
+    "name": "External Template Name", 
+    "sections": [{
+      "name": "Hero Section",
+      "blocks": [{"type": "hero", "content": {...}}]
+    }]
+  }]
+}
+```
+
+**Performance:**
+- External API results cached for 1 hour
+- GitHub API: 60 requests/hour limit (unauthenticated)
+- Errors logged but don't break gallery functionality
+- Discovery runs only on gallery page load
+
+### 🎨 WordPress-Like Experience
+The system mimics WordPress.org template browsing experience:
+- Live discovery of new templates from multiple sources
+- Preview before install capability with realistic rendering
+- One-click installation process with automatic conversion
+- Seamless integration with existing CMS template system
+- Real-time badge indicators and source attribution
+
+This brings the "tinggal pakai" (ready-to-use) experience you requested - templates are discovered automatically and can be previewed/swapped in real-time just like WordPress!
+
+
+
+## 🔗 Signed Public Preview Links
+
+Bagikan tampilan template (termasuk draft opsional) ke pihak eksternal (kepala sekolah, stakeholder) tanpa perlu login.
+
+### Cara Membuat
+1. Admin → Template System → My Templates → pilih template
+2. Form "Signed Public Preview Link" → pilih durasi expired + path awal (opsional)
+3. Centang "Include Draft" bila ingin menampilkan versi draft
+4. Klik Generate Link dan salin URL yang muncul
+
+### Karakteristik
+| Fitur | Detail |
+|-------|--------|
+| Auth | Tidak perlu login (akses via URL bertanda tangan) |
+| Keamanan | Laravel signed URL + expirasi otomatis |
+| Draft Support | Tambahkan param `include_draft` saat generate |
+| Session Keys | `preview_user_template_id`, `preview_use_draft`, `preview_shared_link` |
+| Banner | Warna indigo: "Shared Preview" (jelas bukan live) |
+| SEO | Tetap `noindex,nofollow` (mode preview) |
+
+### Parameter Tambahan
+| Field | Fungsi |
+|-------|--------|
+| expires_minutes | Durasi aktif link (default 120 menit) |
+| path | Path awal redirect (misal `/ppdb`) |
+| include_draft | `1` untuk tampilkan draft (jika ada) |
+
+### Alur Teknis
+1. Generate: controller membuat signed route `public.template-preview`
+2. User membuka URL → middleware `signed` verifikasi hash & expiry
+3. Controller set session preview + opsi draft + flag shared
+4. Redirect ke path tujuan dengan query `?preview=1`
+5. Middleware preview memuat struktur template in-memory
+6. Banner tampil (Shared Preview) + meta noindex
+
+### Kapan Digunakan
+- Review desain sebelum aktivasi
+- Validasi perubahan draft oleh manajemen
+- Kolaborasi remote tanpa membuat akun tambahan
+
+### Best Practice
+- Batasi durasi (≤ 2 jam) untuk keamanan
+- Regenerate link setelah perubahan besar
+- Jangan sebarkan ke publik luas (tidak untuk produksi permanen)
+
+### Roadmap Peningkatan (Opsional)
+- Single-use token (sekali klik hangus)
+- Audit log siapa mengakses (ip, user-agent)
+- Password-protected preview (lapisan kedua)
+- Revocation manual (blacklist signature hash)
+
+> Signed preview memastikan proses persetujuan visual berjalan cepat tanpa mengorbankan keamanan atau data live.

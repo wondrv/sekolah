@@ -9,15 +9,16 @@
 @endpush
 
 @section('content')
+@include('partials.preview-banner')
 <div class="template-render" data-template="{{ $template->id }}">
     @foreach($sections as $sectionData)
         @php
             $section = $sectionData['section'];
             $blocks = $sectionData['blocks'];
         @endphp
-        
-        <section 
-            class="template-section {{ $section->css_classes ?? '' }}" 
+
+        <section
+            class="template-section {{ $section->css_classes ?? '' }}"
             data-section="{{ $section->id }}"
             @if($section->css_id ?? false) id="{{ $section->css_id }}" @endif
             @if($section->background_color ?? false) style="background-color: {{ $section->background_color }};" @endif
@@ -25,13 +26,13 @@
             @if($section->container ?? true)
                 <div class="container mx-auto px-4">
             @endif
-            
+
             <div class="section-content">
                 @foreach($blocks as $blockHtml)
                     {!! $blockHtml !!}
                 @endforeach
             </div>
-            
+
             @if($section->container ?? true)
                 </div>
             @endif
@@ -41,8 +42,8 @@
 
 @if(auth()->check() && auth()->user()->is_admin)
 <div class="template-editor-toggle">
-    <button 
-        id="toggle-page-builder" 
+    <button
+        id="toggle-page-builder"
         class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 z-50"
         onclick="togglePageBuilder()"
     >
@@ -62,7 +63,7 @@ let pageBuilderActive = false;
 function togglePageBuilder() {
     const container = document.getElementById('page-builder-container');
     const button = document.getElementById('toggle-page-builder');
-    
+
     if (!pageBuilderActive) {
         container.classList.remove('hidden');
         button.innerHTML = '<i class="fas fa-times mr-2"></i>Close Editor';

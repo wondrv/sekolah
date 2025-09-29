@@ -4,6 +4,7 @@
 @section('meta_description', App\Support\Theme::getSiteInfo()['description'])
 
 @section('content')
+@include('partials.preview-banner')
 @if($template && $template->sections)
     @foreach($template->sections as $section)
         @if(($section->active ?? false) && $section->blocks)

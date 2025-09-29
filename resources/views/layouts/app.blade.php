@@ -6,6 +6,9 @@
   <title>@yield('title', App\Support\Theme::getSiteInfo()['name'])</title>
   <meta name="description" content="@yield('meta_description', App\Support\Theme::getSiteInfo()['description'])">
   <meta name="keywords" content="{{ App\Support\Theme::getSiteInfo()['keywords'] }}">
+  @if(!empty($isPreviewMode))
+  <meta name="robots" content="noindex,nofollow">
+  @endif
 
   @if(isset($ogImage))
   <meta property="og:image" content="{{ $ogImage }}">

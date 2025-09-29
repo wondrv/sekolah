@@ -46,6 +46,7 @@ class UserTemplate extends Model
         'description',
         'preview_image',
         'template_data',
+        'draft_template_data',
         'source',
         'is_active',
         'customizations',
@@ -53,9 +54,82 @@ class UserTemplate extends Model
 
     protected $casts = [
         'template_data' => 'array',
+        'draft_template_data' => 'array',
         'is_active' => 'boolean',
         'customizations' => 'array',
     ];
+
+    public function revisions()
+    {
+        return $this->hasMany(TemplateRevision::class)->latest();
+    }
+
+    protected function createRevision(string $type, ?string $note = null): void
+    {
+        try {
+            TemplateRevision::create([
+                'user_template_id' => $this->id,
+                'type' => $type,
+                'snapshot' => [
+                    'template_data' => $this->template_data,
+                    'draft_template_data' => $this->draft_template_data,
+                    'name' => $this->name,
+                    'description' => $this->description,
+                    'source' => $this->source,
+                    'is_active' => $this->is_active,
+                ],
+                'note' => $note,
+            ]);
+        } catch (\Exception $e) {
+            // Fail silently – we don't want to block activation/publish if revision logging fails
+        }
+    }
+
+    /**
+     * Check if draft exists
+     */
+    public function hasDraft(): bool
+    {
+        return !empty($this->draft_template_data) && is_array($this->draft_template_data);
+    }
+
+    /**
+     * Start a draft based on current template_data if none exists
+     */
+    public function ensureDraftInitialized(): void
+    {
+        if (!$this->hasDraft()) {
+            $this->update(['draft_template_data' => $this->template_data]);
+        }
+    }
+
+    /**
+     * Publish draft (replace template_data and clear draft)
+     */
+    public function publishDraft(): void
+    {
+        if ($this->hasDraft()) {
+            // Snapshot before publish
+            $this->createRevision('publish_draft', 'Before publish draft');
+            $this->update([
+                'template_data' => $this->draft_template_data,
+                'draft_template_data' => null,
+            ]);
+
+            if ($this->is_active) {
+                $this->applyToSite();
+            }
+            $this->createRevision('after_publish_draft', 'After publish draft');
+        }
+    }
+
+    /**
+     * Discard draft changes
+     */
+    public function discardDraft(): void
+    {
+        $this->update(['draft_template_data' => null]);
+    }
 
     public function user()
     {
@@ -125,6 +199,8 @@ class UserTemplate extends Model
 
     public function activate()
     {
+        // Log revision BEFORE activation (state prior to activation)
+        $this->createRevision('activate', 'Before activation');
         // Deactivate all other templates for this user
         static::where('user_id', $this->user_id)
             ->where('id', '!=', $this->id)
@@ -135,6 +211,34 @@ class UserTemplate extends Model
 
         // Apply template to site
         $this->applyToSite();
+        $this->createRevision('after_activate', 'After activation');
+    }
+
+    public function restoreRevision(TemplateRevision $revision, bool $keepDraft = true): void
+    {
+        // Snapshot current before restore
+        $this->createRevision('pre_restore', 'Before restoring revision ID '.$revision->id);
+
+        $snapshot = $revision->snapshot;
+        $update = [];
+        if (isset($snapshot['template_data'])) {
+            $update['template_data'] = $snapshot['template_data'];
+        }
+        if ($keepDraft && isset($snapshot['draft_template_data'])) {
+            $update['draft_template_data'] = $snapshot['draft_template_data'];
+        } else {
+            $update['draft_template_data'] = null; // clear if not keeping
+        }
+        if (isset($snapshot['name'])) $update['name'] = $snapshot['name'];
+        if (isset($snapshot['description'])) $update['description'] = $snapshot['description'];
+
+        $this->update($update);
+
+        if ($this->is_active) {
+            $this->applyToSite();
+        }
+
+        $this->createRevision('post_restore', 'After restoring revision ID '.$revision->id);
     }
 
     public function applyToSite()

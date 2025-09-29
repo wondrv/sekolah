@@ -14,6 +14,24 @@ Route::get('/quick-login', function() {
     return 'Admin user not found';
 })->name('admin.quick-login');
 
+// EMERGENCY: reset admin credentials & auto login (remove in production)
+Route::match(['get','post'],'/emergency-reset-admin', function(\Illuminate\Http\Request $request) {
+    if (!app()->isLocal()) {
+        abort(403, 'Not allowed in this environment.');
+    }
+    $email = 'admin@school.local';
+    $password = $request->get('password', 'password');
+    $user = \App\Models\User::firstOrNew(['email' => $email]);
+    $user->name = 'Administrator';
+    $user->role = 'admin';
+    $user->is_admin = true;
+    $user->email_verified_at = now();
+    $user->password = bcrypt($password);
+    $user->save();
+    Auth::login($user);
+    return redirect()->route('admin.dashboard')->with('success', 'Emergency admin reset. Email: '.$email.' Password: '.$password);
+})->name('admin.emergency-reset-admin');
+
 // Debug route to test authentication
 Route::get('/debug-auth', function() {
     $user = Auth::user();
@@ -222,8 +240,16 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::get('gallery', [Admin\Template\TemplateGalleryController::class, 'index'])->name('gallery.index');
         Route::get('gallery/categories', [Admin\Template\TemplateGalleryController::class, 'categories'])->name('gallery.categories');
         Route::get('gallery/category/{category:slug}', [Admin\Template\TemplateGalleryController::class, 'byCategory'])->name('gallery.category');
+        Route::post('gallery/bulk-install', [Admin\Template\TemplateGalleryController::class, 'bulkInstall'])->name('gallery.bulk-install');
+
+        // External templates (MUST be before {template} routes to avoid conflicts)
+        Route::post('gallery/external/install', [Admin\Template\TemplateGalleryController::class, 'installExternal'])->name('gallery.external.install');
+        Route::get('gallery/external/preview', [Admin\Template\TemplateGalleryController::class, 'previewExternal'])->name('gallery.external.preview');
+
+        // Template-specific routes (MUST be after external routes)
         Route::get('gallery/{template}', [Admin\Template\TemplateGalleryController::class, 'show'])->name('gallery.show');
         Route::get('gallery/{template}/preview', [Admin\Template\TemplateGalleryController::class, 'preview'])->name('gallery.preview');
+        Route::get('gallery/{template}/live-preview', [Admin\Template\TemplateGalleryController::class, 'livePreview'])->name('gallery.live-preview');
         Route::post('gallery/{template}/install', [Admin\Template\TemplateGalleryController::class, 'install'])->name('gallery.install');
 
         // My Templates
@@ -236,7 +262,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
         // Template Export/Import
         Route::post('my-templates/{userTemplate}/export', [Admin\Template\MyTemplatesController::class, 'export'])->name('my-templates.export');
-        Route::post('import', [Admin\Template\MyTemplatesController::class, 'import'])->name('import');
+        Route::post('import', [Admin\Template\MyTemplatesController::class, 'import'])->name('my-templates.import');
 
         // Template Builder
         Route::get('builder', [Admin\Template\TemplateBuilderController::class, 'index'])->name('builder.index');
@@ -258,6 +284,30 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::delete('exports/{export}', [Admin\Template\TemplateExportController::class, 'destroy'])->name('exports.destroy');
         Route::post('exports/cleanup-expired', [Admin\Template\TemplateExportController::class, 'cleanupExpired'])->name('exports.cleanup-expired');
         Route::post('exports/bulk-download', [Admin\Template\TemplateExportController::class, 'bulkDownload'])->name('exports.bulk-download');
+
+        // Live Preview Routes
+        Route::post('my-templates/{userTemplate}/preview-start', [Admin\Template\MyTemplatesController::class, 'startPreview'])
+            ->name('my-templates.preview-start');
+        Route::post('preview-stop', [Admin\Template\MyTemplatesController::class, 'stopPreview'])
+            ->name('preview-stop');
+
+        // Draft actions
+        Route::post('my-templates/{userTemplate}/draft/preview', [Admin\Template\MyTemplatesController::class, 'previewDraft'])
+            ->name('my-templates.draft.preview');
+        Route::post('my-templates/{userTemplate}/draft/publish', [Admin\Template\MyTemplatesController::class, 'publishDraft'])
+            ->name('my-templates.draft.publish');
+        Route::post('my-templates/{userTemplate}/draft/discard', [Admin\Template\MyTemplatesController::class, 'discardDraft'])
+            ->name('my-templates.draft.discard');
+
+        // Revisions
+        Route::post('my-templates/{userTemplate}/revisions/{revision}/restore', [Admin\Template\MyTemplatesController::class, 'restoreRevision'])
+            ->name('my-templates.revisions.restore');
+        Route::delete('my-templates/{userTemplate}/revisions/{revision}', [Admin\Template\MyTemplatesController::class, 'deleteRevision'])
+            ->name('my-templates.revisions.delete');
+
+        // Signed public preview link generation
+        Route::post('my-templates/{userTemplate}/signed-preview-link', [Admin\Template\MyTemplatesController::class, 'generateSignedPreview'])
+            ->name('my-templates.signed-preview-link');
     });
 
     // Cache Management

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use ZipArchive;
@@ -67,7 +68,9 @@ class MyTemplatesController extends Controller
     {
         $this->authorize('view', $userTemplate);
 
-        $userTemplate->load(['galleryTemplate', 'templates.sections.blocks']);
+        $userTemplate->load(['galleryTemplate', 'templates.sections.blocks', 'revisions' => function($q){
+            $q->limit(20); // show last 20
+        }]);
 
         return view('admin.templates.my-templates.show', compact('userTemplate'));
     }
@@ -128,6 +131,165 @@ class MyTemplatesController extends Controller
                 ->with('success', 'Template berhasil dihapus!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menghapus template: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Generate a signed public preview link for external reviewers.
+     */
+    public function generateSignedPreview(Request $request, UserTemplate $userTemplate)
+    {
+        $this->authorize('view', $userTemplate);
+
+        $validated = $request->validate([
+            'expires_minutes' => 'nullable|integer|min:5|max:4320', // up to 3 days
+            'path' => 'nullable|string|max:255',
+            'include_draft' => 'sometimes|boolean',
+        ]);
+
+        $minutes = $validated['expires_minutes'] ?? 120; // default 2 hours
+        $path = $validated['path'] ?? '/';
+        $includeDraft = $request->boolean('include_draft');
+
+        // Build base params for signed route
+        $params = ['userTemplate' => $userTemplate->id];
+        if ($includeDraft) {
+            $params['draft'] = 1;
+        }
+        if ($path && $path !== '/') {
+            $params['path'] = ltrim($path, '/');
+        }
+
+    $url = URL::temporarySignedRoute(
+            'public.template-preview',
+            now()->addMinutes($minutes),
+            $params
+        );
+
+        return redirect()->back()->with('signed_preview_link', $url)->with('success', 'Signed preview link dibuat.');
+    }
+
+    /**
+     * Start live preview for a user template (session + query based)
+     */
+    public function startPreview(Request $request, UserTemplate $userTemplate)
+    {
+        $this->authorize('view', $userTemplate);
+
+        // Store preview template id in session
+        session(['preview_user_template_id' => $userTemplate->id]);
+
+        // Optional: allow specific target path
+        $path = $request->get('path', '/');
+        $separator = str_contains($path, '?') ? '&' : '?';
+
+        return redirect($path . $separator . 'preview=1')
+            ->with('success', 'Mode preview dimulai untuk template: ' . $userTemplate->name);
+    }
+
+    /**
+     * Stop live preview session
+     */
+    public function stopPreview(Request $request)
+    {
+        session()->forget(['preview_user_template_id', 'preview_use_draft']);
+        return redirect('/')->with('success', 'Mode preview dihentikan.');
+    }
+
+    /**
+     * Start draft preview (uses draft_template_data if available)
+     */
+    public function previewDraft(Request $request, UserTemplate $userTemplate)
+    {
+        $this->authorize('view', $userTemplate);
+
+        if (!$userTemplate->hasDraft()) {
+            return redirect()->back()->with('error', 'Tidak ada draft untuk template ini.');
+        }
+
+        session(['preview_user_template_id' => $userTemplate->id]);
+        session(['preview_use_draft' => true]);
+
+        $path = $request->get('path', '/');
+        $separator = str_contains($path, '?') ? '&' : '?';
+
+        return redirect($path . $separator . 'preview=1')
+            ->with('success', 'Preview draft dimulai.');
+    }
+
+    /**
+     * Publish draft changes into live template
+     */
+    public function publishDraft(Request $request, UserTemplate $userTemplate)
+    {
+        $this->authorize('update', $userTemplate);
+
+        if (!$userTemplate->hasDraft()) {
+            return redirect()->back()->with('error', 'Tidak ada draft untuk dipublish.');
+        }
+
+        try {
+            $userTemplate->publishDraft();
+            session()->forget(['preview_use_draft']);
+            return redirect()->back()->with('success', 'Draft berhasil dipublish!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mempublish draft: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Discard draft changes
+     */
+    public function discardDraft(Request $request, UserTemplate $userTemplate)
+    {
+        $this->authorize('update', $userTemplate);
+
+        if (!$userTemplate->hasDraft()) {
+            return redirect()->back()->with('error', 'Tidak ada draft untuk dibatalkan.');
+        }
+
+        try {
+            $userTemplate->discardDraft();
+            session()->forget(['preview_use_draft']);
+            return redirect()->back()->with('success', 'Draft berhasil dibatalkan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal membatalkan draft: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Restore a template revision
+     */
+    public function restoreRevision(Request $request, UserTemplate $userTemplate, \App\Models\TemplateRevision $revision)
+    {
+        $this->authorize('update', $userTemplate);
+        if ($revision->user_template_id !== $userTemplate->id) {
+            abort(403);
+        }
+
+        try {
+            $userTemplate->restoreRevision($revision, $request->boolean('keep_draft', true));
+            return redirect()->back()->with('success', 'Revision berhasil direstore.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal restore revision: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a template revision
+     */
+    public function deleteRevision(Request $request, UserTemplate $userTemplate, \App\Models\TemplateRevision $revision)
+    {
+        $this->authorize('update', $userTemplate);
+        if ($revision->user_template_id !== $userTemplate->id) {
+            abort(403);
+        }
+
+        try {
+            $revision->delete();
+            return redirect()->back()->with('success', 'Revision dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus revision: '.$e->getMessage());
         }
     }
 
