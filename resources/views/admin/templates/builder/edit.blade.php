@@ -135,18 +135,14 @@
                             <div class="flex items-start space-x-4">
                                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
                                     <span class="text-white text-lg">
-                                        @if(is_array($config) && isset($config['category']))
-                                            @switch($config['category'])
-                                                @case('header') 🎯 @break
-                                                @case('content') 📝 @break
-                                                @case('info') 📊 @break
-                                                @case('marketing') 📢 @break
-                                                @case('media') 🖼️ @break
-                                                @default 🔧
-                                            @endswitch
-                                        @else
-                                            🔧
-                                        @endif
+                                        @switch($category)
+                                            @case('header') 🎯 @break
+                                            @case('content') 📝 @break
+                                            @case('info') 📊 @break
+                                            @case('marketing') 📢 @break
+                                            @case('media') 🖼️ @break
+                                            @default 🔧
+                                        @endswitch
                                     </span>
                                 </div>
                                 <div class="flex-1 min-w-0">

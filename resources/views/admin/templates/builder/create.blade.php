@@ -117,31 +117,42 @@
             <!-- Available Block Types Preview -->
             <div>
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Available Block Types</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @foreach($blockTypes as $type => $config)
-                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
-                                    <span class="text-blue-600 text-sm">
-                                        @switch($config['category'])
-                                            @case('header') 🎯 @break
-                                            @case('content') 📝 @break
-                                            @case('info') 📊 @break
-                                            @case('marketing') 📢 @break
-                                            @case('media') 🖼️ @break
-                                            @default 🔧
-                                        @endswitch
-                                    </span>
+                <div class="space-y-6">
+                    @foreach($blockTypes as $category => $blocks)
+                    <div>
+                        <h4 class="text-md font-medium text-gray-800 mb-3 capitalize">{{ $category }} Blocks</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach($blocks as $type => $config)
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                                            <span class="text-blue-600 text-sm">
+                                                @switch($category)
+                                                    @case('header') 🎯 @break
+                                                    @case('content') 📝 @break
+                                                    @case('info') 📊 @break
+                                                    @case('marketing') 📢 @break
+                                                    @case('media') 🖼️ @break
+                                                    @default 🔧
+                                                @endswitch
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h4 class="text-sm font-medium text-gray-900">
+                                            {{ is_array($config) && isset($config['name']) ? $config['name'] : ucfirst(str_replace('-', ' ', $type)) }}
+                                        </h4>
+                                        <p class="text-sm text-gray-500">
+                                            {{ is_array($config) && isset($config['description']) ? $config['description'] : 'Block component' }}
+                                        </p>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mt-1">
+                                            {{ ucfirst($category) }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="ml-3">
-                                <h4 class="text-sm font-medium text-gray-900">{{ $config['name'] }}</h4>
-                                <p class="text-sm text-gray-500">{{ $config['description'] }}</p>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mt-1">
-                                    {{ ucfirst($config['category']) }}
-                                </span>
-                            </div>
+                            @endforeach
                         </div>
                     </div>
                     @endforeach

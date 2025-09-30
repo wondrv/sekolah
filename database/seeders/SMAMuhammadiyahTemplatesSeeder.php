@@ -601,18 +601,46 @@ class SMAMuhammadiyahTemplatesSeeder extends Seeder
      */
     private function getModernIslamicTemplate()
     {
+        return [
+            'templates' => [
+                [
+                    'name' => 'Homepage SMA Muhammadiyah Modern Islamic',
+                    'slug' => 'homepage-modern-islamic',
+                    'description' => 'Template modern dengan nuansa Islami untuk SMA Muhammadiyah',
+                    'type' => 'page',
+                    'active' => true,
+                    'sections' => [
+                        // Hero Section
+                        [
+                            'name' => 'Hero Banner',
+                            'order' => 1,
+                            'blocks' => [
+                                [
+                                    'type' => 'hero',
+                                    'name' => 'Islamic Hero Banner',
+                                    'order' => 0,
+                                    'content' => [
+                                        'title' => 'SMA Muhammadiyah 1 Taman',
+                                        'subtitle' => 'Berdaya Saing Global dengan Nilai-nilai Islami',
+                                        'description' => 'Mempersiapkan siswa untuk kompetisi di tingkat nasional dan internasional',
+                                        'background_image' => '/images/hero-islamic.jpg',
+                                        'buttons' => [
                                             [
-                                                'title' => 'Berdaya Saing Global',
-                                                'description' => 'Mempersiapkan siswa untuk kompetisi di tingkat nasional dan internasional',
-                                                'icon' => 'globe',
+                                                'text' => 'Daftar Sekarang',
+                                                'url' => '/ppdb',
+                                                'style' => 'primary'
                                             ],
-                                        ],
+                                            [
+                                                'text' => 'Pelajari Lebih Lanjut',
+                                                'url' => '/tentang',
+                                                'style' => 'secondary'
+                                            ]
+                                        ]
                                     ],
                                     'active' => true,
                                 ],
                             ],
                         ],
-
                         // Program Unggulan
                         [
                             'name' => 'Program Unggulan',
@@ -652,42 +680,10 @@ class SMAMuhammadiyahTemplatesSeeder extends Seeder
                                 ],
                             ],
                         ],
-
-                        // Struktur Organisasi
-                        [
-                            'name' => 'Manajemen',
-                            'order' => 3,
-                            'blocks' => [
-                                [
-                                    'type' => 'rich-text',
-                                    'name' => 'Management Structure',
-                                    'order' => 0,
-                                    'content' => [
-                                        'title' => 'Struktur Manajemen',
-                                        'content' => '<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            <div class="text-center">
-                                                <h4 class="font-bold text-lg mb-2">Kurikulum</h4>
-                                                <p class="text-gray-600">Pengelolaan kurikulum akademik dan pengembangan pembelajaran</p>
-                                            </div>
-                                            <div class="text-center">
-                                                <h4 class="font-bold text-lg mb-2">Kesiswaan</h4>
-                                                <p class="text-gray-600">Pembinaan dan pengembangan karakter siswa</p>
-                                            </div>
-                                            <div class="text-center">
-                                                <h4 class="font-bold text-lg mb-2">ISMUBA</h4>
-                                                <p class="text-gray-600">Pendidikan Islam dan Kemuhammadiyahan</p>
-                                            </div>
-                                        </div>',
-                                    ],
-                                    'active' => true,
-                                ],
-                            ],
-                        ],
-
                         // Statistics
                         [
                             'name' => 'Prestasi Sekolah',
-                            'order' => 4,
+                            'order' => 3,
                             'blocks' => [
                                 [
                                     'type' => 'stats',
@@ -701,98 +697,6 @@ class SMAMuhammadiyahTemplatesSeeder extends Seeder
                                             ['number' => 50, 'label' => 'Guru & Staff', 'icon' => 'user-tie'],
                                             ['number' => 25, 'label' => 'Tahun Berdiri', 'suffix' => '+', 'icon' => 'calendar'],
                                             ['number' => 95, 'label' => 'Tingkat Kelulusan', 'suffix' => '%', 'icon' => 'graduation-cap'],
-                                        ],
-                                    ],
-                                    'active' => true,
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * Modern Islamic Template
-     */
-    private function getModernIslamicTemplate()
-    {
-        return [
-            'templates' => [
-                [
-                    'name' => 'Homepage SMA Modern Islamic',
-                    'slug' => 'homepage',
-                    'description' => 'Homepage modern dengan nilai-nilai islami',
-                    'type' => 'page',
-                    'active' => true,
-                    'sections' => [
-                        [
-                            'name' => 'Modern Islamic Hero',
-                            'order' => 0,
-                            'blocks' => [
-                                [
-                                    'type' => 'hero',
-                                    'name' => 'Islamic Modern Hero',
-                                    'order' => 0,
-                                    'content' => [
-                                        'title' => 'SMA Modern Islamic Excellence',
-                                        'subtitle' => 'Menggabungkan Teknologi Modern dengan Nilai-nilai Islam untuk Menciptakan Generasi Unggul Berakhlak Mulia',
-                                        'button_text' => 'Explore Programs',
-                                        'button_url' => '/programs',
-                                        'background_image' => 'hero/modern-islamic.jpg',
-                                    ],
-                                    'active' => true,
-                                ],
-                            ],
-                        ],
-                        [
-                            'name' => 'Character Building',
-                            'order' => 1,
-                            'blocks' => [
-                                [
-                                    'type' => 'card-grid',
-                                    'name' => 'Islamic Values',
-                                    'order' => 0,
-                                    'content' => [
-                                        'title' => 'Pembentukan Karakter Islami',
-                                        'cards' => [
-                                            [
-                                                'title' => 'Akhlak Karimah',
-                                                'description' => 'Pembentukan akhlak mulia berdasarkan Al-Quran dan Sunnah',
-                                                'icon' => 'heart-islamic',
-                                            ],
-                                            [
-                                                'title' => 'Leadership Islam',
-                                                'description' => 'Kepemimpinan dengan nilai-nilai Islam untuk masa depan',
-                                                'icon' => 'crown-islamic',
-                                            ],
-                                            [
-                                                'title' => 'Global Mindset',
-                                                'description' => 'Wawasan global dengan tetap berpegang pada nilai-nilai Islam',
-                                                'icon' => 'world-islamic',
-                                            ],
-                                        ],
-                                    ],
-                                    'active' => true,
-                                ],
-                            ],
-                        ],
-                        [
-                            'name' => 'Achievement Stats',
-                            'order' => 2,
-                            'blocks' => [
-                                [
-                                    'type' => 'stats',
-                                    'name' => 'Islamic Achievement',
-                                    'order' => 0,
-                                    'content' => [
-                                        'title' => 'Excellence in Islamic Education',
-                                        'stats' => [
-                                            ['number' => 900, 'label' => 'Islamic Students', 'icon' => 'user-islamic'],
-                                            ['number' => 40, 'label' => 'Islamic Teachers', 'icon' => 'teacher-islamic'],
-                                            ['number' => 100, 'label' => 'Character Programs', 'suffix' => '%', 'icon' => 'program'],
-                                            ['number' => 20, 'label' => 'Years Excellence', 'suffix' => '+', 'icon' => 'excellence'],
                                         ],
                                     ],
                                     'active' => true,
