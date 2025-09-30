@@ -5,7 +5,8 @@
     $data = array_merge($content ?? [], $settings ?? [], $style_settings ?? []);
 @endphp
 
-<section class="cta-banner-block py-16 {{ $data['background_color'] ?? 'bg-gradient-to-r from-blue-600 to-blue-800' }} text-white">
+@php $anchor = $data['anchor'] ?? null; @endphp
+<section @if($anchor) id="{{ $anchor }}" @endif class="cta-banner-block py-16 {{ $data['background_color'] ?? 'bg-gradient-to-r from-blue-600 to-blue-800' }} text-white">
   <div class="container mx-auto px-4">
     <div class="text-center max-w-4xl mx-auto">
       @if(isset($data['title']))

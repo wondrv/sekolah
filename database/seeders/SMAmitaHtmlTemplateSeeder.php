@@ -57,8 +57,9 @@ class SMAmitaHtmlTemplateSeeder extends Seeder
             ]
         );
 
-        // Create UserTemplate for easy activation
+        // Create UserTemplate for admin if exists
         $adminUser = User::where('email', 'admin@school.local')->first();
+
         if ($adminUser) {
             UserTemplate::updateOrCreate(
                 ['slug' => 'smamita-html-active'],
@@ -103,9 +104,7 @@ class SMAmitaHtmlTemplateSeeder extends Seeder
                                     'type' => 'rich_text',
                                     'name' => 'Main Navigation',
                                     'order' => 0,
-                                    'content' => [
-                                        'html' => $this->getNavigationHTML()
-                                    ],
+                                    'content' => [ 'html' => $this->getNavigationHTML() ],
                                     'active' => true
                                 ]
                             ]
@@ -122,16 +121,38 @@ class SMAmitaHtmlTemplateSeeder extends Seeder
                                     'order' => 0,
                                     'content' => [
                                         'title' => 'SMA Muhammadiyah 1 Taman',
-                                        'subtitle' => 'Sekolah Para Pemimpin dan Entrepreneur Muda',
+                                        'subtitle' => 'Sekolah Para Pemimpin & Entrepreneur Muda Berakhlak Mulia',
                                         'background_image' => 'https://smam1ta.sch.id/wp-content/uploads/2023/10/gedung-smamita-scaled.jpg',
-                                        'text_align' => 'text-center',
+                                        'text_align' => 'text-left',
+                                        'background_color' => 'bg-gradient-to-r from-blue-900 to-blue-700',
                                         'buttons' => [
-                                            [
-                                                'text' => 'Penerimaan Siswa Baru',
-                                                'url' => '/ppdb',
-                                                'style' => 'primary'
-                                            ]
+                                            ['text' => 'PPDB 2025', 'url' => '/ppdb', 'style' => 'secondary'],
+                                            ['text' => 'Jelajahi Sekolah', 'url' => '#about', 'style' => 'primary']
                                         ]
+                                    ],
+                                    'active' => true
+                                ]
+                            ]
+                        ],
+                        // Key Stats Section
+                        [
+                            'name' => 'Key Statistics',
+                            'order' => 2,
+                            'active' => true,
+                            'blocks' => [
+                                [
+                                    'type' => 'stats',
+                                    'name' => 'School Stats',
+                                    'order' => 0,
+                                    'content' => [
+                                        'title' => 'Pencapaian SMAMITA',
+                                        'stats' => [
+                                            ['number' => '40+', 'label' => 'Tahun Pengalaman'],
+                                            ['number' => '1200+', 'label' => 'Siswa Aktif'],
+                                            ['number' => '95%', 'label' => 'Kelulusan'],
+                                            ['number' => '150+', 'label' => 'Prestasi / Tahun'],
+                                        ],
+                                        'background_color' => 'bg-blue-900'
                                     ],
                                     'active' => true
                                 ]
@@ -140,16 +161,14 @@ class SMAmitaHtmlTemplateSeeder extends Seeder
                         // About Section
                         [
                             'name' => 'About Section',
-                            'order' => 2,
+                            'order' => 3,
                             'active' => true,
                             'blocks' => [
                                 [
                                     'type' => 'rich_text',
                                     'name' => 'About Content',
                                     'order' => 0,
-                                    'content' => [
-                                        'html' => $this->getAboutHTML()
-                                    ],
+                                    'content' => [ 'html' => $this->getAboutHTML() ],
                                     'active' => true
                                 ]
                             ]
@@ -157,33 +176,91 @@ class SMAmitaHtmlTemplateSeeder extends Seeder
                         // News Section
                         [
                             'name' => 'News Section',
-                            'order' => 3,
+                            'order' => 4,
                             'active' => true,
                             'blocks' => [
                                 [
                                     'type' => 'rich_text',
                                     'name' => 'News Content',
                                     'order' => 0,
+                                    'content' => [ 'html' => $this->getNewsHTML() ],
+                                    'active' => true
+                                ]
+                            ]
+                        ],
+                        // Program Highlight Section (Card Grid)
+                        [
+                            'name' => 'Program Section',
+                            'order' => 5,
+                            'active' => true,
+                            'blocks' => [
+                                [
+                                    'type' => 'card_grid',
+                                    'name' => 'Program Grid',
+                                    'order' => 0,
                                     'content' => [
-                                        'html' => $this->getNewsHTML()
+                                        'title' => 'Program Unggulan',
+                                        'subtitle' => 'Beragam jalur pengembangan potensi siswa menuju prestasi dan karakter unggul.',
+                                        'background_color' => 'bg-gray-50',
+                                        'columns' => 4,
+                                        'cards' => [
+                                            ['title' => 'Kelas Internasional', 'description' => 'Pembelajaran bilingual & kolaborasi global.', 'image' => 'https://smam1ta.sch.id/wp-content/uploads/2023/10/gedung-smamita-scaled.jpg'],
+                                            ['title' => 'Entrepreneur', 'description' => 'Membentuk wirausaha muda visioner.', 'image' => 'https://smam1ta.sch.id/wp-content/uploads/2024/07/Penutupan-FORTASI-2024.jpeg'],
+                                            ['title' => 'Olimpiade Sains', 'description' => 'Pembinaan intensif kompetisi akademik.', 'image' => 'https://smam1ta.sch.id/wp-content/uploads/2024/06/IMG_20240614_073321-scaled.jpg'],
+                                            ['title' => 'Tahfidz Qur\'an', 'description' => 'Program hafalan terstruktur & pembinaan karakter Qur\'ani.', 'image' => 'https://smam1ta.sch.id/wp-content/uploads/2024/05/purnawiyata.jpg'],
+                                        ]
                                     ],
                                     'active' => true
                                 ]
                             ]
                         ],
-                        // Program Section
+                        // CTA Banner Section
                         [
-                            'name' => 'Program Section',
-                            'order' => 4,
+                            'name' => 'PPDB CTA Section',
+                            'order' => 6,
                             'active' => true,
                             'blocks' => [
                                 [
-                                    'type' => 'rich_text',
-                                    'name' => 'Program Content',
+                                    'type' => 'cta_banner',
+                                    'name' => 'PPDB CTA',
                                     'order' => 0,
                                     'content' => [
-                                        'html' => $this->getProgramHTML()
+                                        'title' => 'Penerimaan Peserta Didik Baru 2025',
+                                        'subtitle' => 'Daftar sekarang dan bergabung bersama komunitas pembelajar unggul SMAMITA.',
+                                        'button_text' => 'Daftar PPDB',
+                                        'button_url' => '/ppdb',
+                                        'background_style' => 'gradient-blue'
                                     ],
+                                    'active' => true
+                                ]
+                            ]
+                        ],
+                        // Events Teaser Section
+                        [
+                            'name' => 'Events Section',
+                            'order' => 7,
+                            'active' => true,
+                            'blocks' => [
+                                [
+                                    'type' => 'events_teaser',
+                                    'name' => 'Upcoming Events',
+                                    'order' => 0,
+                                    'content' => [ 'title' => 'Agenda Kegiatan', 'limit' => 3 ],
+                                    'active' => true
+                                ]
+                            ]
+                        ],
+                        // Latest Posts Teaser Section
+                        [
+                            'name' => 'Posts Section',
+                            'order' => 8,
+                            'active' => true,
+                            'blocks' => [
+                                [
+                                    'type' => 'posts_teaser',
+                                    'name' => 'Latest Posts',
+                                    'order' => 0,
+                                    'content' => [ 'title' => 'Artikel & Berita Terbaru', 'limit' => 3, 'show_read_more' => true ],
                                     'active' => true
                                 ]
                             ]
@@ -191,20 +268,18 @@ class SMAmitaHtmlTemplateSeeder extends Seeder
                         // Footer
                         [
                             'name' => 'Footer',
-                            'order' => 5,
+                            'order' => 9,
                             'active' => true,
                             'blocks' => [
                                 [
                                     'type' => 'rich_text',
                                     'name' => 'Footer Content',
                                     'order' => 0,
-                                    'content' => [
-                                        'html' => $this->getFooterHTML()
-                                    ],
+                                    'content' => [ 'html' => $this->getFooterHTML() ],
                                     'active' => true
                                 ]
                             ]
-                        ]
+                        ],
                     ]
                 ]
             ]

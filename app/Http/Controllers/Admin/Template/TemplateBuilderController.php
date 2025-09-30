@@ -108,30 +108,67 @@ class TemplateBuilderController extends Controller
 
         try {
             $saveAsDraft = $request->boolean('save_as_draft');
+            $forceApply = $request->boolean('force_apply');
+
+            // Normalize block structure (ensure each block has content key so DB renderer sees it)
+            $normalized = $request->template_data;
+            if (isset($normalized['templates']) && is_array($normalized['templates'])) {
+                foreach ($normalized['templates'] as $ti => $tpl) {
+                    if (isset($tpl['sections']) && is_array($tpl['sections'])) {
+                        foreach ($tpl['sections'] as $si => $section) {
+                            if (isset($section['blocks']) && is_array($section['blocks'])) {
+                                foreach ($section['blocks'] as $bi => $block) {
+                                    if (is_array($block)) {
+                                        // Provide default human readable name if absent to avoid DB insert issues
+                                        if (empty($block['name'])) {
+                                            $normalized['templates'][$ti]['sections'][$si]['blocks'][$bi]['name'] = ucfirst(str_replace(['-', '_'], ' ', $block['type'] ?? 'Block'));
+                                        }
+                                        // If data exists but content missing, move/duplicate
+                                        if (!isset($block['content']) && isset($block['data'])) {
+                                            // If data already has 'content' nested, use that, else wrap whole data
+                                            if (isset($block['data']['content'])) {
+                                                $normalized['templates'][$ti]['sections'][$si]['blocks'][$bi]['content'] = $block['data']['content'];
+                                            } else {
+                                                $normalized['templates'][$ti]['sections'][$si]['blocks'][$bi]['content'] = $block['data'];
+                                            }
+                                        }
+                                        // Guarantee order integer
+                                        if (!isset($block['order'])) {
+                                            $normalized['templates'][$ti]['sections'][$si]['blocks'][$bi]['order'] = $bi;
+                                        }
+                                        if (!isset($block['active'])) {
+                                            $normalized['templates'][$ti]['sections'][$si]['blocks'][$bi]['active'] = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             if ($saveAsDraft) {
-                // Initialize draft if none
                 $userTemplate->ensureDraftInitialized();
                 $userTemplate->update([
                     'name' => $request->name,
                     'description' => $request->description,
-                    'draft_template_data' => $request->template_data,
+                    'draft_template_data' => $normalized,
                 ]);
             } else {
                 $userTemplate->update([
                     'name' => $request->name,
                     'description' => $request->description,
-                    'template_data' => $request->template_data,
+                    'template_data' => $normalized,
                 ]);
-                // Apply only if active
-                if ($userTemplate->is_active) {
+                if ($userTemplate->is_active && ($forceApply || !$saveAsDraft)) {
                     $userTemplate->applyToSite();
                 }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => $saveAsDraft ? 'Draft berhasil disimpan!' : 'Template berhasil disimpan!',
+                'applied' => $userTemplate->is_active && !$saveAsDraft,
+                'message' => $saveAsDraft ? 'Draft berhasil disimpan!' : ($forceApply ? 'Template diterapkan!' : 'Template berhasil disimpan!'),
                 'draft' => $saveAsDraft,
             ]);
 
@@ -139,6 +176,31 @@ class TemplateBuilderController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan template: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function publish(Request $request, UserTemplate $userTemplate)
+    {
+        $this->authorize('update', $userTemplate);
+        try {
+            // Use current draft if exists else template_data
+            if ($userTemplate->hasDraft()) {
+                $userTemplate->publishDraft();
+            } else {
+                // Force apply existing template_data
+                if ($userTemplate->is_active) {
+                    $userTemplate->applyToSite();
+                }
+            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Template berhasil dipublish & diterapkan',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal publish: ' . $e->getMessage(),
             ], 500);
         }
     }

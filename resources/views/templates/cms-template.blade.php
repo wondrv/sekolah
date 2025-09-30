@@ -36,6 +36,22 @@
     <!-- Tailwind CSS -->
     <link href="{{ asset('assets/css/app.css') }}" rel="stylesheet">
 
+    <!-- Inject custom CSS from active user template customizations (if available) -->
+    @php
+        // Attempt to resolve active user template (passed via context or relationship)
+        $activeUserTemplate = $template->userTemplate ?? null;
+        $customCss = $activeUserTemplate->customizations['css'] ?? null;
+        // Backwards compatibility: some imports place css under layout_settings
+        if(!$customCss && ($template->layout_settings['custom_css'] ?? false)) {
+            $customCss = $template->layout_settings['custom_css'];
+        }
+    @endphp
+    @if(!empty($customCss))
+        <style id="user-template-custom-css">
+            {!! $customCss !!}
+        </style>
+    @endif
+
     <!-- Custom CSS from template settings -->
     <style>
         :root {
@@ -100,8 +116,22 @@
 
         <!-- Default Footer if no footer section -->
         @php
+            // Determine if a footer section already exists (explicit flag, name heuristic, or footer tag in HTML)
             $hasFooterSection = collect($sections)->contains(function($sectionData) {
-                return isset($sectionData['section']->settings['is_footer']) && $sectionData['section']->settings['is_footer'];
+                // Explicit flag
+                if(isset($sectionData['section']->settings['is_footer']) && $sectionData['section']->settings['is_footer']) {
+                    return true;
+                }
+                // Name heuristic
+                $name = strtolower($sectionData['section']->name ?? '');
+                if(str_contains($name, 'footer')) return true;
+                // Scan rendered block HTML
+                foreach($sectionData['blocks'] as $blockHtml) {
+                    if(is_string($blockHtml) && stripos($blockHtml, '<footer') !== false) {
+                        return true;
+                    }
+                }
+                return false;
             });
         @endphp
         @if(!$hasFooterSection)
@@ -171,10 +201,20 @@
     <!-- Scripts -->
     <script src="{{ asset('assets/js/app.js') }}" defer></script>
 
-    <!-- Custom JS -->
+    <!-- Custom JS (template layout settings) -->
     @if($template->layout_settings && isset($template->layout_settings['custom_js']))
-        <script>
+        <script id="template-layout-custom-js">
             {!! $template->layout_settings['custom_js'] !!}
+        </script>
+    @endif
+
+    <!-- Inject custom JS from active user template customizations (if available) -->
+    @php
+        $customJs = $activeUserTemplate->customizations['javascript'] ?? null;
+    @endphp
+    @if(!empty($customJs))
+        <script id="user-template-custom-js">
+            {!! $customJs !!}
         </script>
     @endif
 
@@ -193,16 +233,4 @@
     @endif
 </body>
 
-</html>
-
-@php
-function hasFooterSection($sections) {
-    foreach ($sections as $sectionData) {
-        $section = $sectionData['section'];
-        if (str_contains(strtolower($section->name), 'footer')) {
-            return true;
-        }
-    }
-    return false;
-}
-@endphp
+ </html>

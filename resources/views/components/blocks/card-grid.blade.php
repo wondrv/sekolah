@@ -5,7 +5,8 @@
     $data = array_merge($content ?? [], $settings ?? [], $style_settings ?? []);
 @endphp
 
-<section class="card-grid-block py-16 {{ $data['background_color'] ?? 'bg-gray-50' }}">
+@php $anchor = $data['anchor'] ?? null; @endphp
+<section @if($anchor) id="{{ $anchor }}" @endif class="card-grid-block py-16 {{ $data['background_color'] ?? 'bg-gray-50' }}">
   <div class="container mx-auto px-4">
     @if(isset($data['title']) || isset($data['subtitle']))
       <div class="text-center mb-12">

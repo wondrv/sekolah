@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class UserTemplate
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
  * @property string|null $description
  * @property string|null $preview_image
  * @property array|null $template_data
+ * @property array|null $draft_template_data
  * @property string $source  // gallery|custom|imported
  * @property bool $is_active
  * @property array|null $customizations
@@ -217,7 +219,7 @@ class UserTemplate extends Model
     public function restoreRevision(TemplateRevision $revision, bool $keepDraft = true): void
     {
         // Snapshot current before restore
-        $this->createRevision('pre_restore', 'Before restoring revision ID '.$revision->id);
+        $this->createRevision('pre_restore', 'Before restoring revision ID '.$revision->getKey());
 
         $snapshot = $revision->snapshot;
         $update = [];
@@ -238,7 +240,7 @@ class UserTemplate extends Model
             $this->applyToSite();
         }
 
-        $this->createRevision('post_restore', 'After restoring revision ID '.$revision->id);
+        $this->createRevision('post_restore', 'After restoring revision ID '.$revision->getKey());
     }
 
     public function applyToSite()
@@ -291,11 +293,19 @@ class UserTemplate extends Model
     protected function createSectionsFromData($template, $sectionsData)
     {
         foreach ($sectionsData as $sectionData) {
+            // Auto-detect footer section by name if not explicitly flagged
+            $settings = $sectionData['settings'] ?? [];
+            if(!isset($settings['is_footer'])) {
+                $nameCheck = strtolower($sectionData['name'] ?? '');
+                if(str_contains($nameCheck, 'footer')) {
+                    $settings['is_footer'] = true;
+                }
+            }
             $section = Section::create([
                 'template_id' => $template->id,
                 'name' => $sectionData['name'],
                 'order' => $sectionData['order'],
-                'settings' => $sectionData['settings'] ?? null,
+                'settings' => $settings ?: null,
             ]);
 
             if (isset($sectionData['blocks'])) {
@@ -307,21 +317,53 @@ class UserTemplate extends Model
     protected function createBlocksFromData($section, $blocksData)
     {
         foreach ($blocksData as $blockData) {
-            Block::create([
-                'section_id' => $section->id,
-                'type' => $blockData['type'],
-                'name' => $blockData['name'],
-                'order' => $blockData['order'],
-                'content' => $blockData['content'] ?? null,
-                'settings' => $blockData['settings'] ?? null,
-                'data' => $blockData['data'] ?? null, // Add data field
-                'style_settings' => $blockData['style_settings'] ?? null,
-                'css_class' => $blockData['css_class'] ?? null,
-                'visible_desktop' => $blockData['visible_desktop'] ?? true,
-                'visible_tablet' => $blockData['visible_tablet'] ?? true,
-                'visible_mobile' => $blockData['visible_mobile'] ?? true,
-                'active' => $blockData['active'] ?? true,
-            ]);
+            // Normalize block type (kebab-case -> snake_case) for renderer compatibility
+            $rawType = $blockData['type'] ?? 'unknown';
+            $normalizedType = str_replace('-', '_', $rawType);
+
+            // If name missing, generate a readable one
+            $name = $blockData['name'] ?? ucfirst(str_replace(['-', '_'], ' ', $rawType));
+
+            // Merge content into data if only stored there
+            $data = $blockData['data'] ?? [];
+            if (empty($blockData['content']) && is_array($data) && isset($data['content'])) {
+                $content = $data['content'];
+            } else {
+                $content = $blockData['content'] ?? null;
+            }
+            // Ensure accessor getContentAttribute() can find content inside data['content']
+            if ($content !== null) {
+                if (!is_array($data)) { $data = []; }
+                if (!isset($data['content']) || $data['content'] !== $content) {
+                    $data['content'] = $content;
+                }
+            }
+
+            try {
+                Block::create([
+                    'section_id' => $section->id,
+                    'type' => $normalizedType,
+                    'name' => $name,
+                    'order' => $blockData['order'] ?? 0,
+                    'content' => $content,
+                    'settings' => $blockData['settings'] ?? null,
+                    'data' => $data ?: null,
+                    'style_settings' => $blockData['style_settings'] ?? null,
+                    'css_class' => $blockData['css_class'] ?? null,
+                    'visible_desktop' => $blockData['visible_desktop'] ?? true,
+                    'visible_tablet' => $blockData['visible_tablet'] ?? true,
+                    'visible_mobile' => $blockData['visible_mobile'] ?? true,
+                    'active' => $blockData['active'] ?? true,
+                ]);
+            } catch (\Exception $e) {
+                if (config('app.debug')) {
+                    Log::error('Block create failed', [
+                        'error' => $e->getMessage(),
+                        'section_id' => $section->id,
+                        'raw_block' => $blockData,
+                    ]);
+                }
+            }
         }
     }
 

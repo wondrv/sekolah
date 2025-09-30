@@ -281,6 +281,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::get('builder/{userTemplate}/edit', [Admin\Template\TemplateBuilderController::class, 'edit'])->name('builder.edit');
         Route::put('builder/{userTemplate}', [Admin\Template\TemplateBuilderController::class, 'update'])->name('builder.update');
         Route::get('builder/{userTemplate}/preview', [Admin\Template\TemplateBuilderController::class, 'preview'])->name('builder.preview');
+        // Publish & Apply (force apply current template_data to site DB tables)
+        Route::post('builder/{userTemplate}/publish', [Admin\Template\TemplateBuilderController::class, 'publish'])
+            ->name('builder.publish');
 
         // Builder API endpoints
         Route::post('builder/{userTemplate}/sections', [Admin\Template\TemplateBuilderController::class, 'saveSection'])->name('builder.save-section');

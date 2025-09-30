@@ -59,6 +59,11 @@
                 <span class="mr-2">💾</span>
                 Save Template
             </button>
+            <button id="publishTemplate"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                <span class="mr-2">🚀</span>
+                Publish & Apply
+            </button>
         </div>
     </div>
 </div>
@@ -422,6 +427,60 @@
     </div>
 </div>
 
+<!-- Section Settings Modal -->
+<div id="sectionSettingsModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="sectionSettingsTitle">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-xl px-6 pt-6 pb-5 text-left shadow-2xl transform transition-all sm:my-12 sm:align-middle sm:max-w-lg w-full">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 flex items-center" id="sectionSettingsTitle">⚙️ Section Settings</h3>
+                    <p class="text-xs text-gray-500 mt-1">Configure title & appearance for this section.</p>
+                </div>
+                <button type="button" id="closeSectionSettings" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close section settings">
+                    ✕
+                </button>
+            </div>
+
+            <form id="sectionSettingsForm" class="space-y-5" onsubmit="return false;">
+                <input type="hidden" id="sectionSettingsIndex">
+
+                <div>
+                    <label for="sectionNameInput" class="block text-sm font-medium text-gray-700 mb-1">Section Name</label>
+                    <input id="sectionNameInput" type="text" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2" placeholder="e.g. Hero Section" required>
+                </div>
+
+                <div>
+                    <label for="sectionBgSelect" class="block text-sm font-medium text-gray-700 mb-1">Background Style</label>
+                    <select id="sectionBgSelect" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
+                        <option value="light">Light</option>
+                        <option value="muted">Muted</option>
+                        <option value="dark">Dark</option>
+                        <option value="gradient">Gradient</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="sectionPaddingTop">Padding Top</label>
+                        <input type="number" id="sectionPaddingTop" min="0" step="4" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2" placeholder="48">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="sectionPaddingBottom">Padding Bottom</label>
+                        <input type="number" id="sectionPaddingBottom" min="0" step="4" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2" placeholder="48">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <button type="button" id="cancelSectionSettings" class="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" id="saveSectionSettings" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
 /* Custom CSS for Template Builder */
 /* Force black text utility without altering parent background */
@@ -600,8 +659,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedBlock = null;
     let selectedSection = null;
 
+    // Ensure base structure exists
+    if(!currentTemplate.templates) {
+        currentTemplate.templates = [{ sections: [] }];
+    }
+    if(!currentTemplate.templates[0].sections) {
+        currentTemplate.templates[0].sections = [];
+    }
+
     // Drag and Drop functionality
-    initializeDragAndDrop();
+    initializeDragAndDrop(); // initial (will be rebound after re-render)
 
     // Block editing
     initializeBlockEditing();
@@ -610,78 +677,63 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAutoSave();
 
     function initializeDragAndDrop() {
-        // Enable drag for block items
+        // Drag sources (library) stay constant
         document.querySelectorAll('.block-item').forEach(item => {
+            if(item.dataset.dragBound) return; // avoid rebinding
+            item.dataset.dragBound = '1';
             item.addEventListener('dragstart', function(e) {
                 e.dataTransfer.setData('text/plain', this.dataset.blockType);
                 e.dataTransfer.setData('application/json', this.dataset.blockConfig);
-
-                // Add visual feedback
                 this.style.opacity = '0.5';
                 this.style.transform = 'scale(0.95)';
-
-                // Create drag preview
                 const dragPreview = this.cloneNode(true);
                 dragPreview.style.transform = 'rotate(5deg)';
                 dragPreview.style.opacity = '0.9';
                 document.body.appendChild(dragPreview);
                 e.dataTransfer.setDragImage(dragPreview, 50, 25);
-
-                setTimeout(() => {
-                    document.body.removeChild(dragPreview);
-                }, 1);
+                setTimeout(() => { document.body.removeChild(dragPreview); }, 1);
             });
-
-            item.addEventListener('dragend', function(e) {
-                this.style.opacity = '';
-                this.style.transform = '';
-            });
+            item.addEventListener('dragend', function() { this.style.opacity=''; this.style.transform=''; });
         });
 
-        // Enable drop for sections
+        bindDropZones();
+
+        if ('ontouchstart' in window) {
+            initializeTouchDragDrop();
+        }
+    }
+
+    function bindDropZones() {
         document.querySelectorAll('.drop-zone').forEach(zone => {
+            if(zone.dataset.dropBound) return;
+            zone.dataset.dropBound = '1';
             zone.addEventListener('dragover', function(e) {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'copy';
                 this.classList.add('dragover');
-
-                // Add pulsing animation
                 this.style.animation = 'pulse 1s infinite';
             });
-
             zone.addEventListener('dragleave', function(e) {
-                // Only remove if we're leaving the zone entirely
                 if (!this.contains(e.relatedTarget)) {
                     this.classList.remove('dragover');
                     this.style.animation = '';
                 }
             });
-
             zone.addEventListener('drop', function(e) {
                 e.preventDefault();
                 this.classList.remove('dragover');
                 this.style.animation = '';
-
                 const blockType = e.dataTransfer.getData('text/plain');
-                const blockConfig = JSON.parse(e.dataTransfer.getData('application/json'));
+                let blockConfigRaw = e.dataTransfer.getData('application/json');
+                let blockConfig = {};
+                try { blockConfig = JSON.parse(blockConfigRaw || '{}'); } catch(e2) {}
                 const sectionIndex = parseInt(this.dataset.sectionIndex);
-
-                // Add success animation
                 this.style.background = '#10b981';
-                this.style.transform = 'scale(1.05)';
-
-                setTimeout(() => {
-                    this.style.background = '';
-                    this.style.transform = '';
-                    addBlockToSection(sectionIndex, blockType, blockConfig);
-                }, 300);
+                this.style.transform = 'scale(1.03)';
+                setTimeout(() => { this.style.background=''; this.style.transform=''; }, 250);
+                addBlockToSection(sectionIndex, blockType, blockConfig);
             });
         });
-
-        // Add mobile touch support
-        if ('ontouchstart' in window) {
-            initializeTouchDragDrop();
-        }
     }
 
     function initializeBlockEditing() {
@@ -725,25 +777,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function addBlockToSection(sectionIndex, blockType, blockConfig) {
-        // Implementation for adding blocks
-        console.log('Adding block', blockType, 'to section', sectionIndex);
-
-        // Update template data
+        if(!currentTemplate.templates[0].sections[sectionIndex]) return;
         if (!currentTemplate.templates[0].sections[sectionIndex].blocks) {
             currentTemplate.templates[0].sections[sectionIndex].blocks = [];
         }
-
         const newBlock = {
             type: blockType,
             order: currentTemplate.templates[0].sections[sectionIndex].blocks.length,
             active: true,
             data: getDefaultBlockData(blockType)
         };
-
         currentTemplate.templates[0].sections[sectionIndex].blocks.push(newBlock);
-
-        // Re-render section
-        renderSection(sectionIndex);
+        renderAllSections();
+        queueAutoPersist();
+        showSuccessNotification(blockType.replace('-', ' ') + ' block added');
     }
 
     function editBlock(sectionIndex, blockIndex) {
@@ -761,17 +808,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function deleteBlock(sectionIndex, blockIndex) {
+        if(!currentTemplate.templates[0].sections[sectionIndex]) return;
         currentTemplate.templates[0].sections[sectionIndex].blocks.splice(blockIndex, 1);
-
-        // Re-index remaining blocks
-        currentTemplate.templates[0].sections[sectionIndex].blocks.forEach((block, index) => {
-            block.order = index;
-        });
-
-        renderSection(sectionIndex);
+        currentTemplate.templates[0].sections[sectionIndex].blocks.forEach((block, index) => { block.order = index; });
+        renderAllSections();
+        queueAutoPersist();
     }
 
-    function saveTemplate(saveAsDraft = false) {
+    function saveTemplate(saveAsDraft = false, forceApply = false) {
         fetch(`{{ route('admin.templates.builder.update', $userTemplate) }}`, {
             method: 'PUT',
             headers: {
@@ -782,7 +826,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 name: '{{ $userTemplate->name }}',
                 description: '{{ $userTemplate->description }}',
                 template_data: currentTemplate,
-                save_as_draft: saveAsDraft
+                save_as_draft: saveAsDraft,
+                force_apply: forceApply
             })
         })
         .then(response => response.json())
@@ -792,6 +837,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('autoSaveIndicator').classList.add('hidden');
                 if (saveAsDraft) {
                     showSuccessNotification('Draft saved successfully!');
+                } else if(forceApply) {
+                    showSuccessNotification('Template published & applied!');
                 }
             } else {
                 document.getElementById('autoSaveStatus').textContent = 'Save failed';
@@ -959,10 +1006,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderSection(sectionIndex) {
-        // Implementation to re-render a section
-        // This would update the DOM with the current template data
-        console.log('Rendering section', sectionIndex);
-        showSuccessNotification('Section updated successfully!');
+        // Kept for compatibility; we now re-render all for simplicity
+        renderAllSections();
+    }
+
+    function renderAllSections() {
+        const container = document.getElementById('templateSections');
+        if(!container) return;
+        const sections = currentTemplate.templates[0].sections || [];
+        if(!sections.length) {
+            container.innerHTML = `<div class="p-12 text-center text-gray-500">No sections yet. Click "Add New Section".</div>`;
+            bindDropZones();
+            return;
+        }
+        const sectionHtml = sections.map((section, sIdx) => {
+            const blocks = section.blocks || [];
+            const blockHtml = blocks.map((block, bIdx) => {
+                const blockType = block.type || 'unknown';
+                const icon = (type => ({'hero':'🎯','card-grid':'📋','rich-text':'📝','stats':'📊','cta-banner':'📢','gallery-teaser':'🖼️','events-teaser':'📅'})[type] || '🔧')(blockType);
+                return `<div class="block-element bg-white border-2 border-gray-200 rounded-xl p-6 mb-4 relative group hover:border-blue-400 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1" data-block-index="${bIdx}" data-block-type="${blockType}">
+                    <div class="block-content">
+                        <div class="text-center text-gray-600">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><span class="text-white text-2xl">${icon}</span></div>
+                            <h5 class="text-lg font-bold text-gray-800 mb-2">${blockType.replace(/-/g,' ') } Block</h5>
+                            <p class="text-sm text-gray-500 mb-4">Click to edit content and customize this block</p>
+                            <div class="inline-flex items-center px-4 py-2 bg-blue-100 rounded-full"><span class="text-blue-600 text-sm font-medium">✏️ Click to edit</span></div>
+                        </div>
+                    </div>
+                    <div class="block-controls absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div class="flex space-x-2">
+                            <button class="edit-block px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-lg transform hover:scale-105 transition-all">✏️ Edit</button>
+                            <button class="delete-block px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 shadow-lg transform hover:scale-105 transition-all">🗑️ Delete</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            return `<div class="section-container border border-gray-200 bg-white mb-1" data-section-index="${sIdx}">
+                <div class="section-header bg-gray-50 px-6 py-4 flex items-center justify-between border-b border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center"><span class="text-gray-800 text-sm font-bold">📋</span></div>
+                        <div>
+                            <h4 class="text-lg font-bold text-black force-black-text no-select-highlight section-name">${escapeHtml(section.name || 'Section '+(sIdx+1))}</h4>
+                            <p class="text-gray-300 text-xs">Section ${sIdx + 1}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button class="section-settings px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">⚙️ Settings</button>
+                        <button class="delete-section px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">🗑️ Delete</button>
+                    </div>
+                </div>
+                <div class="section-content min-h-32 p-6 bg-gradient-to-br from-gray-50 to-white drop-zone border-t border-gray-200" data-section-index="${sIdx}">
+                    ${blockHtml || `<div class=\"empty-section text-center py-16 text-gray-500 border-2 border-dashed border-blue-300 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50\"><div class=\"w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg\"><span class=\"text-white text-2xl\">📦</span></div><h4 class=\"text-lg font-bold text-gray-700 mb-2\">Empty Section</h4><p class=\"text-sm text-gray-600 mb-4\">Drag blocks from the library to build your content</p><div class=\"inline-flex items-center px-4 py-2 bg-blue-100 rounded-full\"><span class=\"text-blue-600 text-sm font-medium\">👈 Start by dragging a block here</span></div></div>`}
+                </div>
+            </div>`;
+        }).join('');
+        container.innerHTML = sectionHtml;
+        bindDropZones(); // rebind for new zones
+    }
+
+    function escapeHtml(str){
+        return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function queueAutoPersist(){
+        // quick debounce for saving after structure change
+        triggerAutoSave();
     }
 
     function loadBlockEditForm(block) {
@@ -1030,8 +1138,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Event listeners
-    document.getElementById('saveTemplate').addEventListener('click', () => saveTemplate(false));
+    document.getElementById('saveTemplate').addEventListener('click', () => saveTemplate(false, false));
     document.getElementById('saveDraft').addEventListener('click', () => saveTemplate(true));
+    document.getElementById('publishTemplate').addEventListener('click', () => {
+        // Force apply current non-draft data
+        saveTemplate(false, true);
+    });
 
     document.getElementById('closeBlockModal').addEventListener('click', function(e) {
         e.preventDefault();
@@ -1064,17 +1176,127 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('addSection').addEventListener('click', function() {
         const newSection = {
-            name: 'New Section',
+            name: 'New Section ' + (currentTemplate.templates[0].sections.length + 1),
             order: currentTemplate.templates[0].sections.length,
             settings: { background: 'light' },
             blocks: []
         };
-
         currentTemplate.templates[0].sections.push(newSection);
-
-        // Re-render template
-        location.reload(); // Simple approach - in production, would update DOM
+        renderAllSections();
+        queueAutoPersist();
+        showSuccessNotification('Section added');
     });
+
+    // Delegated events for dynamic elements
+    document.getElementById('templateSections').addEventListener('click', function(e){
+        const deleteBtn = e.target.closest('.delete-section');
+        if(deleteBtn){
+            const sectionEl = deleteBtn.closest('.section-container');
+            const idx = parseInt(sectionEl.dataset.sectionIndex);
+            if(confirm('Delete this section?')){
+                currentTemplate.templates[0].sections.splice(idx,1);
+                // reindex order
+                currentTemplate.templates[0].sections.forEach((s,i)=> s.order = i);
+                renderAllSections();
+                queueAutoPersist();
+                showSuccessNotification('Section deleted');
+            }
+            return;
+        }
+        const settingsBtn = e.target.closest('.section-settings');
+        if(settingsBtn){
+            const sectionEl = settingsBtn.closest('.section-container');
+            const idx = parseInt(sectionEl.dataset.sectionIndex);
+            openSectionSettingsModal(idx);
+            return;
+        }
+        const deleteBlockBtn = e.target.closest('.delete-block');
+        if(deleteBlockBtn){
+            const sectionEl = e.target.closest('.section-content');
+            const sIdx = parseInt(sectionEl.dataset.sectionIndex);
+            const blockEl = e.target.closest('.block-element');
+            const bIdx = parseInt(blockEl.dataset.blockIndex);
+            if(confirm('Delete this block?')) deleteBlock(sIdx,bIdx);
+            return;
+        }
+        const editBlockBtn = e.target.closest('.edit-block');
+        if(editBlockBtn){
+            const sectionEl = e.target.closest('.section-content');
+            const sIdx = parseInt(sectionEl.dataset.sectionIndex);
+            const blockEl = e.target.closest('.block-element');
+            const bIdx = parseInt(blockEl.dataset.blockIndex);
+            editBlock(sIdx,bIdx);
+            return;
+        }
+    });
+
+    // Initial client-side normalization render (optional to sync markup)
+    renderAllSections();
+});
+
+// Section Settings Modal logic
+function openSectionSettingsModal(index){
+    const modal = document.getElementById('sectionSettingsModal');
+    const idxInput = document.getElementById('sectionSettingsIndex');
+    const nameInput = document.getElementById('sectionNameInput');
+    const bgSelect = document.getElementById('sectionBgSelect');
+    const padTop = document.getElementById('sectionPaddingTop');
+    const padBottom = document.getElementById('sectionPaddingBottom');
+    const sections = window.currentTemplate?.templates?.[0]?.sections || [];
+    const section = sections[index] || { name:'', settings:{} };
+    idxInput.value = index;
+    nameInput.value = section.name || '';
+    bgSelect.value = section.settings?.background || 'light';
+    padTop.value = section.settings?.padding_top || '';
+    padBottom.value = section.settings?.padding_bottom || '';
+    modal.classList.remove('hidden');
+    setTimeout(()=> nameInput.focus(), 50);
+}
+
+function closeSectionSettingsModal(){
+    document.getElementById('sectionSettingsModal').classList.add('hidden');
+}
+
+document.addEventListener('click', function(e){
+    if(e.target.id === 'closeSectionSettings' || e.target.id === 'cancelSectionSettings'){
+        closeSectionSettingsModal();
+    }
+});
+
+document.getElementById('sectionSettingsForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const index = parseInt(document.getElementById('sectionSettingsIndex').value);
+    const name = document.getElementById('sectionNameInput').value.trim();
+    const bg = document.getElementById('sectionBgSelect').value;
+    const pTop = document.getElementById('sectionPaddingTop').value;
+    const pBottom = document.getElementById('sectionPaddingBottom').value;
+    if(!isNaN(index) && window.currentTemplate?.templates?.[0]?.sections[index]){
+        const target = window.currentTemplate.templates[0].sections[index];
+        target.name = name || target.name;
+        target.settings = target.settings || {};
+        target.settings.background = bg;
+        if(pTop) target.settings.padding_top = parseInt(pTop); else delete target.settings.padding_top;
+        if(pBottom) target.settings.padding_bottom = parseInt(pBottom); else delete target.settings.padding_bottom;
+        // Persist and re-render
+        if(typeof queueAutoPersist === 'function') queueAutoPersist();
+        if(typeof renderAllSections === 'function') renderAllSections();
+        showSuccessNotification('Section updated');
+    }
+    closeSectionSettingsModal();
+});
+
+// Close modal on backdrop click
+document.getElementById('sectionSettingsModal').addEventListener('click', function(e){
+    if(e.target === this){
+        closeSectionSettingsModal();
+    }
+});
+
+// Escape key close
+document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && !document.getElementById('sectionSettingsModal').classList.contains('hidden')){
+        closeSectionSettingsModal();
+    }
 });
 </script>
 @endsection

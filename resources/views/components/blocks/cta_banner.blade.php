@@ -11,7 +11,8 @@
     $background_color = $content['background_color'] ?? $block->data['content']['background_color'] ?? $data['background_color'] ?? 'bg-gradient-to-r from-blue-600 to-blue-800';
 @endphp
 
-<section class="cta-banner-block py-16 {{ $background_color }} text-white">
+@php $anchor = $content['anchor'] ?? $block->data['content']['anchor'] ?? ($data['anchor'] ?? null); @endphp
+<section @if($anchor) id="{{ $anchor }}" @endif class="cta-banner-block py-16 {{ $background_color }} text-white">
   <div class="container mx-auto px-4">
     <div class="text-center max-w-4xl mx-auto">
       @if($title)

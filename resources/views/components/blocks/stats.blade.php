@@ -9,7 +9,8 @@
     $background_color = $content['background_color'] ?? $block->data['content']['background_color'] ?? $data['background_color'] ?? 'bg-blue-900';
 @endphp
 
-<section class="stats-block py-16 {{ $background_color }} text-white">
+@php $anchor = $content['anchor'] ?? $block->data['content']['anchor'] ?? ($data['anchor'] ?? null); @endphp
+<section @if($anchor) id="{{ $anchor }}" @endif class="stats-block py-16 {{ $background_color }} text-white">
   <div class="container mx-auto px-4">
     @if($title)
       <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">{{ $title }}</h2>
