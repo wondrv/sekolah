@@ -36,6 +36,27 @@ use Illuminate\Support\Facades\Log;
  * @method static static fromGallery()
  * @method static static imported()
  */
+/**
+ * Class UserTemplate
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int|null $gallery_template_id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property string|null $preview_image
+ * @property array|null $template_data
+ * @property array|null $draft_template_data
+ * @property string $source
+ * @property bool $is_active
+ * @property array|null $customizations
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read TemplateGallery|null $galleryTemplate
+ * @property-read \Illuminate\Database\Eloquent\Collection|Template[] $templates
+ * @property-read \Illuminate\Database\Eloquent\Collection|TemplateRevision[] $revisions
+ */
 class UserTemplate extends Model
 {
     use HasFactory;

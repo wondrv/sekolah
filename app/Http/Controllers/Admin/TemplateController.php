@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Template;
 use App\Models\Section;
 use App\Models\Block;
+use App\Models\UserTemplate;
 use Illuminate\Http\Request;
+use App\Http\Requests\TemplateImportRequest;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use App\Support\Theme;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Auth;
 
 class TemplateController extends Controller
 {
@@ -130,7 +134,7 @@ class TemplateController extends Controller
 
                 if ($id) {
                     // Update only if the section belongs to this template
-                    $section = \App\Models\Section::where('id', $id)
+                    $section = Section::where('id', $id)
                         ->where('template_id', $template->id)
                         ->first();
                     if ($section) {
@@ -138,10 +142,10 @@ class TemplateController extends Controller
                     }
                 } else {
                     // Create new section with a unique key
-                    $base = \Illuminate\Support\Str::slug($payload['name']) ?: 'section';
+                    $base = Str::slug($payload['name']) ?: 'section';
                     $key = $base;
                     $suffix = 1;
-                    while (\App\Models\Section::where('key', $key)->exists()) {
+                    while (Section::where('key', $key)->exists()) {
                         $key = $base.'-'.(++$suffix);
                     }
 
@@ -215,43 +219,211 @@ class TemplateController extends Controller
     /**
      * Import a template JSON as a NEW template
      */
-    public function import(Request $request): RedirectResponse
+    public function import(TemplateImportRequest $request): RedirectResponse
     {
-        $request->validate([
-            'file' => 'required|file|mimetypes:application/json,text/plain',
-        ]);
-
-        $data = json_decode(file_get_contents($request->file('file')->getRealPath()), true);
-        if (!is_array($data)) {
-            return back()->with('error', 'File JSON tidak valid.');
+        $uploaded = $request->file('file') ?? $request->file('template_file');
+        if (!$uploaded) {
+            return back()->with('error', 'Tidak ada file yang diterima.');
         }
 
-        $tpl = $data['template'] ?? [];
-        $sections = $data['sections'] ?? [];
-        if (empty($tpl) || !is_array($sections)) {
-            return back()->with('error', 'Struktur JSON tidak sesuai.');
+        $ext = strtolower($uploaded->getClientOriginalExtension());
+        $templateNameOverride = $request->input('template_name');
+        $activate = (bool) $request->boolean('activate_after_import');
+
+        try {
+            if (in_array($ext, ['json', 'txt'])) {
+                // Existing JSON import path
+                $data = json_decode(file_get_contents($uploaded->getRealPath()), true);
+                if (!is_array($data)) {
+                    return back()->with('error', 'File JSON tidak valid.');
+                }
+
+                $tpl = $data['template'] ?? [];
+                $sections = $data['sections'] ?? [];
+                if (empty($tpl) || !is_array($sections)) {
+                    return back()->with('error', 'Struktur JSON tidak sesuai.');
+                }
+
+                // Create template with unique slug if needed
+                $baseSlug = Str::slug($tpl['slug'] ?? $tpl['name'] ?? 'template');
+                $slug = $baseSlug;
+                $i = 1;
+                while (\App\Models\Template::where('slug', $slug)->exists()) {
+                    $slug = $baseSlug.'-'.(++$i);
+                }
+
+                $template = Template::create([
+                    'name' => $templateNameOverride ?: ($tpl['name'] ?? 'Imported Template'),
+                    'description' => $tpl['description'] ?? null,
+                    'slug' => $slug,
+                    'active' => $activate ? true : (bool) ($tpl['active'] ?? true),
+                ]);
+
+                $this->hydrateSectionsAndBlocks($template, $sections);
+
+                Theme::clearCache();
+                Log::info('Template JSON imported', [
+                    'user_id' => Auth::id(),
+                    'slug' => $slug,
+                    'sections' => count($sections),
+                    'blocks_total' => collect($sections)->sum(fn($s) => isset($s['blocks']) ? count($s['blocks']) : 0),
+                ]);
+                return redirect()->route('admin.templates.edit', $template)
+                    ->with('success', 'Template JSON berhasil diimpor.');
+            }
+            elseif (in_array($ext, ['html', 'htm'])) {
+                // HTML import: create UserTemplate with template_data, auto-activate if requested
+                $html = file_get_contents($uploaded->getRealPath());
+                $title = null;
+                if (preg_match('/<title>(.*?)<\/title>/is', $html, $m)) {
+                    $title = trim(strip_tags($m[1]));
+                }
+                $body = null;
+                if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $html, $m)) {
+                    $body = trim($m[1]);
+                } else {
+                    $body = $html; // fallback full content
+                }
+
+                $templateName = $templateNameOverride ?: ($title ?: 'Imported HTML Template');
+                $baseSlug = Str::slug($templateName);
+                if (!$baseSlug) { $baseSlug = 'html-template'; }
+                $slug = $baseSlug; $i = 1;
+                while (UserTemplate::where('slug', $slug)->exists()) { $slug = $baseSlug.'-'.(++$i); }
+
+                $templateData = [
+                    'templates' => [[
+                        'name' => $templateName,
+                        'slug' => $slug,
+                        'description' => 'Imported from HTML file',
+                        'active' => true,
+                        'type' => 'page',
+                        'sections' => [[
+                            'name' => 'HTML Content',
+                            'order' => 1,
+                            'blocks' => [[
+                                'type' => 'rich_text',
+                                'name' => 'HTML Block',
+                                'order' => 1,
+                                'content' => [ 'text' => $body ],
+                                'active' => true,
+                            ]],
+                        ]],
+                    ]],
+                ];
+
+                $userId = \Illuminate\Support\Facades\Auth::id();
+                $userTemplate = \App\Models\UserTemplate::create([
+                    'user_id' => $userId,
+                    'name' => $templateName,
+                    'slug' => $slug,
+                    'description' => 'Imported from HTML file',
+                    'template_data' => $templateData,
+                    'source' => 'imported',
+                    'is_active' => $activate,
+                ]);
+                if ($activate) {
+                    $userTemplate->activate();
+                }
+                Theme::clearCache();
+                Log::info('HTML template imported', [
+                    'user_id' => $userId,
+                    'slug' => $slug,
+                    'body_length' => strlen($body),
+                ]);
+                return redirect()->route('admin.templates.my-templates.show', $userTemplate)
+                    ->with('success', 'File HTML berhasil diimpor ke My Templates dan siap dipakai!');
+            }
+            elseif ($ext === 'zip') {
+                // ZIP import: extract HTML, create UserTemplate with template_data, auto-activate if requested
+                $zip = new \ZipArchive();
+                $openResult = $zip->open($uploaded->getRealPath());
+                if ($openResult !== true) {
+                    return back()->with('error', 'Tidak dapat membuka file ZIP (kode: '.$openResult.').');
+                }
+
+                $htmlContent = null; $foundFileName = null;
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $stat = $zip->statIndex($i);
+                    $name = $stat['name'];
+                    // Prefer index.html else first .html
+                    if (preg_match('/index\.html?$/i', $name)) {
+                        $htmlContent = $zip->getFromIndex($i); $foundFileName = $name; break;
+                    }
+                    if (!$htmlContent && preg_match('/\.html?$/i', $name)) {
+                        $htmlContent = $zip->getFromIndex($i); $foundFileName = $name; // keep searching for index
+                    }
+                }
+                $zip->close();
+
+                if (!$htmlContent) {
+                    return back()->with('error', 'File ZIP tidak berisi file HTML. Pastikan ada index.html.');
+                }
+
+                $title = null;
+                if (preg_match('/<title>(.*?)<\/title>/is', $htmlContent, $m)) {
+                    $title = trim(strip_tags($m[1]));
+                }
+                if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $htmlContent, $m)) {
+                    $body = trim($m[1]);
+                } else { $body = $htmlContent; }
+
+                $templateName = $templateNameOverride ?: ($title ?: 'Imported ZIP Template');
+                $baseSlug = Str::slug($templateName);
+                if (!$baseSlug) { $baseSlug = 'zip-template'; }
+                $slug = $baseSlug; $i = 1;
+                while (UserTemplate::where('slug', $slug)->exists()) { $slug = $baseSlug.'-'.(++$i); }
+
+                $templateData = [
+                    'templates' => [[
+                        'name' => $templateName,
+                        'slug' => $slug,
+                        'description' => 'Imported from ZIP ('.$foundFileName.')',
+                        'active' => true,
+                        'type' => 'page',
+                        'sections' => [[
+                            'name' => 'ZIP HTML Content',
+                            'order' => 1,
+                            'blocks' => [[
+                                'type' => 'rich_text',
+                                'name' => 'ZIP HTML Block',
+                                'order' => 1,
+                                'content' => [ 'text' => $body ],
+                                'active' => true,
+                            ]],
+                        ]],
+                    ]],
+                ];
+
+                $userId = \Illuminate\Support\Facades\Auth::id();
+                $userTemplate = \App\Models\UserTemplate::create([
+                    'user_id' => $userId,
+                    'name' => $templateName,
+                    'slug' => $slug,
+                    'description' => 'Imported from ZIP ('.$foundFileName.')',
+                    'template_data' => $templateData,
+                    'source' => 'imported',
+                    'is_active' => $activate,
+                ]);
+                if ($activate) {
+                    $userTemplate->activate();
+                }
+                Theme::clearCache();
+                Log::info('ZIP template imported', [
+                    'user_id' => $userId,
+                    'slug' => $slug,
+                    'origin_file' => $foundFileName,
+                    'body_length' => strlen($body),
+                ]);
+                return redirect()->route('admin.templates.my-templates.show', $userTemplate)
+                    ->with('success', 'ZIP berhasil diimpor ke My Templates dan siap dipakai!');
+            }
+            else {
+                return back()->with('error', 'Ekstensi file tidak didukung untuk import.');
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal mengimpor template: '.$e->getMessage());
         }
-
-        // Create template with unique slug if needed
-        $baseSlug = Str::slug($tpl['slug'] ?? $tpl['name'] ?? 'template');
-        $slug = $baseSlug;
-        $i = 1;
-        while (\App\Models\Template::where('slug', $slug)->exists()) {
-            $slug = $baseSlug.'-'.(++$i);
-        }
-
-        $template = Template::create([
-            'name' => $tpl['name'] ?? 'Imported Template',
-            'description' => $tpl['description'] ?? null,
-            'slug' => $slug,
-            'active' => (bool) ($tpl['active'] ?? true),
-        ]);
-
-        $this->hydrateSectionsAndBlocks($template, $sections);
-
-        Theme::clearCache();
-
-        return redirect()->route('admin.templates.edit', $template)->with('success', 'Template berhasil diimpor.');
     }
 
     /**

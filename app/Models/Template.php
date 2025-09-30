@@ -5,6 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Class Template
+ *
+ * @property int $id
+ * @property int|null $user_template_id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property bool $active
+ * @property string|null $type
+ * @property array|null $layout_settings
+ * @property bool $is_global
+ * @property int $sort_order
+ * @property string|null $template_version
+ * @property array|null $metadata
+ * @property-read \Illuminate\Support\Collection|Section[] $sections
+ * @property-read UserTemplate|null $userTemplate
+ */
 class Template extends Model
 {
     use HasFactory;

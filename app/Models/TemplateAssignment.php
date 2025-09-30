@@ -5,6 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Class TemplateAssignment
+ *
+ * @property int $id
+ * @property string $route_pattern
+ * @property string|null $page_slug
+ * @property int $template_id
+ * @property int $priority
+ * @property bool $active
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read Template $template
+ */
 class TemplateAssignment extends Model
 {
     use HasFactory;
