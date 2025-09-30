@@ -4,223 +4,232 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
     <title>{{ config('app.name', 'Laravel') }} - Admin Panel</title>
-
-    <!-- Tailwind CSS -->
     <link href="{{ asset('assets/css/app.css') }}" rel="stylesheet">
-
-    <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="font-sans antialiased bg-gray-100">
-    <div class="min-h-screen flex">
-        <!-- Left Sidebar -->
-        <div class="w-64 shadow-lg border-r border-gray-800 flex flex-col" style="background-color: #36454F;" x-data="{
-                content: {{ (request()->routeIs('admin.posts.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.events.*') || request()->routeIs('admin.galleries.*')) ? 'true' : 'false' }},
-                school: {{ (request()->routeIs('admin.facilities.*') || request()->routeIs('admin.programs.*') || request()->routeIs('admin.achievements.*') || request()->routeIs('admin.testimonials.*')) ? 'true' : 'false' }},
-                templates: {{ (request()->routeIs('admin.templates.gallery.*') || request()->routeIs('admin.templates.my-templates*') || request()->routeIs('admin.templates.builder.*') || request()->routeIs('admin.templates.exports*')) ? 'true' : 'false' }},
-                advanced: {{ (request()->routeIs('admin.templates.index') || request()->routeIs('admin.templates.show') || request()->routeIs('admin.templates.edit') || request()->routeIs('admin.templates.create') || request()->routeIs('admin.template-assignments.*') || request()->routeIs('admin.theme.*') || request()->routeIs('admin.menus.*') || request()->routeIs('admin.settings.*')) ? 'true' : 'false' }},
-                communication: {{ (request()->routeIs('admin.messages.*')) ? 'true' : 'false' }}
-            }">
+<body style="margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6;">
+    <!-- Force Flexbox Layout -->
+    <div style="display: flex; min-height: 100vh; width: 100%;">
+
+        <!-- SIDEBAR - FIXED LEFT -->
+        <aside style="width: 256px; min-width: 256px; background-color: #36454F; box-shadow: 2px 0 4px rgba(0,0,0,0.1); display: flex; flex-direction: column;"
+               x-data="{
+                   content: {{ (request()->routeIs('admin.posts.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.events.*') || request()->routeIs('admin.galleries.*')) ? 'true' : 'false' }},
+                   ppdb: {{ (request()->routeIs('ppdb.*')) ? 'true' : 'false' }},
+                   school: {{ (request()->routeIs('admin.facilities.*') || request()->routeIs('admin.programs.*') || request()->routeIs('admin.achievements.*') || request()->routeIs('admin.testimonials.*')) ? 'true' : 'false' }},
+                   templates: {{ (request()->routeIs('admin.templates.gallery.*') || request()->routeIs('admin.templates.my-templates*') || request()->routeIs('admin.templates.builder.*') || request()->routeIs('admin.templates.exports*')) ? 'true' : 'false' }},
+                   advanced: {{ (request()->routeIs('admin.templates.index') || request()->routeIs('admin.templates.show') || request()->routeIs('admin.templates.edit') || request()->routeIs('admin.templates.create') || request()->routeIs('admin.template-assignments.*') || request()->routeIs('admin.theme.*') || request()->routeIs('admin.menus.*') || request()->routeIs('admin.settings.*')) ? 'true' : 'false' }},
+                   communication: {{ (request()->routeIs('admin.messages.*')) ? 'true' : 'false' }}
+               }">
+
             <!-- Sidebar Header -->
-            <div class="p-6 border-b border-gray-800">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold">🏫</span>
+            <div style="padding: 1.5rem; border-bottom: 1px solid #4a5568; color: white;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 2.5rem; height: 2.5rem; background-color: #3b82f6; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 1.25rem;">🏫</span>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold text-white">Admin Panel</h1>
-                        <p class="text-xs text-gray-400">{{ auth()->user()->name }}</p>
+                        <h1 style="font-size: 1.125rem; font-weight: bold; margin: 0; color: white;">Admin Panel</h1>
+                        <p style="font-size: 0.75rem; color: #a0aec0; margin: 0;">{{ auth()->user()?->name ?? 'Guest' }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Sidebar Navigation -->
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <!-- Navigation Menu -->
+            <nav style="flex: 1; padding: 1rem; overflow-y: auto;">
                 <!-- Dashboard -->
                 <a href="{{ route('admin.dashboard') }}"
-                   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                    <span class="mr-3">📊</span>
+                   style="display: flex; align-items: center; padding: 0.5rem 0.75rem; border-radius: 0.375rem; text-decoration: none; margin-bottom: 0.25rem; font-size: 0.9rem; {{ request()->routeIs('admin.dashboard') ? 'background-color: #3b82f6; color: white;' : 'color: #d1d5db;' }} transition: all 0.2s;">
+                    <span style="margin-right: 0.5rem; font-size: 1rem;">📊</span>
                     Dashboard
                 </a>
 
-                <!-- Content Management Dropdown -->
-                <div class="space-y-1">
+                <!-- Content Management -->
+                <div style="margin-bottom: 0.25rem;">
                     <button @click="content = !content"
-                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
-                        <div class="flex items-center">
-                            <span class="mr-3">📄</span>
+                            style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: none; border: none; color: #d1d5db; text-align: left; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="margin-right: 0.5rem; font-size: 1rem;">📄</span>
                             Content Management
                         </div>
-                        <svg class="w-4 h-4 transition-transform" :class="content ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
+                        <span style="font-size: 0.75rem; transition: transform 0.2s; display: inline-block;" :style="content ? 'transform: rotate(180deg)' : ''">▼</span>
                     </button>
-                    <div x-show="content" x-transition class="ml-6 space-y-1">
-                        <!-- Pages single link (no dropdown) -->
-                        <a href="{{ route('admin.pages.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.pages.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">📄</span>
+                    <div x-show="content" x-transition style="margin-left: 1rem; margin-top: 0.125rem;">
+                        <a href="{{ route('admin.posts.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.posts.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">📝</span>
+                            Berita & Artikel
+                        </a>
+                        <a href="{{ route('admin.pages.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.pages.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">📄</span>
                             Halaman
                         </a>
-                        <a href="{{ route('admin.galleries.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.galleries.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🖼️</span>
+                        <a href="{{ route('admin.events.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.events.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">📅</span>
+                            Agenda & Kalender
+                        </a>
+                        <a href="{{ route('admin.galleries.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.galleries.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🖼️</span>
                             Galeri
                         </a>
                     </div>
                 </div>
 
-                <!-- School Features Dropdown -->
-                <div class="space-y-1">
+                <!-- PPDB Management -->
+                <div style="margin-bottom: 0.25rem;">
+                    <button @click="ppdb = !ppdb"
+                            style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: none; border: none; color: #d1d5db; text-align: left; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="margin-right: 0.5rem; font-size: 1rem;">🎓</span>
+                            PPDB Management
+                        </div>
+                        <span style="font-size: 0.75rem; transition: transform 0.2s; display: inline-block;" :style="ppdb ? 'transform: rotate(180deg)' : ''">▼</span>
+                    </button>
+                    <div x-show="ppdb" x-transition style="margin-left: 1rem; margin-top: 0.125rem;">
+                        <a href="{{ route('ppdb.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('ppdb.index') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">📋</span>
+                            Pengaturan PPDB
+                        </a>
+                        <a href="{{ route('ppdb.costs') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('ppdb.costs') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">💰</span>
+                            Biaya Pendaftaran
+                        </a>
+                    </div>
+                </div>
+
+                <!-- School Features -->
+                <div style="margin-bottom: 0.25rem;">
                     <button @click="school = !school"
-                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
-                        <div class="flex items-center">
-                            <span class="mr-3">🏫</span>
+                            style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: none; border: none; color: #d1d5db; text-align: left; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="margin-right: 0.5rem; font-size: 1rem;">🏫</span>
                             School Features
                         </div>
-                        <svg class="w-4 h-4 transition-transform" :class="school ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
+                        <span style="font-size: 0.75rem; transition: transform 0.2s; display: inline-block;" :style="school ? 'transform: rotate(180deg)' : ''">▼</span>
                     </button>
-                    <div x-show="school" x-transition class="ml-6 space-y-1">
-                        <a href="{{ route('admin.facilities.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.facilities.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🏫</span>
+                    <div x-show="school" x-transition style="margin-left: 1rem; margin-top: 0.125rem;">
+                        <a href="{{ route('admin.facilities.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.facilities.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🏫</span>
                             Fasilitas
                         </a>
-                        <a href="{{ route('admin.programs.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.programs.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🎯</span>
+                        <a href="{{ route('admin.programs.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.programs.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🎯</span>
                             Program Unggulan
                         </a>
-                        <a href="{{ route('admin.achievements.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.achievements.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🏆</span>
+                        <a href="{{ route('admin.achievements.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.achievements.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🏆</span>
                             Prestasi
                         </a>
-                        <a href="{{ route('admin.testimonials.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.testimonials.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">💬</span>
+                        <a href="{{ route('admin.testimonials.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.testimonials.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">💬</span>
                             Testimoni
                         </a>
                     </div>
                 </div>
 
-                <!-- Template System Dropdown -->
-                <div class="space-y-1">
+                <!-- Template System -->
+                <div style="margin-bottom: 0.25rem;">
                     <button @click="templates = !templates"
-                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg {{ (request()->routeIs('admin.templates.gallery.*') || request()->routeIs('admin.templates.my-templates*') || request()->routeIs('admin.templates.builder.*') || request()->routeIs('admin.templates.exports*')) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                        <div class="flex items-center">
-                            <span class="mr-3">🎨</span>
+                            style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: none; border: none; color: #d1d5db; text-align: left; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="margin-right: 0.5rem; font-size: 1rem;">🎨</span>
                             Template System
                         </div>
-                        <svg class="w-4 h-4 transition-transform" :class="templates ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
+                        <span style="font-size: 0.75rem; transition: transform 0.2s; display: inline-block;" :style="templates ? 'transform: rotate(180deg)' : ''">▼</span>
                     </button>
-                    <div x-show="templates" x-transition class="ml-6 space-y-1">
-                        <a href="{{ route('admin.templates.gallery.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.gallery.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🎨</span>
+                    <div x-show="templates" x-transition style="margin-left: 1rem; margin-top: 0.125rem;">
+                        <a href="{{ route('admin.templates.gallery.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.templates.gallery.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🎨</span>
                             Template Gallery
                         </a>
-                        <a href="{{ route('admin.templates.my-templates') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.my-templates*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">📱</span>
+                        <a href="{{ route('admin.templates.my-templates') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.templates.my-templates*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">📝</span>
                             My Templates
-                        </a>
-                        <a href="{{ route('admin.templates.builder.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.builder.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🔧</span>
-                            Template Builder
-                        </a>
-                        <a href="{{ route('admin.templates.exports') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.templates.exports*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">📦</span>
-                            Export/Import
                         </a>
                     </div>
                 </div>
 
-                <!-- Advanced Features Dropdown -->
-                <div class="space-y-1">
+                <!-- HTML Validator -->
+                <a href="{{ route('admin.html-validator.index') }}"
+                   style="display: flex; align-items: center; padding: 0.5rem 0.75rem; border-radius: 0.375rem; text-decoration: none; margin-bottom: 0.25rem; font-size: 0.9rem; {{ request()->routeIs('admin.html-validator.*') ? 'background-color: #3b82f6; color: white;' : 'color: #d1d5db;' }}">
+                    <span style="margin-right: 0.5rem; font-size: 1rem;">🔍</span>
+                    HTML Validator
+                </a>
+
+                <!-- Advanced Features -->
+                <div style="margin-bottom: 0.25rem;">
                     <button @click="advanced = !advanced"
-                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg {{ (request()->routeIs('admin.templates.index') || request()->routeIs('admin.templates.show') || request()->routeIs('admin.templates.edit') || request()->routeIs('admin.templates.create') || request()->routeIs('admin.template-assignments.*') || request()->routeIs('admin.theme.*') || request()->routeIs('admin.menus.*') || request()->routeIs('admin.settings.*')) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                        <div class="flex items-center">
-                            <span class="mr-3">🛠️</span>
+                            style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: none; border: none; color: #d1d5db; text-align: left; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="margin-right: 0.5rem; font-size: 1rem;">🛠️</span>
                             Advanced Features
                         </div>
-                        <svg class="w-4 h-4 transition-transform" :class="advanced ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
+                        <span style="font-size: 0.75rem; transition: transform 0.2s; display: inline-block;" :style="advanced ? 'transform: rotate(180deg)' : ''">▼</span>
                     </button>
-                    <div x-show="advanced" x-transition class="ml-6 space-y-1">
-                        <a href="{{ route('admin.templates.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ (request()->routeIs('admin.templates.index') || request()->routeIs('admin.templates.show') || request()->routeIs('admin.templates.edit') || request()->routeIs('admin.templates.create')) ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🛠️</span>
+                    <div x-show="advanced" x-transition style="margin-left: 1rem; margin-top: 0.125rem;">
+                        <a href="{{ route('admin.templates.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.templates.index') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🛠️</span>
                             Legacy Templates
                         </a>
-                        <a href="{{ route('admin.template-assignments.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.template-assignments.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🔗</span>
+                        <a href="{{ route('admin.template-assignments.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.template-assignments.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🔗</span>
                             Template Assignments
                         </a>
-                        <a href="{{ route('admin.theme.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.theme.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🎭</span>
+                        <a href="{{ route('admin.theme.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.theme.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🎭</span>
                             Theme Settings
                         </a>
-                        <a href="{{ route('admin.menus.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.menus.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">🧭</span>
+                        <a href="{{ route('admin.menus.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.menus.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🧭</span>
                             Menu Management
                         </a>
-                        <a href="{{ route('admin.settings.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.settings.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <span class="mr-2">⚙️</span>
+                        <a href="{{ route('admin.settings.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.settings.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">⚙️</span>
                             Settings
                         </a>
                     </div>
                 </div>
 
-                <!-- Communication Dropdown -->
-                <div class="space-y-1">
-                    @php
-                        $unreadCount = \App\Models\Message::where('status', 'unread')->count();
-                        $totalNotifications = $unreadCount;
-                    @endphp
+                <!-- Communication -->
+                <div style="margin-bottom: 0.25rem;">
                     <button @click="communication = !communication"
-                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white">
-                        <div class="flex items-center">
-                            <span class="mr-3">📧</span>
+                            style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: none; border: none; color: #d1d5db; text-align: left; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="margin-right: 0.5rem; font-size: 1rem;">📧</span>
                             Communication
-                            @if($totalNotifications > 0)
-                                <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-2">{{ $totalNotifications }}</span>
-                            @endif
                         </div>
-                        <svg class="w-4 h-4 transition-transform" :class="communication ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
+                        <span style="font-size: 0.75rem; transition: transform 0.2s; display: inline-block;" :style="communication ? 'transform: rotate(180deg)' : ''">▼</span>
                     </button>
-                    <div x-show="communication" x-transition class="ml-6 space-y-1">
-                        <a href="{{ route('admin.messages.index') }}" class="flex items-center justify-between px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg {{ request()->routeIs('admin.messages.*') ? 'bg-blue-600 text-white' : '' }}">
-                            <div class="flex items-center">
-                                <span class="mr-2">📧</span>
-                                Inbox Messages
-                            </div>
-                            @if($unreadCount > 0)
-                                <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1">{{ $unreadCount }}</span>
-                            @endif
+                    <div x-show="communication" x-transition style="margin-left: 1rem; margin-top: 0.125rem;">
+                        <a href="{{ route('admin.messages.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.messages.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">📧</span>
+                            Inbox Messages
                         </a>
                     </div>
                 </div>
             </nav>
 
             <!-- Sidebar Footer -->
-            <div class="p-4 border-t border-gray-800">
-                <div class="text-center">
-                    <p class="text-xs text-gray-400">Admin Panel v1.0</p>
-                </div>
+            <div style="padding: 1rem; border-top: 1px solid #4a5568; text-align: center;">
+                <p style="font-size: 0.75rem; color: #9ca3af; margin: 0;">Admin Panel v1.0</p>
             </div>
-        </div>
+        </aside>
 
-        <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col min-w-0">
+        <!-- MAIN CONTENT AREA -->
+        <main style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+
             <!-- Top Header -->
-            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
-                <div class="flex items-center justify-between">
+            <header style="background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">@yield('title', 'Admin Panel')</h1>
-                        <p class="text-sm text-gray-600 mt-1">@yield('subtitle', 'Manage your school\'s content and settings')</p>
+                        @hasSection('header')
+                            @yield('header')
+                        @else
+                            <h1 style="font-size: 1.5rem; font-weight: bold; color: #111827; margin: 0;">@yield('title', 'Admin Panel')</h1>
+                            <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;">@yield('subtitle', 'Manage your school\'s content and settings')</p>
+                        @endif
                     </div>
-                    <div class="flex items-center space-x-4">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
                         @yield('header-actions')
 
                         <!-- Quick Template Switcher -->
@@ -230,134 +239,77 @@
                             } catch (Exception $e) { $quickTemplates = collect(); }
                         @endphp
                         @if(isset($quickTemplates) && $quickTemplates->count() > 0)
-                        <div x-data="{ open:false }" class="relative">
-                            <button @click="open=!open" class="inline-flex items-center px-3 py-1.5 text-sm rounded-lg border {{ $quickTemplates->first(fn($t)=>$t->is_active)?'border-green-300 bg-green-50 text-green-700':'border-gray-300 bg-gray-50 text-gray-700' }} hover:bg-white shadow-sm">
-                                🎨 <span class="ml-2">{{ optional($quickTemplates->first(fn($t)=>$t->is_active))->name ?? 'Pilih Template' }}</span>
-                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        <div x-data="{ open:false }" style="position: relative;">
+                            <button @click="open=!open" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.5rem; border: 1px solid {{ $quickTemplates->first(fn($t)=>$t->is_active) ? '#34d399' : '#d1d5db' }}; background-color: {{ $quickTemplates->first(fn($t)=>$t->is_active) ? '#ecfdf5' : '#f9fafb' }}; color: {{ $quickTemplates->first(fn($t)=>$t->is_active) ? '#047857' : '#374151' }}; cursor: pointer;">
+                                🎨 <span>{{ optional($quickTemplates->first(fn($t)=>$t->is_active))->name ?? 'Pilih Template' }}</span>
                             </button>
-                            <div x-show="open" @click.away="open=false" x-transition class="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-2 space-y-1">
+                            <div x-show="open" @click.away="open=false" x-transition style="position: absolute; right: 0; margin-top: 0.5rem; width: 16rem; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 50; padding: 0.5rem;">
                                 @foreach($quickTemplates as $qt)
-                                    <div class="flex items-center justify-between group {{ $qt->is_active ? 'bg-green-50 border border-green-200 rounded-md px-2 py-1' : 'px-2 py-1 rounded-md hover:bg-gray-50' }}">
-                                        <div class="text-xs font-medium truncate max-w-[120px] {{ $qt->is_active ? 'text-green-700' : 'text-gray-700' }}" title="{{ $qt->name }}">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; {{ $qt->is_active ? 'background-color: #ecfdf5; border: 1px solid #34d399; border-radius: 0.375rem; padding: 0.5rem;' : 'padding: 0.5rem; border-radius: 0.375rem;' }} margin-bottom: 0.25rem;">
+                                        <div style="font-size: 0.75rem; font-weight: 500; max-width: 7.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; {{ $qt->is_active ? 'color: #047857;' : 'color: #374151;' }}" title="{{ $qt->name }}">
                                             {{ $qt->name }}
                                         </div>
                                         @if(!$qt->is_active)
-                                            <form method="POST" action="{{ route('admin.templates.my-templates.activate', $qt->id) }}" onsubmit="open=false" class="inline">
+                                            <form method="POST" action="{{ route('admin.templates.my-templates.activate', $qt->id) }}" style="display: inline;">
                                                 @csrf
-                                                <button class="text-[10px] px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Aktifkan</button>
+                                                <button style="font-size: 0.625rem; padding: 0.25rem 0.5rem; background-color: #3b82f6; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">Aktifkan</button>
                                             </form>
                                         @else
-                                            <span class="text-[10px] px-2 py-0.5 rounded bg-green-600 text-white">Active</span>
+                                            <span style="font-size: 0.625rem; padding: 0.125rem 0.5rem; border-radius: 0.25rem; background-color: #10b981; color: white;">Active</span>
                                         @endif
                                     </div>
                                 @endforeach
-                                <a href="{{ route('admin.templates.my-templates') }}" class="block mt-2 text-center text-[11px] text-blue-600 hover:underline">Kelola Template »</a>
+                                <a href="{{ route('admin.templates.my-templates') }}" style="display: block; margin-top: 0.5rem; text-align: center; font-size: 0.6875rem; color: #3b82f6; text-decoration: none;">Kelola Template »</a>
                             </div>
                         </div>
                         @endif
 
-                        <!-- Clear Cache Button -->
-                        <form method="POST" action="{{ route('admin.cache.clear') }}" class="inline">
+                        <button onclick="window.open('{{ url('/') }}', '_blank')"
+                                style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background-color: #10b981; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">
+                            🌐 View Website
+                        </button>
+                        <form method="POST" action="{{ route('admin.cache.clear') }}" style="display: inline;">
                             @csrf
-                            <button type="submit"
-                                    class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                                    onclick="return confirm('Yakin ingin membersihkan cache?')">
-                                <span class="mr-1">🗑️</span>
-                                Clear Cache
+                            <button type="submit" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background-color: #f59e0b; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">
+                                🗑️ Clear Cache
                             </button>
                         </form>
-
-                        <!-- View Website Link -->
-                        <a href="{{ route('home') }}" target="_blank"
-                           class="inline-flex items-center px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
-                            <span class="mr-1">🌐</span>
-                            View Website
-                        </a>
-
-                        <!-- Current Time -->
-                        <div class="text-sm text-gray-500 hidden md:block">
-                            {{ now()->format('M d, Y - H:i') }}
-                        </div>
-
-                        <!-- User Profile Dropdown -->
-                        <div class="relative" x-data="{ userMenu: false }" @click.away="userMenu = false">
-                            <button @click="userMenu = !userMenu"
-                                    class="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors shadow-md border-2 border-white">
-                                <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
-                            </button>
-                            <div x-show="userMenu" x-cloak
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="opacity-0 scale-95"
-                                 x-transition:enter-end="opacity-100 scale-100"
-                                 x-transition:leave="transition ease-in duration-150"
-                                 x-transition:leave-start="opacity-100 scale-100"
-                                 x-transition:leave-end="opacity-0 scale-95"
-                                 class="absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-
-                                <!-- User Info Header -->
-                                <div class="px-4 py-3 border-b border-gray-200">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                                            <span class="text-white font-semibold">{{ substr(auth()->user()->name, 0, 2) }}</span>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900">{{ auth()->user()->name }}</p>
-                                            <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
-                                            <p class="text-xs text-blue-600">Administrator</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Menu Items -->
-                                <div class="py-1">
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left">
-                                            <span class="mr-3">🚪</span>
-                                            Sign Out
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
+                        <div style="font-size: 0.75rem; color: #6b7280;">
+                            {{ \Carbon\Carbon::now()->format('M d, Y - H:i') }}
                         </div>
                     </div>
                 </div>
             </header>
 
-            <!-- Main Content -->
-            <!-- Main Content -->
-            <main class="flex-1 overflow-auto p-6 bg-gray-50">
+            <!-- Page Content -->
+            <div style="flex: 1; padding: 1.5rem; background-color: #f9fafb; overflow-y: auto;">
                 @if (session('success'))
-                    <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            {{ session('success') }}
-                        </div>
+                    <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; background-color: #d1fae5; border: 1px solid #34d399; color: #065f46; border-radius: 0.5rem; display: flex; align-items: center;">
+                        <svg style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        {{ session('success') }}
                     </div>
                 @endif
 
                 @if (session('error'))
-                    <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                            {{ session('error') }}
-                        </div>
+                    <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; background-color: #fef2f2; border: 1px solid #f87171; color: #991b1b; border-radius: 0.5rem; display: flex; align-items: center;">
+                        <svg style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        {{ session('error') }}
                     </div>
                 @endif
 
                 @if ($errors->any())
-                    <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-                        <div class="flex items-start">
-                            <svg class="w-5 h-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; background-color: #fef2f2; border: 1px solid #f87171; color: #991b1b; border-radius: 0.5rem;">
+                        <div style="display: flex; align-items: flex-start;">
+                            <svg style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; margin-top: 0.125rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             <div>
-                                <p class="font-medium">Please fix the following errors:</p>
-                                <ul class="mt-1 list-disc list-inside text-sm">
+                                <p style="font-weight: 500; margin: 0 0 0.25rem 0;">Please fix the following errors:</p>
+                                <ul style="margin: 0.25rem 0 0 1rem; list-style-type: disc; font-size: 0.875rem;">
                                     @foreach ($errors->all() as $error)
                                         <li>{{ $error }}</li>
                                     @endforeach
@@ -368,164 +320,10 @@
                 @endif
 
                 @yield('content')
-            </main>
-        </div>
-    </div>
-
-    <!-- Global Delete Confirmation Modal -->
-    <div id="globalDeleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-24 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <h3 class="text-lg font-bold text-gray-900">Konfirmasi Hapus</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-500">
-                        Apakah Anda yakin ingin menghapus <span id="globalDeleteLabel">data ini</span>? Tindakan ini tidak dapat dibatalkan.
-                    </p>
-                </div>
-                <div class="flex justify-center space-x-3 px-4 py-3">
-                    <button id="globalDeleteCancel"
-                            class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">
-                        Batal
-                    </button>
-                    <form id="globalDeleteForm" method="POST" class="inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
-                            Hapus
-                        </button>
-                    </form>
-                </div>
             </div>
-        </div>
+        </main>
     </div>
 
-    <script>
-        (function() {
-            const modal = document.getElementById('globalDeleteModal');
-            const form = document.getElementById('globalDeleteForm');
-            const label = document.getElementById('globalDeleteLabel');
-            const cancelBtn = document.getElementById('globalDeleteCancel');
-
-            function openModal(action, text) {
-                form.action = action;
-                label.textContent = text || 'data ini';
-                modal.classList.remove('hidden');
-            }
-
-            function closeModal() {
-                modal.classList.add('hidden');
-            }
-
-            cancelBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                closeModal();
-            });
-
-            // Intercept any delete form submission and show modal instead
-            document.addEventListener('submit', function(e) {
-                const target = e.target;
-                if (!(target instanceof HTMLFormElement)) return;
-                // Allow the modal's own form to submit normally
-                if (target.id === 'globalDeleteForm') return;
-                // Only consider this form's own elements (avoid nested forms)
-                const isDeleteOverride = Array.from(target.elements || []).some(el => el.name === '_method' && (el.value || '').toUpperCase() === 'DELETE');
-                const hasDeleteMethod = isDeleteOverride || (target.method && target.method.toUpperCase() === 'DELETE');
-                if (!hasDeleteMethod) return;
-
-                // Use data-confirm label if present
-                const confirmText = target.getAttribute('data-confirm') || target.getAttribute('data-label') || 'data ini';
-
-                // Prevent default submit and show modal
-                e.preventDefault();
-                openModal(target.action, confirmText);
-            }, true);
-
-            // Also support elements with data-delete-url attributes (e.g., buttons/links)
-            document.addEventListener('click', function(e) {
-                const btn = e.target.closest('[data-delete-url]');
-                if (!btn) return;
-                e.preventDefault();
-                const url = btn.getAttribute('data-delete-url');
-                const text = btn.getAttribute('data-confirm') || btn.getAttribute('data-label') || btn.getAttribute('data-title') || 'data ini';
-                openModal(url, text);
-            });
-        })();
-
-        // Emergency Modal Escape System
-        // This provides a failsafe to close any stuck modal
-        (() => {
-            let escapeKeyCount = 0;
-            let lastEscapeTime = 0;
-
-            // Triple ESC key to force close any modal
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    const now = Date.now();
-
-                    if (now - lastEscapeTime < 1000) {
-                        escapeKeyCount++;
-                    } else {
-                        escapeKeyCount = 1;
-                    }
-
-                    lastEscapeTime = now;
-
-                    // If user presses ESC 3 times within 3 seconds, force close all modals
-                    if (escapeKeyCount >= 3) {
-                        console.log('Emergency modal escape triggered');
-
-                        // Close all modals with common patterns
-                        const modals = document.querySelectorAll(
-                            '.fixed.inset-0, [class*="modal"], [id*="modal"], [class*="overlay"], .z-50'
-                        );
-
-                        modals.forEach(modal => {
-                            if (modal.style.display !== 'none' && !modal.classList.contains('hidden')) {
-                                modal.style.display = 'none';
-                                modal.classList.add('hidden');
-                            }
-                        });
-
-                        // Restore body scroll
-                        document.body.style.overflow = 'unset';
-
-                        // Clear any React modal states by dispatching close events
-                        window.dispatchEvent(new CustomEvent('forceCloseAllModals'));
-
-                        escapeKeyCount = 0;
-
-                        // Show notification
-                        if (typeof window.showToast === 'function') {
-                            window.showToast('All modals have been closed', 'info');
-                        } else {
-                            alert('Emergency escape: All modals have been closed');
-                        }
-                    }
-                }
-            });
-
-            // Ctrl+Alt+X to force close all modals
-            document.addEventListener('keydown', (e) => {
-                if (e.ctrlKey && e.altKey && e.key === 'x') {
-                    e.preventDefault();
-                    console.log('Emergency hotkey triggered');
-
-                    // Force close everything
-                    const allOverlays = document.querySelectorAll(
-                        '.fixed, [style*="position: fixed"], [class*="modal"], [class*="overlay"], .z-50, .z-40'
-                    );
-
-                    allOverlays.forEach(el => {
-                        el.style.display = 'none';
-                        el.classList.add('hidden');
-                    });
-
-                    document.body.style.overflow = 'unset';
-                    window.location.href = '/admin/dashboard'; // Navigate back to safety
-                }
-            });
-        })();
-    </script>
-    @stack('scripts')
+    @yield('scripts')
 </body>
 </html>

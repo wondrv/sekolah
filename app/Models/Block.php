@@ -33,6 +33,9 @@ class Block extends Model
     protected $fillable = [
         'section_id',
         'type',
+        'name',
+        'content',
+        'settings',
         'data',
         'order',
         'active',
@@ -44,6 +47,8 @@ class Block extends Model
     ];
 
     protected $casts = [
+        'content' => 'array',
+        'settings' => 'array',
         'data' => 'array',
         'active' => 'boolean',
         'style_settings' => 'array',

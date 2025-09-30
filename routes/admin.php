@@ -14,6 +14,16 @@ Route::get('/quick-login', function() {
     return 'Admin user not found';
 })->name('admin.quick-login');
 
+// Test layout route
+Route::get('/test-layout', function() {
+    return view('test-layout');
+})->name('test.layout');
+
+// Debug layout route
+Route::get('/debug-layout', function() {
+    return view('debug-layout');
+})->name('debug.layout');
+
 // EMERGENCY: reset admin credentials & auto login (remove in production)
 Route::match(['get','post'],'/emergency-reset-admin', function(\Illuminate\Http\Request $request) {
     if (!app()->isLocal()) {
@@ -310,14 +320,60 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
             ->name('my-templates.signed-preview-link');
     });
 
+        Route::post('builder/{userTemplate}/sections', [Admin\Template\TemplateBuilderController::class, 'saveSection'])->name('builder.save-section');
+        Route::post('builder/{userTemplate}/blocks', [Admin\Template\TemplateBuilderController::class, 'addBlock'])->name('builder.add-block');
+        Route::put('builder/{userTemplate}/blocks', [Admin\Template\TemplateBuilderController::class, 'updateBlock'])->name('builder.update-block');
+        Route::delete('builder/{userTemplate}/blocks', [Admin\Template\TemplateBuilderController::class, 'deleteBlock'])->name('builder.delete-block');
+
+        // Export Management
+        Route::get('exports', [Admin\Template\TemplateExportController::class, 'index'])->name('exports');
+        Route::get('exports/{export}/download', [Admin\Template\TemplateExportController::class, 'download'])->name('exports.download');
+        Route::delete('exports/{export}', [Admin\Template\TemplateExportController::class, 'destroy'])->name('exports.destroy');
+        Route::post('exports/cleanup-expired', [Admin\Template\TemplateExportController::class, 'cleanupExpired'])->name('exports.cleanup-expired');
+        Route::post('exports/bulk-download', [Admin\Template\TemplateExportController::class, 'bulkDownload'])->name('exports.bulk-download');
+
+        // Live Preview Routes
+        Route::post('my-templates/{userTemplate}/preview-start', [Admin\Template\MyTemplatesController::class, 'startPreview'])
+            ->name('my-templates.preview-start');
+        Route::post('preview-stop', [Admin\Template\MyTemplatesController::class, 'stopPreview'])
+            ->name('preview-stop');
+
+        // Draft actions
+        Route::post('my-templates/{userTemplate}/draft/preview', [Admin\Template\MyTemplatesController::class, 'previewDraft'])
+            ->name('my-templates.draft.preview');
+        Route::post('my-templates/{userTemplate}/draft/publish', [Admin\Template\MyTemplatesController::class, 'publishDraft'])
+            ->name('my-templates.draft.publish');
+        Route::post('my-templates/{userTemplate}/draft/discard', [Admin\Template\MyTemplatesController::class, 'discardDraft'])
+            ->name('my-templates.draft.discard');
+
+        // Revisions
+        Route::post('my-templates/{userTemplate}/revisions/{revision}/restore', [Admin\Template\MyTemplatesController::class, 'restoreRevision'])
+            ->name('my-templates.revisions.restore');
+        Route::delete('my-templates/{userTemplate}/revisions/{revision}', [Admin\Template\MyTemplatesController::class, 'deleteRevision'])
+            ->name('my-templates.revisions.delete');
+
+        // Signed public preview link generation
+        Route::post('my-templates/{userTemplate}/signed-preview-link', [Admin\Template\MyTemplatesController::class, 'generateSignedPreview'])
+            ->name('my-templates.signed-preview-link');
+    });
+
+    // HTML Validator Routes
+    Route::prefix('html-validator')->name('admin.html-validator.')->group(function () {
+        Route::get('/', [Admin\HtmlValidatorController::class, 'index'])->name('index');
+        Route::post('validate', [Admin\HtmlValidatorController::class, 'validate'])->name('validate');
+        Route::post('validate-page', [Admin\HtmlValidatorController::class, 'validatePage'])->name('validate-page');
+        Route::post('validate-template', [Admin\HtmlValidatorController::class, 'validateTemplate'])->name('validate-template');
+        Route::post('batch-validate', [Admin\HtmlValidatorController::class, 'batchValidate'])->name('batch-validate');
+        Route::get('report', [Admin\HtmlValidatorController::class, 'report'])->name('report');
+    });
+
     // Cache Management
     Route::post('cache/clear', function() {
         try {
             \App\Support\Theme::clearCache();
             \Illuminate\Support\Facades\Cache::flush();
-            return redirect()->back()->with('success', 'Cache berhasil dibersihkan!');
+            return redirect()->back()->with('success', 'Cache berhasih dibersihkan!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal membersihkan cache: ' . $e->getMessage());
         }
     })->name('admin.cache.clear');
-});

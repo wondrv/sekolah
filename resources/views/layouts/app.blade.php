@@ -43,6 +43,44 @@
       /* Typography System */
       --font-family: '{{ $typography['font_family'] }}', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       --font-size-base: {{ $typography['font_size_base'] }};
+
+      /* SMAMITA Template Colors */
+      --smamita-primary: #005A9C;
+      --smamita-secondary: #FDB813;
+      --smamita-dark: #333;
+    }
+
+    /* SMAMITA Template Specific Styles */
+    .rich-text-full-section .text-primary {
+      color: var(--smamita-primary) !important;
+    }
+
+    .rich-text-full-section .bg-primary {
+      background-color: var(--smamita-primary) !important;
+    }
+
+    .rich-text-full-section .btn-primary {
+      background-color: var(--smamita-primary) !important;
+      border-color: var(--smamita-primary) !important;
+    }
+
+    .rich-text-full-section .btn-primary:hover {
+      background-color: #004080 !important;
+      border-color: #004080 !important;
+    }
+
+    .rich-text-full-section .text-warning {
+      color: var(--smamita-secondary) !important;
+    }
+
+    /* Ensure proper body padding for fixed navbar */
+    body.has-fixed-nav {
+      padding-top: 76px;
+    }
+
+    /* Font Awesome for icons */
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
       --line-height-base: {{ $typography['line_height_base'] }};
       --font-weight-normal: {{ $typography['font_weight_normal'] }};
       --font-weight-semibold: {{ $typography['font_weight_semibold'] }};
@@ -214,7 +252,7 @@
 
   @stack('head')
 </head>
-<body class="min-h-screen flex flex-col antialiased">
+<body class="min-h-screen flex flex-col antialiased has-fixed-nav" style="background-color: var(--background-color); color: var(--text-color); font-family: var(--font-family);">
   <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-md z-50">
     Lewati ke konten utama
   </a>

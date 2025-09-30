@@ -15,28 +15,50 @@
         @php
             $section = $sectionData['section'];
             $blocks = $sectionData['blocks'];
+
+            // Check if any block contains full HTML sections (navigation, footer, etc.)
+            $hasFullSections = false;
+            foreach ($blocks as $blockHtml) {
+                if (strpos($blockHtml, '<div class="container') !== false ||
+                    strpos($blockHtml, '<nav ') !== false ||
+                    strpos($blockHtml, '<footer ') !== false ||
+                    strpos($blockHtml, 'rich-text-full-section') !== false) {
+                    $hasFullSections = true;
+                    break;
+                }
+            }
         @endphp
 
-        <section
-            class="template-section {{ $section->css_classes ?? '' }}"
-            data-section="{{ $section->id }}"
-            @if($section->css_id ?? false) id="{{ $section->css_id }}" @endif
-            @if($section->background_color ?? false) style="background-color: {{ $section->background_color }};" @endif
-        >
-            @if($section->container ?? true)
-                <div class="container mx-auto px-4">
-            @endif
-
-            <div class="section-content">
+        @if($hasFullSections)
+            {{-- Render full sections without wrapper --}}
+            <div class="template-section-full" data-section="{{ $section->id }}">
                 @foreach($blocks as $blockHtml)
                     {!! $blockHtml !!}
                 @endforeach
             </div>
+        @else
+            {{-- Traditional section with container --}}
+            <section
+                class="template-section {{ $section->css_classes ?? '' }}"
+                data-section="{{ $section->id }}"
+                @if($section->css_id ?? false) id="{{ $section->css_id }}" @endif
+                @if($section->background_color ?? false) style="background-color: {{ $section->background_color }};" @endif
+            >
+                @if($section->container ?? true)
+                    <div class="container mx-auto px-4 py-8 lg:py-12">
+                @endif
 
-            @if($section->container ?? true)
+                <div class="section-content">
+                    @foreach($blocks as $blockHtml)
+                        {!! $blockHtml !!}
+                    @endforeach
                 </div>
-            @endif
-        </section>
+
+                @if($section->container ?? true)
+                    </div>
+                @endif
+            </section>
+        @endif
     @endforeach
 </div>
 

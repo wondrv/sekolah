@@ -9,7 +9,7 @@
             <h1 class="text-3xl font-bold text-gray-900">PPDB Cost Management</h1>
             <p class="mt-2 text-sm text-gray-600">Manage cost items for academic year {{ $academic_year }}</p>
         </div>
-        <a href="{{ route('admin.ppdb.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+        <a href="{{ route('ppdb.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
             Back to Settings
         </a>
     </div>
@@ -27,31 +27,31 @@
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900">Add New Cost</h3>
                 </div>
-                <form action="{{ route('admin.ppdb.costs.store') }}" method="POST" class="p-6">
+                <form action="{{ route('ppdb.costs.store') }}" method="POST" class="p-6">
                     @csrf
-                    
+
                     <div class="space-y-4">
                         <div>
                             <label for="item_name" class="block text-sm font-medium text-gray-700">Item Name</label>
-                            <input type="text" name="item_name" id="item_name" required 
+                            <input type="text" name="item_name" id="item_name" required
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                         </div>
 
                         <div>
                             <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" id="description" rows="2" 
+                            <textarea name="description" id="description" rows="2"
                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"></textarea>
                         </div>
 
                         <div>
                             <label for="amount" class="block text-sm font-medium text-gray-700">Amount (Rp)</label>
-                            <input type="number" name="amount" id="amount" required min="0" 
+                            <input type="number" name="amount" id="amount" required min="0"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                         </div>
 
                         <div>
                             <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
-                            <select name="category" id="category" required 
+                            <select name="category" id="category" required
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                                 <option value="">Select Category</option>
                                 <option value="pendaftaran">Pendaftaran</option>
@@ -68,7 +68,7 @@
 
                         <div>
                             <label for="sort_order" class="block text-sm font-medium text-gray-700">Sort Order</label>
-                            <input type="number" name="sort_order" id="sort_order" value="0" min="0" 
+                            <input type="number" name="sort_order" id="sort_order" value="0" min="0"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                         </div>
 
@@ -77,7 +77,7 @@
                                 <input type="checkbox" name="is_mandatory" value="1" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                                 <span class="ml-2 text-sm text-gray-600">Mandatory</span>
                             </label>
-                            
+
                             <label class="flex items-center">
                                 <input type="checkbox" name="is_active" value="1" checked class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                                 <span class="ml-2 text-sm text-gray-600">Active</span>
@@ -86,7 +86,7 @@
 
                         <div>
                             <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year</label>
-                            <input type="text" name="academic_year" id="academic_year" value="{{ $academic_year }}" 
+                            <input type="text" name="academic_year" id="academic_year" value="{{ $academic_year }}"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                         </div>
                     </div>
@@ -150,7 +150,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                         <div class="flex justify-center space-x-2">
                                             <button class="text-blue-600 hover:text-blue-900" onclick="editCost({{ $cost->id }}, '{{ $cost->item_name }}', '{{ $cost->description }}', {{ $cost->amount }}, '{{ $cost->category }}', {{ $cost->sort_order }}, {{ $cost->is_mandatory ? 'true' : 'false' }}, {{ $cost->is_active ? 'true' : 'false' }}, '{{ $cost->academic_year }}')">Edit</button>
-                                            <form action="{{ route('admin.ppdb.costs.destroy', $cost) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this cost item?')">
+                                            <form action="{{ route('ppdb.costs.destroy', $cost) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this cost item?')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
@@ -185,12 +185,12 @@ function editCost(id, name, description, amount, category, sortOrder, isMandator
     document.getElementById('is_mandatory').checked = isMandatory;
     document.getElementById('is_active').checked = isActive;
     document.getElementById('academic_year').value = academicYear;
-    
+
     // Change form action to update
     const form = document.querySelector('form');
-    form.action = '{{ route("admin.ppdb.costs.store") }}'.replace('costs', 'costs/' + id);
+    form.action = '{{ route("ppdb.costs.store") }}'.replace('costs', 'costs/' + id);
     form.innerHTML += '<input type="hidden" name="_method" value="PUT">';
-    
+
     // Scroll to form
     form.scrollIntoView({ behavior: 'smooth' });
 }

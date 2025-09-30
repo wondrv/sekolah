@@ -281,6 +281,9 @@ class UserTemplate extends Model
             // Create template assignments
             if (isset($templateData['assignments'])) {
                 $this->createAssignmentsFromData($template, $templateData['assignments']);
+            } else {
+                // Auto-create homepage assignment if none specified
+                $this->createDefaultAssignments($template, $templateData);
             }
         }
     }
@@ -311,6 +314,7 @@ class UserTemplate extends Model
                 'order' => $blockData['order'],
                 'content' => $blockData['content'] ?? null,
                 'settings' => $blockData['settings'] ?? null,
+                'data' => $blockData['data'] ?? null, // Add data field
                 'style_settings' => $blockData['style_settings'] ?? null,
                 'css_class' => $blockData['css_class'] ?? null,
                 'visible_desktop' => $blockData['visible_desktop'] ?? true,
@@ -330,6 +334,31 @@ class UserTemplate extends Model
                 'template_id' => $template->id,
                 'priority' => $assignmentData['priority'] ?? 0,
                 'active' => $assignmentData['active'] ?? true,
+            ]);
+        }
+    }
+
+    protected function createDefaultAssignments($template, $templateData)
+    {
+        // Create default homepage assignment for activated templates
+        if ($this->is_active) {
+            TemplateAssignment::updateOrCreate([
+                'route_pattern' => 'home',
+                'template_id' => $template->id,
+            ], [
+                'page_slug' => null,
+                'priority' => 100, // High priority for active templates
+                'active' => true,
+            ]);
+
+            // Also assign to root path
+            TemplateAssignment::updateOrCreate([
+                'route_pattern' => '/',
+                'template_id' => $template->id,
+            ], [
+                'page_slug' => null,
+                'priority' => 100,
+                'active' => true,
             ]);
         }
     }

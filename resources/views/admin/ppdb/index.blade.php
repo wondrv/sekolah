@@ -21,10 +21,10 @@
             <div class="px-6 py-4 border-b border-gray-200">
                 <h3 class="text-lg font-medium text-gray-900">Brochure Settings</h3>
             </div>
-            <form action="{{ route('admin.ppdb.settings.update') }}" method="POST" enctype="multipart/form-data" class="p-6">
+            <form action="{{ route('ppdb.settings.update') }}" method="POST" enctype="multipart/form-data" class="p-6">
                 @csrf
                 @method('PUT')
-                
+
                 <div class="space-y-4">
                     <div>
                         <label class="flex items-center">
@@ -35,19 +35,19 @@
 
                     <div>
                         <label for="brochure_title" class="block text-sm font-medium text-gray-700">Title</label>
-                        <input type="text" name="brochure_title" id="brochure_title" value="{{ $settings['brochure_title'] }}" 
+                        <input type="text" name="brochure_title" id="brochure_title" value="{{ $settings['brochure_title'] }}"
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                     </div>
 
                     <div>
                         <label for="brochure_description" class="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea name="brochure_description" id="brochure_description" rows="3" 
+                        <textarea name="brochure_description" id="brochure_description" rows="3"
                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">{{ $settings['brochure_description'] }}</textarea>
                     </div>
 
                     <div>
                         <label for="brochure_file" class="block text-sm font-medium text-gray-700">Brochure File (PDF)</label>
-                        <input type="file" name="brochure_file" id="brochure_file" accept=".pdf" 
+                        <input type="file" name="brochure_file" id="brochure_file" accept=".pdf"
                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                         @if($settings['brochure_file'])
                             <p class="mt-1 text-sm text-gray-500">Current: {{ basename($settings['brochure_file']) }}</p>
@@ -57,12 +57,12 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="brochure_format" class="block text-sm font-medium text-gray-700">Format</label>
-                            <input type="text" name="brochure_format" id="brochure_format" value="{{ $settings['brochure_format'] }}" 
+                            <input type="text" name="brochure_format" id="brochure_format" value="{{ $settings['brochure_format'] }}"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                         </div>
                         <div>
                             <label for="brochure_size" class="block text-sm font-medium text-gray-700">Size Display</label>
-                            <input type="text" name="brochure_size" id="brochure_size" value="{{ $settings['brochure_size'] }}" 
+                            <input type="text" name="brochure_size" id="brochure_size" value="{{ $settings['brochure_size'] }}"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                         </div>
                     </div>
@@ -70,7 +70,7 @@
 
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <h4 class="text-md font-medium text-gray-900 mb-4">Cost Table Settings</h4>
-                    
+
                     <div class="space-y-4">
                         <div>
                             <label class="flex items-center">
@@ -81,13 +81,13 @@
 
                         <div>
                             <label for="costs_title" class="block text-sm font-medium text-gray-700">Title</label>
-                            <input type="text" name="costs_title" id="costs_title" value="{{ $settings['costs_title'] }}" 
+                            <input type="text" name="costs_title" id="costs_title" value="{{ $settings['costs_title'] }}"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                         </div>
 
                         <div>
                             <label for="costs_description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="costs_description" id="costs_description" rows="2" 
+                            <textarea name="costs_description" id="costs_description" rows="2"
                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">{{ $settings['costs_description'] }}</textarea>
                         </div>
                     </div>
@@ -105,7 +105,7 @@
         <div class="bg-white shadow rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <h3 class="text-lg font-medium text-gray-900">Cost Items ({{ $academic_year }})</h3>
-                <a href="{{ route('admin.ppdb.costs') }}" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                <a href="{{ route('ppdb.costs') }}" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
                     Manage Costs
                 </a>
             </div>
@@ -135,7 +135,7 @@
                         @endif
                     </div>
                 @else
-                    <p class="text-gray-500 text-center py-8">No cost items found. <a href="{{ route('admin.ppdb.costs') }}" class="text-blue-600 hover:text-blue-800">Add some costs</a></p>
+                    <p class="text-gray-500 text-center py-8">No cost items found. <a href="{{ route('ppdb.costs') }}" class="text-blue-600 hover:text-blue-800">Add some costs</a></p>
                 @endif
             </div>
         </div>
