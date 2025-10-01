@@ -11,7 +11,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">Smart Template Import</h1>
-                        <p class="mt-2 text-gray-600">Import templates from anywhere with automatic language detection and translation</p>
+                        <p class="mt-2 text-gray-600">Import templates from GitHub, websites, or files with automatic detection and processing</p>
                     </div>
                     <div class="flex space-x-3">
                         <a href="{{ route('admin.templates.my-templates.index') }}" class="btn btn-secondary">
@@ -24,6 +24,38 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Import Mode Tabs -->
+        <div class="bg-white rounded-lg shadow-sm border mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex">
+                    <button class="import-mode-tab active py-3 px-6 border-b-2 border-blue-500 text-blue-600 font-medium" data-mode="smart">
+                        🤖 Smart Import (CMS Blocks)
+                    </button>
+                    <button class="import-mode-tab py-3 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-mode="full">
+                        📦 Full Template Import (WordPress-like)
+                    </button>
+                </nav>
+            </div>
+
+            <div class="p-6">
+                <div id="smart-mode-description" class="import-mode-description">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <h4 class="font-medium text-blue-900 mb-2">Smart Import Mode</h4>
+                        <p class="text-blue-800 text-sm">Converts websites into CMS blocks that can be edited through the admin panel. Content is analyzed and converted into editable sections.</p>
+                    </div>
+                </div>
+
+                <div id="full-mode-description" class="import-mode-description hidden">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                        <h4 class="font-medium text-green-900 mb-2">Full Template Import Mode</h4>
+                        <p class="text-green-800 text-sm">Imports complete templates as-is (like WordPress themes). Templates are used exactly as they are without CMS editing capabilities.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Import Mode -->
+        <div id="smart-import-content" class="import-mode-content">
         <!-- Import Methods -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <!-- Import from URL -->
@@ -224,6 +256,135 @@
                 <div class="flex justify-between items-center">
                     <span id="progressText" class="text-sm text-gray-600">Starting import...</span>
                     <span id="progressPercentage" class="text-sm font-medium text-gray-900">0%</span>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Full Template Import Mode -->
+        <div id="full-import-content" class="import-mode-content hidden">
+            <!-- Full Template Import Methods -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <!-- GitHub Repository Import -->
+                <div class="bg-white rounded-lg shadow-sm border">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                                <i class="fab fa-github text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">GitHub Repository</h3>
+                                <p class="text-sm text-gray-600">Import complete template from GitHub repo</p>
+                            </div>
+                        </div>
+
+                        <form id="githubImportForm" class="space-y-4">
+                            @csrf
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Repository URL</label>
+                                <input type="url" name="source" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                       placeholder="https://github.com/user/repo" required>
+                                <p class="text-xs text-gray-500 mt-1">Example: startbootstrap themes</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+                                    <input type="text" name="branch" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                           placeholder="main" value="main">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Template Name</label>
+                                    <input type="text" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                           placeholder="My Template">
+                                </div>
+                            </div>
+                            <input type="hidden" name="type" value="github">
+                            <button type="submit" class="btn btn-primary w-full">
+                                <i class="fab fa-github mr-2"></i>Import from GitHub
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Website URL Import -->
+                <div class="bg-white rounded-lg shadow-sm border">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-orange-100 p-3 rounded-lg mr-4">
+                                <i class="fas fa-globe text-orange-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Website Crawl</h3>
+                                <p class="text-sm text-gray-600">Download complete website with all assets</p>
+                            </div>
+                        </div>
+
+                        <form id="websiteImportForm" class="space-y-4">
+                            @csrf
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Website URL</label>
+                                <input type="url" name="source" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                       placeholder="https://example.com" required>
+                                <p class="text-xs text-gray-500 mt-1">System will crawl and download all assets</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Template Name</label>
+                                <input type="text" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                       placeholder="Website Template">
+                            </div>
+                            <input type="hidden" name="type" value="url">
+                            <button type="submit" class="btn btn-primary w-full">
+                                <i class="fas fa-download mr-2"></i>Crawl & Import
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ZIP Upload -->
+                <div class="bg-white rounded-lg shadow-sm border">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-indigo-100 p-3 rounded-lg mr-4">
+                                <i class="fas fa-file-archive text-indigo-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">ZIP Upload</h3>
+                                <p class="text-sm text-gray-600">Upload template as ZIP file</p>
+                            </div>
+                        </div>
+
+                        <form id="zipImportForm" class="space-y-4" enctype="multipart/form-data">
+                            @csrf
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">ZIP File</label>
+                                <input type="file" name="zip_file" accept=".zip" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                <p class="text-xs text-gray-500 mt-1">Max 50MB, must contain index.html</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Template Name</label>
+                                <input type="text" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                       placeholder="Uploaded Template">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full">
+                                <i class="fas fa-upload mr-2"></i>Upload Template
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Template Recent Imports -->
+            <div id="fullTemplateRecents" class="bg-white rounded-lg shadow-sm border">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Full Templates</h3>
+                        <button id="refreshFullTemplates" class="text-blue-600 hover:text-blue-800 text-sm">
+                            <i class="fas fa-sync-alt mr-1"></i>Refresh
+                        </button>
+                    </div>
+                    <div id="fullTemplateList" class="space-y-3">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -919,6 +1080,190 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             alert('Installation failed: ' + error.message);
+        }
+    };
+
+    // Import Mode Switching
+    const modeTabs = document.querySelectorAll('.import-mode-tab');
+    const modeContents = document.querySelectorAll('.import-mode-content');
+    const modeDescriptions = document.querySelectorAll('.import-mode-description');
+
+    modeTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const mode = this.dataset.mode;
+
+            // Update tab styles
+            modeTabs.forEach(t => {
+                t.classList.remove('active', 'border-blue-500', 'text-blue-600');
+                t.classList.add('border-transparent', 'text-gray-500');
+            });
+            this.classList.add('active', 'border-blue-500', 'text-blue-600');
+            this.classList.remove('border-transparent', 'text-gray-500');
+
+            // Update content visibility
+            modeContents.forEach(content => content.classList.add('hidden'));
+            modeDescriptions.forEach(desc => desc.classList.add('hidden'));
+
+            document.getElementById(mode + '-import-content').classList.remove('hidden');
+            document.getElementById(mode + '-mode-description').classList.remove('hidden');
+
+            // Load full templates if switching to full mode
+            if (mode === 'full') {
+                loadFullTemplates();
+            }
+        });
+    });
+
+    // Full Template Import Functions
+    const fullImportForms = ['githubImportForm', 'websiteImportForm', 'zipImportForm'];
+
+    fullImportForms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const isZip = formId === 'zipImportForm';
+                const endpoint = isZip ? '{{ route('admin.templates.smart-import.full-upload') }}' : '{{ route('admin.templates.smart-import.full-import') }}';
+
+                // Show loading
+                showFullImportLoading();                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+
+                    const result = await response.json();
+                    hideFullImportLoading();
+
+                    if (result.success) {
+                        showSuccessModal(
+                            result.message + `\\nFiles imported: ${result.files_imported}`,
+                            'Full Template Imported'
+                        );
+                        loadFullTemplates();
+                        form.reset();
+                    } else {
+                        alert('Import failed: ' + result.message);
+                    }
+                } catch (error) {
+                    hideFullImportLoading();
+                    alert('Import failed: ' + error.message);
+                }
+            });
+        }
+    });
+
+    // Load full templates list
+    async function loadFullTemplates() {
+        try {
+            const response = await fetch('{{ route('admin.templates.smart-import.full-templates') }}');
+            const result = await response.json();
+
+            const templateList = document.getElementById('fullTemplateList');
+
+            if (result.success && result.templates.length > 0) {
+                templateList.innerHTML = result.templates.map(template => `
+                    <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-900">${template.name}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${template.description || 'No description'}</p>
+                                <div class="flex items-center mt-2 space-x-2">
+                                    <span class="text-xs px-2 py-1 rounded ${template.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}">
+                                        ${template.status}
+                                    </span>
+                                    <span class="text-xs text-gray-500">${template.files_count} files</span>
+                                    <span class="text-xs text-gray-500">${template.created_at}</span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2 ml-4">
+                                ${template.status !== 'active' ? `
+                                    <button onclick="activateFullTemplate(${template.id})"
+                                            class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">
+                                        Activate
+                                    </button>
+                                ` : `
+                                    <span class="px-3 py-1 bg-green-600 text-white text-xs rounded">
+                                        Active
+                                    </span>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                templateList.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-folder-open text-gray-400 text-3xl mb-3"></i>
+                        <p class="text-gray-500">No full templates imported yet</p>
+                        <p class="text-sm text-gray-400">Import a template to get started</p>
+                    </div>
+                `;
+            }
+
+        } catch (error) {
+            console.error('Failed to load full templates:', error);
+            const templateList = document.getElementById('fullTemplateList');
+            templateList.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-red-400 text-3xl mb-3"></i>
+                    <p class="text-red-500">Failed to load templates</p>
+                </div>
+            `;
+        }
+    }    // Full import loading modal
+    function showFullImportLoading() {
+        const modal = document.createElement('div');
+        modal.id = 'fullImportModal';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <h3 class="text-lg font-medium mb-2">Importing Full Template...</h3>
+                    <p class="text-gray-600">Downloading and processing all files. This may take a few minutes.</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    function hideFullImportLoading() {
+        const modal = document.getElementById('fullImportModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // Refresh full templates button
+    document.getElementById('refreshFullTemplates')?.addEventListener('click', loadFullTemplates);
+
+    // Activate full template function (global scope)
+    window.activateFullTemplate = async function(templateId) {
+        try {
+            const response = await fetch(`/admin/templates/smart-import/full-activate/${templateId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showSuccessModal(result.message, 'Template Activated');
+                loadFullTemplates();
+            } else {
+                alert('Failed to activate template: ' + result.message);
+            }
+        } catch (error) {
+            alert('Failed to activate template: ' + error.message);
         }
     };
 });

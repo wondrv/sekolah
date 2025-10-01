@@ -269,6 +269,12 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::post('smart-import/import-url', [Admin\Template\SmartImportController::class, 'importFromUrl'])->name('smart-import.import-url');
         Route::post('smart-import/import-file', [Admin\Template\SmartImportController::class, 'importFromFile'])->name('smart-import.import-file');
 
+        // Full Template Import (integrated into Smart Import)
+        Route::post('smart-import/full-import', [Admin\Template\SmartImportController::class, 'importFullTemplate'])->name('smart-import.full-import');
+        Route::post('smart-import/full-upload', [Admin\Template\SmartImportController::class, 'uploadFullTemplate'])->name('smart-import.full-upload');
+        Route::get('smart-import/full-templates', [Admin\Template\SmartImportController::class, 'listFullTemplates'])->name('smart-import.full-templates');
+        Route::post('smart-import/full-activate/{template}', [Admin\Template\SmartImportController::class, 'activateFullTemplate'])->name('smart-import.full-activate');
+
         // Full Template Import (WordPress-like)
         Route::get('full-import', [Admin\Template\FullTemplateImportController::class, 'index'])->name('full-import.index');
         Route::post('full-import/import', [Admin\Template\FullTemplateImportController::class, 'import'])->name('full-import.import');

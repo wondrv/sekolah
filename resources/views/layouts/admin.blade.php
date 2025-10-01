@@ -146,10 +146,6 @@
                             <span style="margin-right: 0.375rem; font-size: 0.85rem;">🤖</span>
                             Smart Import
                         </a>
-                        <a href="{{ route('admin.templates.full-import.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.templates.full-import.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
-                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">📦</span>
-                            Full Template Import
-                        </a>
                         <a href="{{ route('admin.templates.my-templates.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.templates.my-templates*') ? 'background-color: #3b82f6; color: white;' : '' }}">
                             <span style="margin-right: 0.375rem; font-size: 0.85rem;">📝</span>
                             My Templates
