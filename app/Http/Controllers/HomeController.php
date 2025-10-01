@@ -22,7 +22,7 @@ class HomeController extends Controller
     {
         // Check if we should use full template system
         $homepageType = Setting::get('homepage_template_type', 'cms');
-        
+
         if ($homepageType === 'full_template') {
             return $this->renderFullTemplate();
         }
@@ -48,21 +48,21 @@ class HomeController extends Controller
     protected function renderFullTemplate()
     {
         $templateId = Setting::get('active_full_template_id');
-        
+
         if (!$templateId) {
             // No full template active, fall back to CMS
             return $this->renderCmsTemplate();
         }
 
         $template = UserTemplate::find($templateId);
-        
+
         if (!$template || $template->status !== 'active') {
             // Template not found or inactive, fall back to CMS
             return $this->renderCmsTemplate();
         }
 
         $templateData = $template->template_data;
-        
+
         if ($templateData['type'] !== 'full_template') {
             // Not a full template, fall back to CMS
             return $this->renderCmsTemplate();
@@ -80,7 +80,7 @@ class HomeController extends Controller
 
         // Read and serve the HTML content
         $htmlContent = Storage::get($mainFilePath);
-        
+
         // Process the HTML to ensure proper asset URLs
         $htmlContent = $this->processFullTemplateHtml($htmlContent, $assetsPath);
 
@@ -123,17 +123,17 @@ class HomeController extends Controller
             function($matches) use ($baseUrl) {
                 $attribute = $matches[1];
                 $path = $matches[2];
-                
+
                 // Skip if already absolute URL
                 if (filter_var($path, FILTER_VALIDATE_URL) || str_starts_with($path, '//')) {
                     return $matches[0];
                 }
-                
+
                 // Skip if starts with #
                 if (str_starts_with($path, '#')) {
                     return $matches[0];
                 }
-                
+
                 // Convert relative path to storage URL
                 $absolutePath = "{$baseUrl}/" . ltrim($path, '/');
                 return "{$attribute}=\"{$absolutePath}\"";

@@ -33,19 +33,19 @@
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">GitHub Repository URL</label>
-                        <input type="url" name="source" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        <input type="url" name="source" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="https://github.com/username/repository" required>
                         <p class="text-sm text-gray-500 mt-1">Example: https://github.com/startbootstrap/startbootstrap-agency</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Template Name (Optional)</label>
-                            <input type="text" name="name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            <input type="text" name="name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                    placeholder="My Awesome Template">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Branch (Optional)</label>
-                            <input type="text" name="branch" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            <input type="text" name="branch" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                    placeholder="main" value="main">
                         </div>
                     </div>
@@ -63,13 +63,13 @@
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Website URL</label>
-                        <input type="url" name="source" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        <input type="url" name="source" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="https://example.com" required>
                         <p class="text-sm text-gray-500 mt-1">The system will crawl and download the entire website</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Template Name (Optional)</label>
-                        <input type="text" name="name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        <input type="text" name="name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="Website Template">
                     </div>
                     <input type="hidden" name="type" value="url">
@@ -91,7 +91,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Template Name (Optional)</label>
-                        <input type="text" name="name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        <input type="text" name="name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="Uploaded Template">
                     </div>
                     <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -119,7 +119,7 @@
             <h2 class="text-xl font-semibold text-gray-900">Recent Full Templates</h2>
             <a href="{{ route('admin.templates.full-import.list') }}" class="text-blue-600 hover:text-blue-800">View All</a>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="recent-templates">
             <!-- Recent templates will be loaded here -->
         </div>
@@ -132,35 +132,35 @@ document.addEventListener('DOMContentLoaded', function() {
     // Tab switching
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
-    
+
     tabBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const tabId = this.dataset.tab;
-            
+
             // Update button states
             tabBtns.forEach(b => b.classList.remove('active', 'border-blue-500', 'text-blue-600'));
             tabBtns.forEach(b => b.classList.add('border-transparent', 'text-gray-500'));
             this.classList.add('active', 'border-blue-500', 'text-blue-600');
             this.classList.remove('border-transparent', 'text-gray-500');
-            
+
             // Update content visibility
             tabContents.forEach(content => content.classList.add('hidden'));
             document.getElementById(tabId + '-tab').classList.remove('hidden');
         });
     });
-    
+
     // Form submissions
     const forms = ['github-form', 'url-form'];
     forms.forEach(formId => {
         document.getElementById(formId).addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(this);
             const loadingModal = document.getElementById('loading-modal');
-            
+
             loadingModal.classList.remove('hidden');
             loadingModal.classList.add('flex');
-            
+
             fetch('{{ route('admin.templates.full-import.import') }}', {
                 method: 'POST',
                 body: formData,
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 loadingModal.classList.add('hidden');
                 loadingModal.classList.remove('flex');
-                
+
                 if (data.success) {
                     alert(data.message + `\nFiles imported: ${data.files_imported}`);
                     if (data.redirect) {
@@ -189,17 +189,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
-    
+
     // ZIP form submission
     document.getElementById('zip-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        
+
         const formData = new FormData(this);
         const loadingModal = document.getElementById('loading-modal');
-        
+
         loadingModal.classList.remove('hidden');
         loadingModal.classList.add('flex');
-        
+
         fetch('{{ route('admin.templates.full-import.upload') }}', {
             method: 'POST',
             body: formData,
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             loadingModal.classList.add('hidden');
             loadingModal.classList.remove('flex');
-            
+
             if (data.success) {
                 alert(data.message + `\nFiles imported: ${data.files_imported}`);
                 if (data.redirect) {
