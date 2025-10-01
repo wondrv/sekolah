@@ -121,18 +121,66 @@ class SmartTemplateImporterService
     public function analyzeTemplate(string $url, array $options = []): array
     {
         try {
-            // Fetch the HTML content
-            $response = Http::timeout(30)->get($url);
+            // Normalize URL (ensure scheme)
+            if (!preg_match('/^https?:\/\//i', $url)) {
+                $url = 'https://' . ltrim($url, '/');
+            }
+
+            // Fetch the HTML content with custom headers to reduce 403/anti-bot blocks
+            $response = Http::timeout(30)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 SchoolCMSBot/1.0',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language' => 'en-US,en;q=0.9,id;q=0.8'
+                ])->get($url);
+
+            if ($response->status() === 301 || $response->status() === 302) {
+                Log::warning('Analyze received redirect', ['url' => $url, 'status' => $response->status(), 'location' => $response->header('Location')]);
+            }
 
             if (!$response->successful()) {
+                Log::warning('Analyze fetch failed', ['url' => $url, 'status' => $response->status(), 'reason' => $response->reason()]);
                 return [
                     'success' => false,
-                    'error' => 'Failed to fetch template from URL',
-                    'code' => 'FETCH_ERROR'
+                    'error' => 'Failed to fetch template from URL (HTTP ' . $response->status() . ')',
+                    'code' => 'FETCH_ERROR',
+                    'http_status' => $response->status()
                 ];
             }
 
             $html = $response->body();
+
+            // Detect login / non-template pages (very basic heuristics)
+            if (stripos($html, 'login') !== false && stripos(parse_url($url, PHP_URL_HOST) ?? '', 'github') === false) {
+                Log::info('Analyze detected possible login page', ['url' => $url]);
+                return [
+                    'success' => false,
+                    'error' => 'The URL appears to be a login page and cannot be analyzed as a template',
+                    'code' => 'LOGIN_PAGE'
+                ];
+            }
+
+            // Ensure content type is HTML
+            $contentTypeHeader = $response->header('Content-Type');
+            $contentType = $contentTypeHeader ? strtolower($contentTypeHeader) : '';
+            if ($contentType && !str_contains($contentType, 'text/html')) {
+                Log::warning('Analyze non-HTML content-type', ['url' => $url, 'content_type' => $contentType]);
+                return [
+                    'success' => false,
+                    'error' => 'URL does not return an HTML page (content-type: ' . $contentType . ')',
+                    'code' => 'NON_HTML_CONTENT'
+                ];
+            }
+
+            // Minimum HTML length check
+            if (strlen($html) < 500) {
+                Log::warning('Analyze HTML too short', ['url' => $url, 'length' => strlen($html)]);
+                return [
+                    'success' => false,
+                    'error' => 'HTML content too short or not a full template',
+                    'code' => 'HTML_TOO_SHORT'
+                ];
+            }
 
             // Parse HTML
             $dom = new DOMDocument();
@@ -173,6 +221,11 @@ class SmartTemplateImporterService
             ];
 
         } catch (\Exception $e) {
+            Log::error('Analyze exception', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return [
                 'success' => false,
                 'error' => 'Template analysis failed: ' . $e->getMessage(),

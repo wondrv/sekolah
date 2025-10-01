@@ -255,6 +255,22 @@ class SmartImportController extends Controller
             $analysis = $this->importer->analyzeTemplate($url);
 
             if ($analysis['success']) {
+                Log::info('Analyze successful', [
+                    'url' => $url,
+                    'framework' => $analysis['structure']['framework'] ?? null,
+                    'sections' => isset($analysis['structure']['sections']) ? count($analysis['structure']['sections']) : 0,
+                    'language' => $analysis['language']['primary_language'] ?? null,
+                    'html_size' => $analysis['stats']['html_size'] ?? null
+                ]);
+            } else {
+                Log::warning('Analyze failed', [
+                    'url' => $url,
+                    'code' => $analysis['code'] ?? null,
+                    'error' => $analysis['error'] ?? null
+                ]);
+            }
+
+            if ($analysis['success']) {
                 return response()->json([
                     'success' => true,
                     'analysis' => [
@@ -283,7 +299,10 @@ class SmartImportController extends Controller
                 return response()->json([
                     'success' => false,
                     'error' => $analysis['error'],
-                    'code' => $analysis['code']
+                    'code' => $analysis['code'],
+                    'debug' => [
+                        'http_status' => $analysis['http_status'] ?? null
+                    ]
                 ], 422);
             }
 
@@ -301,6 +320,13 @@ class SmartImportController extends Controller
      */
     public function importFromFile(Request $request)
     {
+        Log::info('Smart Import Request Received', [
+            'user_id' => Auth::id(),
+            'has_file' => $request->hasFile('file'),
+            'file_name' => $request->hasFile('file') ? $request->file('file')->getClientOriginalName() : null,
+            'csrf_token' => $request->header('X-CSRF-TOKEN') ? 'present' : 'missing'
+        ]);
+
         $validator = Validator::make($request->all(), [
             'file' => 'required|file|mimes:json,zip,html,htm|max:10240', // 10MB max
             'template_name' => 'string|max:255',
@@ -308,13 +334,14 @@ class SmartImportController extends Controller
         ]);
 
         if ($validator->fails()) {
+            Log::error('Smart Import Validation Failed', $validator->errors()->toArray());
+
             return response()->json([
                 'success' => false,
+                'error' => 'Validation failed: ' . $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
-        }
-
-        try {
+        }        try {
             $file = $request->file('file');
             $userId = Auth::id();
             $autoActivate = $request->boolean('auto_activate', false);
@@ -330,26 +357,54 @@ class SmartImportController extends Controller
             $result = $this->processUploadedFile($file, $userId, $templateName, $autoActivate);
 
             if ($result['success']) {
-                return response()->json([
-                    'success' => true,
-                    'template' => [
-                        'id' => $result['template']->id,
-                        'name' => $result['template']->name,
-                        'slug' => $result['template']->slug,
-                        'preview_url' => $result['template']->preview_image_url,
-                        'is_active' => $result['template']->is_active
-                    ],
-                    'stats' => $result['stats'] ?? [],
-                    'message' => $autoActivate ?
-                        'Template berhasil diimpor dan diaktifkan!' :
-                        'Template berhasil diimpor!'
+                Log::info('Smart Import Success', [
+                    'template_id' => $result['template']->id,
+                    'template_name' => $result['template']->name,
+                    'user_id' => Auth::id()
                 ]);
+
+                // Check if request expects JSON (AJAX) or normal redirect
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'template' => [
+                            'id' => $result['template']->id,
+                            'name' => $result['template']->name,
+                            'slug' => $result['template']->slug,
+                            'preview_url' => $result['template']->preview_image_url ?? null,
+                            'is_active' => $result['template']->is_active
+                        ],
+                        'stats' => $result['stats'] ?? [],
+                        'message' => $autoActivate ?
+                            'Template berhasil diimpor dan diaktifkan!' :
+                            'Template berhasil diimpor!',
+                        'redirect' => route('admin.templates.my-templates.show', $result['template']->id)
+                    ]);
+                } else {
+                    // Normal form submission - redirect with success message
+                    return redirect()->route('admin.templates.my-templates.show', $result['template']->id)
+                        ->with('success', $autoActivate ?
+                            'Template berhasil diimpor dan diaktifkan!' :
+                            'Template berhasil diimpor!');
+                }
             } else {
-                return response()->json([
-                    'success' => false,
+                Log::error('Smart Import Failed', [
                     'error' => $result['error'],
-                    'code' => $result['code'] ?? 'IMPORT_FAILED'
-                ], 422);
+                    'code' => $result['code'] ?? 'UNKNOWN',
+                    'user_id' => Auth::id()
+                ]);
+
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => $result['error'],
+                        'code' => $result['code'] ?? 'IMPORT_FAILED'
+                    ], 422);
+                } else {
+                    return redirect()->back()
+                        ->with('error', 'Import gagal: ' . $result['error'])
+                        ->withInput();
+                }
             }
 
         } catch (\Exception $e) {

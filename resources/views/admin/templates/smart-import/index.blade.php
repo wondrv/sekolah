@@ -348,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
     analyzeBtn.addEventListener('click', async function() {
         const url = document.getElementById('template_url').value;
         if (!url) {
-            alert('Please enter a URL to analyze');
+            showErrorNotification('Please enter a URL to analyze');
             return;
         }
 
@@ -365,15 +365,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ url: url })
             });
 
-            const result = await response.json();
+            let result;
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                const text = await response.text();
+                console.error('Non-JSON analyze response snippet:', text.substring(0, 300));
+                throw new Error('Server returned non-JSON response (possible auth redirect)');
+            }
 
             if (result.success) {
                 showAnalysisResults(result.analysis);
+                showSuccessNotification('Analysis successful', result.analysis.title || 'Template');
             } else {
-                alert('Analysis failed: ' + result.error);
+                const code = result.code ? '[' + result.code + '] ' : '';
+                showErrorNotification(code + (result.error || 'Analysis failed'));
             }
         } catch (error) {
-            alert('Analysis failed: ' + error.message);
+            showErrorNotification('Analysis failed: ' + error.message);
         } finally {
             analyzeBtn.disabled = false;
             analyzeBtn.innerHTML = '<i class="fas fa-search mr-2"></i>Analyze First';
