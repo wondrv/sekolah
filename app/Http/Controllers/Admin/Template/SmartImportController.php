@@ -868,10 +868,23 @@ class SmartImportController extends Controller
             $templateFile = null;
             $htmlFile = null;
             $availableFiles = [];
+            $extractedFiles = []; // Store all files for template switching
 
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $filename = $zip->getNameIndex($i);
                 $availableFiles[] = $filename;
+
+                // Extract all files to storage for template switching
+                if (!str_ends_with($filename, '/')) { // Skip directories
+                    $content = $zip->getFromName($filename);
+                    if ($content !== false) {
+                        $extractedFiles[$filename] = [
+                            'content' => base64_encode($content),
+                            'type' => $this->getFileType($filename),
+                            'size' => strlen($content)
+                        ];
+                    }
+                }
 
                 // Prioritize template.json, then any .json file
                 if (preg_match('/template\.json$/i', $filename)) {
@@ -886,13 +899,14 @@ class SmartImportController extends Controller
                 }
             }
 
-            // If no JSON found, try HTML fallback
-            if (!$templateFile && $htmlFile) {
-                Log::info('No JSON found in ZIP, using HTML fallback', ['html_file' => $htmlFile]);
-                return $this->processZipHtmlFallback($zip, $htmlFile, $userId, $templateName, $autoActivate);
-            }
-
-            if (!$templateFile) {
+            // Determine template type and processing method
+            if ($templateFile) {
+                // Process as JSON-based template but also store files
+                $result = $this->processZipJsonTemplate($zip, $templateFile, $extractedFiles, $userId, $templateName, $autoActivate);
+            } elseif ($htmlFile) {
+                // Process as file-based template
+                $result = $this->processZipFileBasedTemplate($zip, $htmlFile, $extractedFiles, $userId, $templateName, $autoActivate);
+            } else {
                 $zip->close();
                 Log::warning('No JSON or HTML file found in ZIP', ['available_files' => array_slice($availableFiles, 0, 20)]);
                 return [
@@ -902,37 +916,161 @@ class SmartImportController extends Controller
                 ];
             }
 
-            Log::info('Found JSON file in ZIP', ['template_file' => $templateFile]);
-
-            // Extract and process the template file
-            $content = $zip->getFromName($templateFile);
             $zip->close();
+            return $result;
+
+        } catch (\Exception $e) {
+            $zip->close();
+            throw $e;
+        }
+    }
+
+    /**
+     * Get file type from filename
+     */
+    protected function getFileType(string $filename): string
+    {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        $typeMap = [
+            'html' => 'html',
+            'htm' => 'html',
+            'css' => 'css',
+            'js' => 'javascript',
+            'json' => 'json',
+            'php' => 'php',
+            'blade' => 'blade',
+            'jpg' => 'image',
+            'jpeg' => 'image',
+            'png' => 'image',
+            'gif' => 'image',
+            'svg' => 'image',
+            'pdf' => 'document',
+            'txt' => 'text',
+            'md' => 'markdown'
+        ];
+
+        return $typeMap[$extension] ?? 'other';
+    }
+
+    /**
+     * Process ZIP with JSON template but also store files for switching
+     */
+    protected function processZipJsonTemplate($zip, string $templateFile, array $extractedFiles, int $userId, ?string $templateName, bool $autoActivate): array
+    {
+        // Extract and process the template file
+        $content = $zip->getFromName($templateFile);
+
+        if ($content === false) {
+            return [
+                'success' => false,
+                'error' => 'Could not extract template file from ZIP',
+                'code' => 'EXTRACT_ERROR'
+            ];
+        }
+
+        // Create temporary file and process as JSON
+        $tempFile = tmpfile();
+        fwrite($tempFile, $content);
+        $tempPath = stream_get_meta_data($tempFile)['uri'];
+
+        $mockFile = new \Illuminate\Http\UploadedFile(
+            $tempPath,
+            $templateFile,
+            'application/json',
+            null,
+            true
+        );
+
+        // Process the JSON template normally
+        $result = $this->processJsonFile($mockFile, $userId, $templateName, $autoActivate);
+
+        // If successful, also store the extracted files for template switching
+        if ($result['success']) {
+            $template = $result['template'];
+            $template->update([
+                'template_files' => $extractedFiles,
+                'template_type' => 'blocks' // JSON-based but with file storage
+            ]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Process ZIP as file-based template (WordPress-like)
+     */
+    protected function processZipFileBasedTemplate($zip, string $htmlFile, array $extractedFiles, int $userId, ?string $templateName, bool $autoActivate): array
+    {
+        try {
+            // Extract main HTML content
+            $content = $zip->getFromName($htmlFile);
 
             if ($content === false) {
                 return [
                     'success' => false,
-                    'error' => 'Could not extract template file from ZIP',
+                    'error' => 'Could not extract HTML file from ZIP',
                     'code' => 'EXTRACT_ERROR'
                 ];
             }
 
-            // Create temporary file and process as JSON
-            $tempFile = tmpfile();
-            fwrite($tempFile, $content);
-            $tempPath = stream_get_meta_data($tempFile)['uri'];
+            // Extract title from HTML if no template name provided
+            if (!$templateName) {
+                if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $content, $matches)) {
+                    $templateName = trim(strip_tags($matches[1]));
+                }
+                if (!$templateName) {
+                    $templateName = pathinfo($htmlFile, PATHINFO_FILENAME);
+                }
+            }
 
-            $mockFile = new \Illuminate\Http\UploadedFile(
-                $tempPath,
-                $templateFile,
-                'application/json',
-                null,
-                true
-            );
+            // Create template data structure for file-based template
+            $templateData = [
+                'type' => 'file_based',
+                'main_file' => $htmlFile,
+                'description' => 'File-based template imported from ZIP',
+                'files' => array_keys($extractedFiles)
+            ];
 
-            return $this->processJsonFile($mockFile, $userId, $templateName, $autoActivate);
+            // Create user template with file-based type
+            $template = UserTemplate::create([
+                'user_id' => $userId,
+                'name' => $templateName,
+                'slug' => Str::slug($templateName) . '-' . time(),
+                'description' => 'File-based template imported from ZIP',
+                'template_data' => $templateData,
+                'template_files' => $extractedFiles,
+                'template_type' => 'files', // File-based template
+                'source' => 'imported',
+                'is_active' => false,
+                'customizations' => [
+                    'import_method' => 'zip_file_based',
+                    'main_file' => $htmlFile,
+                    'imported_at' => now()->toISOString()
+                ]
+            ]);
+
+            // Auto-activate if requested
+            if ($autoActivate) {
+                $template->activate();
+            }
+
+            // Generate stats
+            $stats = [
+                'templates_created' => 1,
+                'files_stored' => count($extractedFiles),
+                'main_file' => $htmlFile,
+                'template_type' => 'file_based',
+                'import_method' => 'zip'
+            ];
+
+            return [
+                'success' => true,
+                'template' => $template,
+                'stats' => $stats
+            ];
 
         } catch (\Exception $e) {
-            $zip->close();
             throw $e;
         }
     }

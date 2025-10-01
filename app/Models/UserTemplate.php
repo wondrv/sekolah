@@ -70,6 +70,8 @@ class UserTemplate extends Model
         'preview_image',
         'template_data',
         'draft_template_data',
+        'template_files', // Store extracted ZIP files
+        'template_type', // 'blocks' or 'files'
         'source',
         'is_active',
         'customizations',
@@ -81,6 +83,7 @@ class UserTemplate extends Model
     protected $casts = [
         'template_data' => 'array',
         'draft_template_data' => 'array',
+        'template_files' => 'array', // Cast to array for file storage
         'is_active' => 'boolean',
         'customizations' => 'array',
         'settings' => 'array',

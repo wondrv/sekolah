@@ -301,7 +301,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::get('live-import/popular-urls', [Admin\Template\LiveImportController::class, 'getPopularUrls'])->name('live-import.popular-urls');
         Route::post('live-import/test-language', [Admin\Template\LiveImportController::class, 'testLanguageDetection'])->name('live-import.test-language');
 
-        // My Templates
+        // Template Switching\n        Route::get('template-switcher', function() {\n            $activeTemplate = \\App\\Models\\UserTemplate::where('user_id', Auth::id())->where('is_active', true)->first();\n            $templates = \\App\\Models\\UserTemplate::where('user_id', Auth::id())->orderBy('created_at', 'desc')->get();\n            return view('admin.templates.switcher', compact('activeTemplate', 'templates'));\n        })->name('template-switcher');\n\n        // My Templates
         Route::get('my-templates', [Admin\Template\MyTemplatesController::class, 'index'])->name('my-templates.index');
         Route::get('my-templates/{userTemplate}', [Admin\Template\MyTemplatesController::class, 'show'])->name('my-templates.show');
         Route::get('my-templates/{userTemplate}/edit', [Admin\Template\MyTemplatesController::class, 'edit'])->name('my-templates.edit');
