@@ -401,6 +401,24 @@ class TemplateBuilderController extends Controller
     protected function getAvailableBlockTypes()
     {
         $blockTypes = [
+            'navigation' => [
+                'name' => 'Navigation',
+                'description' => 'Header navigasi dengan menu',
+                'icon' => 'nav-icon',
+                'category' => 'header',
+                'fields' => [
+                    'site_title' => ['type' => 'text', 'label' => 'Judul Situs'],
+                    'logo_text' => ['type' => 'text', 'label' => 'Teks Logo'],
+                    'menu_items' => ['type' => 'repeater', 'label' => 'Menu Items', 'fields' => [
+                        'title' => ['type' => 'text', 'label' => 'Judul Menu'],
+                        'url' => ['type' => 'url', 'label' => 'URL'],
+                        'target' => ['type' => 'select', 'label' => 'Target', 'options' => ['_self' => 'Same Window', '_blank' => 'New Window']],
+                    ]],
+                    'background_color' => ['type' => 'color', 'label' => 'Warna Background'],
+                    'text_color' => ['type' => 'color', 'label' => 'Warna Teks'],
+                    'sticky' => ['type' => 'checkbox', 'label' => 'Sticky Navigation'],
+                ],
+            ],
             'hero' => [
                 'name' => 'Hero Section',
                 'description' => 'Header besar dengan judul, subjudul, dan tombol',
@@ -486,6 +504,27 @@ class TemplateBuilderController extends Controller
                     'limit' => ['type' => 'number', 'label' => 'Jumlah Event'],
                     'show_date' => ['type' => 'boolean', 'label' => 'Tampilkan Tanggal'],
                     'show_excerpt' => ['type' => 'boolean', 'label' => 'Tampilkan Excerpt'],
+                ],
+            ],
+            'footer' => [
+                'name' => 'Footer',
+                'description' => 'Footer dengan kontak dan link cepat',
+                'icon' => 'footer-icon',
+                'category' => 'footer',
+                'fields' => [
+                    'content' => ['type' => 'wysiwyg', 'label' => 'Konten Footer'],
+                    'contact_info' => ['type' => 'group', 'label' => 'Info Kontak', 'fields' => [
+                        'email' => ['type' => 'email', 'label' => 'Email'],
+                        'phone' => ['type' => 'text', 'label' => 'Telepon'],
+                        'address' => ['type' => 'textarea', 'label' => 'Alamat'],
+                    ]],
+                    'footer_links' => ['type' => 'repeater', 'label' => 'Link Footer', 'fields' => [
+                        'title' => ['type' => 'text', 'label' => 'Judul Link'],
+                        'url' => ['type' => 'url', 'label' => 'URL'],
+                    ]],
+                    'background_color' => ['type' => 'color', 'label' => 'Warna Background'],
+                    'text_color' => ['type' => 'color', 'label' => 'Warna Teks'],
+                    'copyright' => ['type' => 'text', 'label' => 'Copyright Text'],
                 ],
             ],
         ];

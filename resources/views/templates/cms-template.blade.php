@@ -114,27 +114,8 @@
             </section>
         @endforeach
 
-        <!-- Default Footer if no footer section -->
-        @php
-            // Determine if a footer section already exists (explicit flag, name heuristic, or footer tag in HTML)
-            $hasFooterSection = collect($sections)->contains(function($sectionData) {
-                // Explicit flag
-                if(isset($sectionData['section']->settings['is_footer']) && $sectionData['section']->settings['is_footer']) {
-                    return true;
-                }
-                // Name heuristic
-                $name = strtolower($sectionData['section']->name ?? '');
-                if(str_contains($name, 'footer')) return true;
-                // Scan rendered block HTML
-                foreach($sectionData['blocks'] as $blockHtml) {
-                    if(is_string($blockHtml) && stripos($blockHtml, '<footer') !== false) {
-                        return true;
-                    }
-                }
-                return false;
-            });
-        @endphp
-        @if(!$hasFooterSection)
+        <!-- Footer sections are now handled by template system -->
+        {{-- All sections including footer are now template-driven --}}
             <footer class="bg-gray-900 text-white py-12">
                 <div class="container mx-auto px-4">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-8">

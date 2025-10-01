@@ -453,47 +453,348 @@ class SmartTemplateImporterService
     }
 
     /**
-     * Extract sections from HTML
+     * Extract sections from HTML with intelligent content detection
      */
     protected function extractSections(DOMDocument $dom, DOMXPath $xpath, array $analysis): array
     {
         $sections = [];
         $sectionOrder = 1;
 
-        // Header section
-        $header = $xpath->query('//header')->item(0);
-        if ($header) {
-            $sections[] = $this->createSectionFromElement($header, 'Header', $sectionOrder++, $xpath);
+        // Use intelligent content detection
+        $detectedSections = $this->intelligentContentDetection($dom, $xpath);
+
+        foreach ($detectedSections as $detectedSection) {
+            $sections[] = [
+                'name' => $detectedSection['name'],
+                'key' => $detectedSection['key'],
+                'order' => $sectionOrder++,
+                'active' => true,
+                'blocks' => $detectedSection['blocks']
+            ];
         }
 
-        // Navigation section
-        $nav = $xpath->query('//nav')->item(0);
-        if ($nav && (!$header || !$this->isChildOf($nav, $header))) {
-            $sections[] = $this->createSectionFromElement($nav, 'Navigation', $sectionOrder++, $xpath);
-        }
-
-        // Main content sections
-        $mainSections = $xpath->query('//main//section | //section | //div[contains(@class, "section")]');
-        foreach ($mainSections as $section) {
-            $sectionName = $this->guessSectionName($section);
-            $sections[] = $this->createSectionFromElement($section, $sectionName, $sectionOrder++, $xpath);
-        }
-
-        // If no explicit sections found, create from main content areas
-        if (count($sections) <= 2) {
-            $contentAreas = $xpath->query('//main | //div[contains(@class, "content")] | //div[contains(@class, "main")]');
-            foreach ($contentAreas as $area) {
-                $sections[] = $this->createSectionFromElement($area, 'Main Content', $sectionOrder++, $xpath);
-            }
-        }
-
-        // Footer section
-        $footer = $xpath->query('//footer')->item(0);
-        if ($footer) {
-            $sections[] = $this->createSectionFromElement($footer, 'Footer', $sectionOrder++, $xpath, ['is_footer' => true]);
+        // If no intelligent sections detected, fallback to basic extraction
+        if (empty($sections)) {
+            $sections = $this->fallbackSectionExtraction($dom, $xpath);
         }
 
         return $sections;
+    }
+
+    /**
+     * Advanced intelligent content detection for complete website parsing
+     */
+    protected function intelligentContentDetection(DOMDocument $dom, DOMXPath $xpath): array
+    {
+        $sections = [];
+        $sectionOrder = 1;
+
+        // 1. DETECT HEADER/NAVIGATION SECTION (always first)
+        $headerSection = $this->detectHeaderNavigation($dom, $xpath);
+        if ($headerSection) {
+            $headerSection['order'] = $sectionOrder++;
+            $sections[] = $headerSection;
+        }
+
+        // 2. Extract Hero/Banner Section
+        $heroSection = $this->extractHeroSection($dom, $xpath);
+        if ($heroSection) {
+            $heroSection['order'] = $sectionOrder++;
+            $sections[] = $heroSection;
+        }
+
+        // 2. Extract About/Profile Section
+        $aboutSection = $this->extractAboutSection($dom, $xpath);
+        if ($aboutSection) {
+            $aboutSection['order'] = $sectionOrder++;
+            $sections[] = $aboutSection;
+        }
+
+        // 3. Extract Programs/Services Section
+        $programsSection = $this->extractProgramsSection($dom, $xpath);
+        if ($programsSection) {
+            $programsSection['order'] = $sectionOrder++;
+            $sections[] = $programsSection;
+        }
+
+        // 4. Extract Statistics/Numbers Section
+        $statsSection = $this->extractStatsSection($dom, $xpath);
+        if ($statsSection) {
+            $statsSection['order'] = $sectionOrder++;
+            $sections[] = $statsSection;
+        }
+
+        // 5. Extract News/Articles Section
+        $newsSection = $this->extractNewsSection($dom, $xpath);
+        if ($newsSection) {
+            $newsSection['order'] = $sectionOrder++;
+            $sections[] = $newsSection;
+        }
+
+        // 6. Extract Contact Section
+        $contactSection = $this->extractContactSection($dom, $xpath);
+        if ($contactSection) {
+            $contactSection['order'] = $sectionOrder++;
+            $sections[] = $contactSection;
+        }
+
+        // 7. DETECT FOOTER SECTION (always last)
+        $footerSection = $this->detectFooterSection($dom, $xpath);
+        if ($footerSection) {
+            $footerSection['order'] = $sectionOrder++;
+            $sections[] = $footerSection;
+        }
+
+        return $sections;
+    }
+
+    /**
+     * Extract Hero/Banner section automatically
+     */
+    protected function extractHeroSection(DOMDocument $dom, DOMXPath $xpath): ?array
+    {
+        // Look for hero patterns
+        $heroSelectors = [
+            '//div[contains(@class, "hero")]',
+            '//div[contains(@class, "banner")]',
+            '//div[contains(@class, "jumbotron")]',
+            '//header[contains(@class, "main")]',
+            '//section[1]', // First section often hero
+            '//*[contains(@class, "intro")]'
+        ];
+
+        foreach ($heroSelectors as $selector) {
+            $elements = $xpath->query($selector);
+            if ($elements->length > 0) {
+                $heroElement = $elements->item(0);
+
+                // Extract hero content
+                $title = $this->extractTitle($heroElement, $xpath);
+                $subtitle = $this->extractSubtitle($heroElement, $xpath);
+                $backgroundInfo = $this->extractBackgroundInfo($heroElement);
+
+                if ($title || $subtitle) {
+                    return [
+                        'name' => 'Hero Section',
+                        'key' => 'hero',
+                        'blocks' => [[
+                            'type' => 'hero',
+                            'order' => 1,
+                            'active' => true,
+                            'data' => [
+                                'title' => $title ?: 'Selamat Datang di Sekolah Kami',
+                                'subtitle' => $subtitle ?: 'Membangun generasi unggul melalui pendidikan berkualitas',
+                                'background_color' => 'bg-gradient-to-r from-blue-600 to-purple-600',
+                                'text_color' => 'text-white',
+                                'button_text' => 'Pelajari Lebih Lanjut',
+                                'button_link' => '#about'
+                            ]
+                        ]]
+                    ];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract About/Profile section automatically
+     */
+    protected function extractAboutSection(DOMDocument $dom, DOMXPath $xpath): ?array
+    {
+        $aboutSelectors = [
+            '//*[contains(@class, "about")]',
+            '//*[contains(@id, "about")]',
+            '//*[contains(@class, "profile")]',
+            '//*[contains(translate(text(), "ABOUT", "about"), "about")]',
+            '//*[contains(translate(text(), "TENTANG", "tentang"), "tentang")]'
+        ];
+
+        foreach ($aboutSelectors as $selector) {
+            $elements = $xpath->query($selector);
+            if ($elements->length > 0) {
+                $aboutElement = $elements->item(0);
+                $content = $this->extractRichContent($aboutElement, $xpath);
+
+                if (!empty($content)) {
+                    return [
+                        'name' => 'Tentang Kami',
+                        'key' => 'about',
+                        'blocks' => [[
+                            'type' => 'rich_text',
+                            'order' => 1,
+                            'active' => true,
+                            'data' => [
+                                'content' => $content
+                            ]
+                        ]]
+                    ];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract Programs/Services section automatically
+     */
+    protected function extractProgramsSection(DOMDocument $dom, DOMXPath $xpath): ?array
+    {
+        $programSelectors = [
+            '//*[contains(@class, "program")]',
+            '//*[contains(@class, "service")]',
+            '//*[contains(@class, "feature")]',
+            '//*[contains(@class, "card-grid")]',
+            '//*[contains(@class, "grid")]'
+        ];
+
+        foreach ($programSelectors as $selector) {
+            $elements = $xpath->query($selector);
+            if ($elements->length > 0) {
+                $programElement = $elements->item(0);
+                $cards = $this->extractCardGrid($programElement, $xpath);
+
+                if (!empty($cards)) {
+                    return [
+                        'name' => 'Program Unggulan',
+                        'key' => 'programs',
+                        'blocks' => [[
+                            'type' => 'card_grid',
+                            'order' => 1,
+                            'active' => true,
+                            'data' => [
+                                'title' => 'Program Unggulan Kami',
+                                'subtitle' => 'Berbagai program terbaik untuk mendukung prestasi siswa',
+                                'cards' => $cards
+                            ]
+                        ]]
+                    ];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract Statistics section automatically
+     */
+    protected function extractStatsSection(DOMDocument $dom, DOMXPath $xpath): ?array
+    {
+        $statsSelectors = [
+            '//*[contains(@class, "stat")]',
+            '//*[contains(@class, "number")]',
+            '//*[contains(@class, "counter")]',
+            '//*[contains(@class, "metric")]'
+        ];
+
+        foreach ($statsSelectors as $selector) {
+            $elements = $xpath->query($selector);
+            if ($elements->length > 0) {
+                $stats = $this->extractStatistics($elements, $xpath);
+
+                if (!empty($stats)) {
+                    return [
+                        'name' => 'Statistik Sekolah',
+                        'key' => 'statistics',
+                        'blocks' => [[
+                            'type' => 'stats',
+                            'order' => 1,
+                            'active' => true,
+                            'data' => [
+                                'title' => 'Statistik Pencapaian',
+                                'subtitle' => 'Data prestasi dan pencapaian sekolah',
+                                'background_color' => 'bg-blue-900',
+                                'text_color' => 'text-white',
+                                'stats' => $stats
+                            ]
+                        ]]
+                    ];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract News/Articles section automatically
+     */
+    protected function extractNewsSection(DOMDocument $dom, DOMXPath $xpath): ?array
+    {
+        $newsSelectors = [
+            '//*[contains(@class, "news")]',
+            '//*[contains(@class, "article")]',
+            '//*[contains(@class, "blog")]',
+            '//*[contains(@class, "post")]',
+            '//article'
+        ];
+
+        foreach ($newsSelectors as $selector) {
+            $elements = $xpath->query($selector);
+            if ($elements->length > 0) {
+                $articles = $this->extractArticles($elements, $xpath);
+
+                if (!empty($articles)) {
+                    return [
+                        'name' => 'Berita & Acara',
+                        'key' => 'news',
+                        'blocks' => [[
+                            'type' => 'events_teaser',
+                            'order' => 1,
+                            'active' => true,
+                            'data' => [
+                                'title' => 'Berita Terbaru',
+                                'subtitle' => 'Informasi dan update terkini dari sekolah',
+                                'events' => $articles
+                            ]
+                        ]]
+                    ];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract Contact section automatically
+     */
+    protected function extractContactSection(DOMDocument $dom, DOMXPath $xpath): ?array
+    {
+        $contactSelectors = [
+            '//*[contains(@class, "contact")]',
+            '//*[contains(@id, "contact")]',
+            '//*[contains(@class, "footer")]//text()[contains(., "@") or contains(., "phone") or contains(., "address")]/..',
+            '//footer'
+        ];
+
+        foreach ($contactSelectors as $selector) {
+            $elements = $xpath->query($selector);
+            if ($elements->length > 0) {
+                $contactElement = $elements->item(0);
+                $contactInfo = $this->extractContactInfo($contactElement, $xpath);
+
+                if (!empty($contactInfo)) {
+                    return [
+                        'name' => 'Kontak Kami',
+                        'key' => 'contact',
+                        'blocks' => [[
+                            'type' => 'rich_text',
+                            'order' => 1,
+                            'active' => true,
+                            'data' => [
+                                'content' => $this->formatContactInfo($contactInfo)
+                            ]
+                        ]]
+                    ];
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -999,5 +1300,630 @@ class SmartTemplateImporterService
 </html>';
 
         return $templateHtml;
+    }
+
+    /**
+     * Fallback section extraction when intelligent detection fails
+     */
+    protected function fallbackSectionExtraction(DOMDocument $dom, DOMXPath $xpath): array
+    {
+        $sections = [];
+        $sectionOrder = 1;
+
+        // Create basic sections with content
+        $sections[] = [
+            'name' => 'Hero Section',
+            'key' => 'hero',
+            'order' => $sectionOrder++,
+            'active' => true,
+            'blocks' => [[
+                'type' => 'hero',
+                'order' => 1,
+                'active' => true,
+                'data' => [
+                    'title' => 'Selamat Datang di Sekolah Kami',
+                    'subtitle' => 'Membangun generasi unggul melalui pendidikan berkualitas',
+                    'background_color' => 'bg-gradient-to-r from-blue-600 to-purple-600',
+                    'text_color' => 'text-white',
+                    'button_text' => 'Pelajari Lebih Lanjut',
+                    'button_link' => '#about'
+                ]
+            ]]
+        ];
+
+        // Extract any text content for about section
+        $bodyText = $this->extractBodyText($dom, $xpath);
+        if ($bodyText) {
+            $sections[] = [
+                'name' => 'Tentang Kami',
+                'key' => 'about',
+                'order' => $sectionOrder++,
+                'active' => true,
+                'blocks' => [[
+                    'type' => 'rich_text',
+                    'order' => 1,
+                    'active' => true,
+                    'data' => [
+                        'content' => $bodyText
+                    ]
+                ]]
+            ];
+        }
+
+        // Create default footer section
+        $sections[] = [
+            'name' => 'Footer',
+            'key' => 'footer',
+            'order' => $sectionOrder++,
+            'active' => true,
+            'settings' => ['is_footer' => true],
+            'blocks' => [[
+                'type' => 'footer',
+                'order' => 1,
+                'active' => true,
+                'data' => [
+                    'content' => '<p>Sekolah terdepan dalam memberikan pendidikan berkualitas dengan fasilitas modern dan tenaga pengajar profesional.</p>',
+                    'contact_info' => [
+                        'email' => 'info@sekolah.sch.id',
+                        'phone' => '(021) 1234-5678',
+                        'address' => 'Jl. Pendidikan No. 123, Kota'
+                    ],
+                    'footer_links' => [
+                        ['title' => 'Tentang Kami', 'url' => '#about'],
+                        ['title' => 'Program', 'url' => '#programs'],
+                        ['title' => 'Berita', 'url' => '#news'],
+                        ['title' => 'Kontak', 'url' => '#contact']
+                    ],
+                    'background_color' => 'bg-gray-900',
+                    'text_color' => 'text-white',
+                    'copyright' => '© ' . date('Y') . ' School CMS. All rights reserved.'
+                ]
+            ]]
+        ];
+
+        return $sections;
+    }
+
+    /**
+     * Extract title from element
+     */
+    protected function extractTitle(\DOMElement $element, DOMXPath $xpath): ?string
+    {
+        $titleSelectors = ['.//h1', './/h2', './/*[contains(@class, "title")]', './/*[contains(@class, "heading")]'];
+
+        foreach ($titleSelectors as $selector) {
+            $titles = $xpath->query($selector, $element);
+            if ($titles->length > 0) {
+                $title = trim($titles->item(0)->textContent);
+                if (strlen($title) > 5 && strlen($title) < 200) {
+                    return $title;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract subtitle from element
+     */
+    protected function extractSubtitle(\DOMElement $element, DOMXPath $xpath): ?string
+    {
+        $subtitleSelectors = ['.//p[1]', './/*[contains(@class, "subtitle")]', './/*[contains(@class, "description")]', './/h3', './/h4'];
+
+        foreach ($subtitleSelectors as $selector) {
+            $subtitles = $xpath->query($selector, $element);
+            if ($subtitles->length > 0) {
+                $subtitle = trim($subtitles->item(0)->textContent);
+                if (strlen($subtitle) > 10 && strlen($subtitle) < 500) {
+                    return $subtitle;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract background info from element
+     */
+    protected function extractBackgroundInfo(\DOMElement $element): array
+    {
+        $style = $element->getAttribute('style');
+        $classes = $element->getAttribute('class');
+
+        $info = [];
+
+        if (strpos($style, 'background') !== false) {
+            $info['has_background'] = true;
+        }
+
+        if (strpos($classes, 'dark') !== false) {
+            $info['theme'] = 'dark';
+        } elseif (strpos($classes, 'light') !== false) {
+            $info['theme'] = 'light';
+        }
+
+        return $info;
+    }
+
+    /**
+     * Extract rich content from element
+     */
+    protected function extractRichContent(\DOMElement $element, DOMXPath $xpath): string
+    {
+        $content = '';
+
+        // Get headings and paragraphs
+        $textElements = $xpath->query('.//h1 | .//h2 | .//h3 | .//p | .//div[string-length(text()) > 20]', $element);
+
+        foreach ($textElements as $textEl) {
+            $text = trim($textEl->textContent);
+            if (strlen($text) > 10) {
+                $tagName = strtolower($textEl->nodeName);
+                if (in_array($tagName, ['h1', 'h2', 'h3'])) {
+                    $content .= "<{$tagName}>" . htmlspecialchars($text) . "</{$tagName}>\n";
+                } else {
+                    $content .= "<p>" . htmlspecialchars($text) . "</p>\n";
+                }
+            }
+        }
+
+        return $content ?: '<p>Konten akan ditambahkan di sini.</p>';
+    }
+
+    /**
+     * Extract card grid from element
+     */
+    protected function extractCardGrid(\DOMElement $element, DOMXPath $xpath): array
+    {
+        $cards = [];
+
+        // Look for card-like elements
+        $cardElements = $xpath->query('.//*[contains(@class, "card") or contains(@class, "item") or contains(@class, "box")]', $element);
+
+        foreach ($cardElements as $cardEl) {
+            $title = $this->extractTitle($cardEl, $xpath);
+            $description = $this->extractSubtitle($cardEl, $xpath);
+
+            if ($title || $description) {
+                $cards[] = [
+                    'title' => $title ?: 'Program',
+                    'description' => $description ?: 'Deskripsi program akan ditambahkan.',
+                    'icon' => '🎯',
+                    'link' => '#'
+                ];
+            }
+        }
+
+        // If no cards found, create default ones
+        if (empty($cards)) {
+            $cards = [
+                [
+                    'title' => 'Program MIPA',
+                    'description' => 'Program Matematika dan Ilmu Pengetahuan Alam dengan kurikulum terdepan.',
+                    'icon' => '🔬',
+                    'link' => '#'
+                ],
+                [
+                    'title' => 'Program IPS',
+                    'description' => 'Program Ilmu Pengetahuan Sosial yang mempersiapkan siswa untuk berbagai bidang.',
+                    'icon' => '📊',
+                    'link' => '#'
+                ],
+                [
+                    'title' => 'Program Bahasa',
+                    'description' => 'Program Bahasa dan Budaya dengan fokus komunikasi global.',
+                    'icon' => '🗣️',
+                    'link' => '#'
+                ]
+            ];
+        }
+
+        return $cards;
+    }
+
+    /**
+     * Extract statistics from elements
+     */
+    protected function extractStatistics(\DOMNodeList $elements, DOMXPath $xpath): array
+    {
+        $stats = [];
+
+        foreach ($elements as $statEl) {
+            $number = $this->extractNumber($statEl);
+            $label = $this->extractStatLabel($statEl, $xpath);
+
+            if ($number || $label) {
+                $stats[] = [
+                    'number' => $number ?: '100+',
+                    'label' => $label ?: 'Achievement',
+                    'icon' => '📊'
+                ];
+            }
+        }
+
+        // Default stats if none found
+        if (empty($stats)) {
+            $stats = [
+                ['number' => '1.200', 'label' => 'Siswa Aktif', 'icon' => '👥'],
+                ['number' => '85', 'label' => 'Guru & Staff', 'icon' => '👨‍🏫'],
+                ['number' => '15', 'label' => 'Ruang Kelas', 'icon' => '🏫'],
+                ['number' => '98%', 'label' => 'Tingkat Kelulusan', 'icon' => '🎓']
+            ];
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Extract articles from elements
+     */
+    protected function extractArticles(\DOMNodeList $elements, DOMXPath $xpath): array
+    {
+        $articles = [];
+
+        foreach ($elements as $articleEl) {
+            $title = $this->extractTitle($articleEl, $xpath);
+            $description = $this->extractSubtitle($articleEl, $xpath);
+            $date = $this->extractDate($articleEl, $xpath);
+
+            if ($title) {
+                $articles[] = [
+                    'title' => $title,
+                    'description' => $description ?: 'Deskripsi artikel akan ditambahkan.',
+                    'date' => $date ?: date('Y-m-d'),
+                    'time' => '10:00',
+                    'category' => 'Berita',
+                    'link' => '#'
+                ];
+            }
+        }
+
+        // Default articles if none found
+        if (empty($articles)) {
+            $articles = [
+                [
+                    'title' => 'Prestasi Olimpiade Sains',
+                    'description' => 'Siswa-siswa kami berhasil meraih medali emas dalam kompetisi sains.',
+                    'date' => date('Y-m-d'),
+                    'time' => '10:00',
+                    'category' => 'Prestasi',
+                    'link' => '#'
+                ],
+                [
+                    'title' => 'Pembukaan Fasilitas Baru',
+                    'description' => 'Fasilitas laboratorium dan perpustakaan baru telah resmi dibuka.',
+                    'date' => date('Y-m-d', strtotime('-1 week')),
+                    'time' => '14:00',
+                    'category' => 'Fasilitas',
+                    'link' => '#'
+                ]
+            ];
+        }
+
+        return $articles;
+    }
+
+    /**
+     * Extract contact info from element
+     */
+    protected function extractContactInfo(\DOMElement $element, DOMXPath $xpath): array
+    {
+        $contact = [];
+
+        $text = $element->textContent;
+
+        // Extract email
+        if (preg_match('/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/', $text, $matches)) {
+            $contact['email'] = $matches[1];
+        }
+
+        // Extract phone
+        if (preg_match('/(\+?[\d\s\-\(\)]{10,})/', $text, $matches)) {
+            $contact['phone'] = trim($matches[1]);
+        }
+
+        // Extract address (basic)
+        $addressKeywords = ['jl.', 'jalan', 'street', 'address', 'alamat'];
+        foreach ($addressKeywords as $keyword) {
+            if (stripos($text, $keyword) !== false) {
+                $contact['address'] = 'Alamat akan ditambahkan di sini';
+                break;
+            }
+        }
+
+        return $contact;
+    }
+
+    /**
+     * Format contact info to HTML
+     */
+    protected function formatContactInfo(array $contactInfo): string
+    {
+        $html = '<h2>Kontak Kami</h2>';
+
+        if (isset($contactInfo['address'])) {
+            $html .= '<p>📍 ' . htmlspecialchars($contactInfo['address']) . '</p>';
+        }
+
+        if (isset($contactInfo['phone'])) {
+            $html .= '<p>📞 ' . htmlspecialchars($contactInfo['phone']) . '</p>';
+        }
+
+        if (isset($contactInfo['email'])) {
+            $html .= '<p>✉️ ' . htmlspecialchars($contactInfo['email']) . '</p>';
+        }
+
+        if (empty($contactInfo)) {
+            $html .= '<p>📍 Jl. Pendidikan No. 123, Kota</p>';
+            $html .= '<p>📞 (021) 1234-5678</p>';
+            $html .= '<p>✉️ info@sekolah.sch.id</p>';
+        }
+
+        return $html;
+    }
+
+    /**
+     * Extract body text for fallback
+     */
+    protected function extractBodyText(DOMDocument $dom, DOMXPath $xpath): string
+    {
+        $textElements = $xpath->query('//p[string-length(text()) > 20] | //div[string-length(text()) > 50]');
+        $content = '';
+
+        $count = 0;
+        foreach ($textElements as $el) {
+            if ($count >= 3) break; // Limit to first 3 meaningful paragraphs
+
+            $text = trim($el->textContent);
+            if (strlen($text) > 20) {
+                $content .= '<p>' . htmlspecialchars($text) . '</p>' . "\n";
+                $count++;
+            }
+        }
+
+        return $content ?: '<p>Sekolah kami berkomitmen memberikan pendidikan terbaik dengan fasilitas modern dan tenaga pengajar berkualitas.</p>';
+    }
+
+    /**
+     * Extract number from element
+     */
+    protected function extractNumber(\DOMElement $element): ?string
+    {
+        $text = $element->textContent;
+        if (preg_match('/(\d+[.,]?\d*[%]?)/', $text, $matches)) {
+            return $matches[1];
+        }
+        return null;
+    }
+
+    /**
+     * Extract stat label from element
+     */
+    protected function extractStatLabel(\DOMElement $element, DOMXPath $xpath): ?string
+    {
+        $text = trim($element->textContent);
+        // Remove numbers to get label
+        $label = preg_replace('/\d+[.,]?\d*[%]?/', '', $text);
+        $label = trim($label);
+
+        return strlen($label) > 2 ? $label : null;
+    }
+
+    /**
+     * Extract date from element
+     */
+    protected function extractDate(\DOMElement $element, DOMXPath $xpath): ?string
+    {
+        $text = $element->textContent;
+
+        // Look for date patterns
+        if (preg_match('/(\d{4}-\d{2}-\d{2})/', $text, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('/(\d{1,2}\/\d{1,2}\/\d{4})/', $text, $matches)) {
+            return date('Y-m-d', strtotime($matches[1]));
+        }
+
+        return null;
+    }
+
+    /**
+     * Detect header and navigation section from website
+     */
+    protected function detectHeaderNavigation(DOMDocument $dom, DOMXPath $xpath): ?array
+    {
+        // Look for header, nav, or top navigation elements
+        $headerElements = $xpath->query('//header | //nav | //*[contains(@class, "header") or contains(@class, "navigation") or contains(@class, "navbar") or contains(@class, "top-bar")]');
+
+        if ($headerElements->length > 0) {
+            $headerEl = $headerElements->item(0);
+
+            // Extract site title/logo
+            $siteTitle = $this->extractSiteTitle($headerEl, $xpath);
+
+            // Extract navigation menu
+            $menuItems = $this->extractNavigationMenu($headerEl, $xpath);
+
+            return [
+                'name' => 'Header & Navigation',
+                'key' => 'header_nav',
+                'active' => true,
+                'settings' => ['is_header' => true],
+                'blocks' => [[
+                    'type' => 'navigation',
+                    'order' => 1,
+                    'active' => true,
+                    'data' => [
+                        'site_title' => $siteTitle ?: 'School CMS',
+                        'menu_items' => $menuItems,
+                        'logo_text' => $siteTitle ?: 'School CMS',
+                        'background_color' => 'bg-white',
+                        'text_color' => 'text-gray-800',
+                        'sticky' => true
+                    ]
+                ]]
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Detect footer section from website
+     */
+    protected function detectFooterSection(DOMDocument $dom, DOMXPath $xpath): ?array
+    {
+        // Look for footer elements
+        $footerElements = $xpath->query('//footer | //*[contains(@class, "footer") or contains(@class, "site-footer")]');
+
+        if ($footerElements->length > 0) {
+            $footerEl = $footerElements->item(0);
+
+            // Extract footer content
+            $footerContent = $this->extractFooterContent($footerEl, $xpath);
+            $contactInfo = $this->extractContactInfo($footerEl, $xpath);
+            $footerLinks = $this->extractFooterLinks($footerEl, $xpath);
+
+            return [
+                'name' => 'Footer',
+                'key' => 'footer',
+                'active' => true,
+                'settings' => ['is_footer' => true],
+                'blocks' => [[
+                    'type' => 'footer',
+                    'order' => 1,
+                    'active' => true,
+                    'data' => [
+                        'content' => $footerContent,
+                        'contact_info' => $contactInfo,
+                        'footer_links' => $footerLinks,
+                        'background_color' => 'bg-gray-900',
+                        'text_color' => 'text-white',
+                        'copyright' => '© ' . date('Y') . ' School CMS. All rights reserved.'
+                    ]
+                ]]
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract site title from header
+     */
+    protected function extractSiteTitle(\DOMElement $element, DOMXPath $xpath): ?string
+    {
+        // Look for logo text, h1, or brand elements
+        $titleElements = $xpath->query('.//h1 | .//*[contains(@class, "logo")] | .//*[contains(@class, "brand")] | .//*[contains(@class, "site-title")]', $element);
+
+        foreach ($titleElements as $titleEl) {
+            $text = trim($titleEl->textContent);
+            if (strlen($text) > 2 && strlen($text) < 100) {
+                return $text;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract navigation menu items
+     */
+    protected function extractNavigationMenu(\DOMElement $element, DOMXPath $xpath): array
+    {
+        $menuItems = [];
+
+        // Look for navigation links
+        $navLinks = $xpath->query('.//a[string-length(text()) > 1]', $element);
+
+        foreach ($navLinks as $link) {
+            $text = trim($link->textContent);
+            $href = '#';
+            if ($link instanceof \DOMElement) {
+                $href = $link->getAttribute('href') ?: '#';
+            }
+
+            if (strlen($text) > 1 && strlen($text) < 50) {
+                $menuItems[] = [
+                    'title' => $text,
+                    'url' => $href,
+                    'target' => '_self'
+                ];
+            }
+        }
+
+        // Default menu if none found
+        if (empty($menuItems)) {
+            $menuItems = [
+                ['title' => 'Beranda', 'url' => '/', 'target' => '_self'],
+                ['title' => 'Tentang', 'url' => '#about', 'target' => '_self'],
+                ['title' => 'Program', 'url' => '#programs', 'target' => '_self'],
+                ['title' => 'Berita', 'url' => '#news', 'target' => '_self'],
+                ['title' => 'Kontak', 'url' => '#contact', 'target' => '_self']
+            ];
+        }
+
+        return $menuItems;
+    }
+
+    /**
+     * Extract footer content
+     */
+    protected function extractFooterContent(\DOMElement $element, DOMXPath $xpath): string
+    {
+        $content = '';
+
+        // Get main content from footer
+        $textElements = $xpath->query('.//p[string-length(text()) > 10] | .//div[string-length(text()) > 20]', $element);
+
+        foreach ($textElements as $textEl) {
+            $text = trim($textEl->textContent);
+            if (strlen($text) > 10) {
+                $content .= '<p>' . htmlspecialchars($text) . '</p>' . "\n";
+                break; // Only take first meaningful content
+            }
+        }
+
+        return $content ?: '<p>Sekolah terdepan dalam memberikan pendidikan berkualitas dengan fasilitas modern dan tenaga pengajar profesional.</p>';
+    }
+
+    /**
+     * Extract footer links
+     */
+    protected function extractFooterLinks(\DOMElement $element, DOMXPath $xpath): array
+    {
+        $links = [];
+
+        $linkElements = $xpath->query('.//a[string-length(text()) > 1]', $element);
+
+        foreach ($linkElements as $link) {
+            $text = trim($link->textContent);
+            $href = '#';
+            if ($link instanceof \DOMElement) {
+                $href = $link->getAttribute('href') ?: '#';
+            }
+
+            if (strlen($text) > 1 && strlen($text) < 30) {
+                $links[] = [
+                    'title' => $text,
+                    'url' => $href
+                ];
+            }
+        }
+
+        // Default footer links
+        if (empty($links)) {
+            $links = [
+                ['title' => 'Tentang Kami', 'url' => '#about'],
+                ['title' => 'Program', 'url' => '#programs'],
+                ['title' => 'Berita', 'url' => '#news'],
+                ['title' => 'Kontak', 'url' => '#contact']
+            ];
+        }
+
+        return $links;
     }
 }
