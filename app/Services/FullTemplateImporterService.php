@@ -93,25 +93,43 @@ class FullTemplateImporterService
      */
     protected function importFromGitHub(string $repoUrl, array $options = []): array
     {
-        // Extract owner/repo from GitHub URL
-        preg_match('/github\.com\/([^\/]+)\/([^\/]+)/', $repoUrl, $matches);
+        // Extract owner/repo from GitHub URL and handle .git suffix
+        preg_match('/github\.com\/([^\/]+)\/([^\/\.]+)(?:\.git)?/', $repoUrl, $matches);
         if (count($matches) < 3) {
-            throw new \InvalidArgumentException('Invalid GitHub repository URL');
+            // Try alternative patterns
+            preg_match('/github\.com\/([^\/]+)\/([^\?\/]+)/', $repoUrl, $matches);
+            if (count($matches) < 3) {
+                throw new \InvalidArgumentException('Invalid GitHub repository URL: ' . $repoUrl);
+            }
         }
 
-        $owner = $matches[1];
-        $repo = $matches[2];
+        $owner = trim($matches[1]);
+        $repo = trim(str_replace('.git', '', $matches[2]));
         $branch = $options['branch'] ?? 'main';
 
-        // Download as ZIP
-        $zipUrl = "https://github.com/{$owner}/{$repo}/archive/refs/heads/{$branch}.zip";
+        Log::info('GitHub import started', ['owner' => $owner, 'repo' => $repo, 'branch' => $branch]);
 
-        $response = Http::timeout(60)->get($zipUrl);
-        if (!$response->successful()) {
-            throw new \Exception('Failed to download GitHub repository');
+        // Try different branch names if main fails
+        $branches = [$branch, 'master', 'main'];
+        $response = null;
+        $successfulBranch = null;
+
+        foreach (array_unique($branches) as $tryBranch) {
+            $zipUrl = "https://github.com/{$owner}/{$repo}/archive/refs/heads/{$tryBranch}.zip";
+            Log::info('Trying GitHub download', ['url' => $zipUrl]);
+
+            $response = Http::timeout(60)->get($zipUrl);
+            if ($response->successful()) {
+                $successfulBranch = $tryBranch;
+                break;
+            }
         }
 
-        // Save ZIP temporarily
+        if (!$response || !$response->successful()) {
+            throw new \Exception('Failed to download GitHub repository. Tried branches: ' . implode(', ', $branches));
+        }
+
+        Log::info('GitHub download successful', ['branch' => $successfulBranch, 'size' => strlen($response->body())]);        // Save ZIP temporarily
         $tempZipPath = storage_path('app/temp/' . Str::uuid() . '.zip');
         File::ensureDirectoryExists(dirname($tempZipPath));
         File::put($tempZipPath, $response->body());
@@ -148,36 +166,46 @@ class FullTemplateImporterService
      */
     protected function importFromWebsite(string $url, array $options = []): array
     {
+        Log::info('Website import started', ['url' => $url]);
+
         $response = Http::timeout(30)->get($url);
         if (!$response->successful()) {
-            throw new \Exception('Failed to fetch website: ' . $url);
+            throw new \Exception('Failed to fetch website: ' . $url . ' (Status: ' . $response->status() . ')');
         }
 
         $html = $response->body();
+
+        // Check if we got valid HTML
+        if (empty($html) || !str_contains($html, '<html')) {
+            throw new \Exception('The URL did not return valid HTML content. It might be an API endpoint or require authentication.');
+        }
+
         $baseUrl = $this->getBaseUrl($url);
+        Log::info('HTML fetched successfully', ['size' => strlen($html), 'base_url' => $baseUrl]);
 
         // Parse HTML and extract all assets
         $dom = new DOMDocument();
-        @$dom->loadHTML($html);
+        libxml_use_internal_errors(true); // Suppress HTML parsing errors
+        $dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
         $xpath = new DOMXPath($dom);
 
         $assets = $this->extractAssetsFromHtml($dom, $xpath, $baseUrl);
+        Log::info('Assets extracted', ['asset_count' => count($assets)]);
 
         // Create template directory
         $templateId = Str::uuid();
         $templateDir = "templates/full/{$templateId}";
 
-        // Save main HTML file
-        Storage::put("{$templateDir}/index.html", $html);
-
         // Download and save assets
         $downloadedAssets = $this->downloadAssets($assets, $templateDir);
+        Log::info('Assets downloaded', ['downloaded_count' => count($downloadedAssets)]);
 
         // Update HTML with local asset paths
         $processedHtml = $this->updateAssetPaths($html, $assets, $templateDir);
-        Storage::put("{$templateDir}/index.html", $processedHtml);
 
-        $files = ['index.html' => "{$templateDir}/index.html"];
+        // Save processed HTML file
+        Storage::put("{$templateDir}/index.html", $processedHtml);        $files = ['index.html' => "{$templateDir}/index.html"];
         $files = array_merge($files, $downloadedAssets);
 
         return [
@@ -213,12 +241,27 @@ class FullTemplateImporterService
         $zip->extractTo($extractPath);
         $zip->close();
 
-        // Find main HTML file
+        // Find main HTML file with enhanced detection
         $mainFile = $this->findMainHtmlFile($extractPath);
         if (!$mainFile) {
+            // Try to find any HTML file and log the structure
+            $allFiles = $this->getAllFiles($extractPath);
+            Log::warning('No main HTML file found', [
+                'extract_path' => $extractPath,
+                'all_files' => array_slice($allFiles, 0, 20) // Log first 20 files
+            ]);
+
+            // Check if this might be a source code repository without built HTML
+            if ($this->looksLikeSourceRepo($extractPath)) {
+                File::deleteDirectory($extractPath);
+                throw new \Exception('This appears to be a source code repository. Please use a repository with built HTML files (like dist/ or build/ folder) or a ready-to-use template.');
+            }
+
             File::deleteDirectory($extractPath);
-            throw new \Exception('No index.html or main HTML file found in the template');
+            throw new \Exception('No HTML file found in the template. Available files: ' . implode(', ', array_slice($allFiles, 0, 10)));
         }
+
+        Log::info('Main file found', ['main_file' => $mainFile]);
 
         // Copy all files to storage
         $files = $this->copyTemplateFiles($extractPath, $templateDir);
@@ -245,8 +288,29 @@ class FullTemplateImporterService
      */
     protected function findMainHtmlFile(string $dir): ?string
     {
+        // First, look for common main file names in root
         $possibleFiles = ['index.html', 'home.html', 'main.html', 'default.html'];
 
+        foreach ($possibleFiles as $file) {
+            $rootFile = $dir . '/' . $file;
+            if (file_exists($rootFile)) {
+                return $rootFile;
+            }
+        }
+
+        // Then look for them recursively, but prefer ones in dist/build folders
+        $preferredPaths = ['dist', 'build', 'public', 'www', 'docs'];
+
+        foreach ($preferredPaths as $path) {
+            foreach ($possibleFiles as $file) {
+                $fullPath = $this->findFileRecursive($dir . '/' . $path, $file);
+                if ($fullPath && file_exists($fullPath)) {
+                    return $fullPath;
+                }
+            }
+        }
+
+        // Look for any main file recursively
         foreach ($possibleFiles as $file) {
             $fullPath = $this->findFileRecursive($dir, $file);
             if ($fullPath) {
@@ -254,12 +318,30 @@ class FullTemplateImporterService
             }
         }
 
-        // Find any HTML file
-        $htmlFiles = File::glob($dir . '/**/*.html');
-        return $htmlFiles[0] ?? null;
-    }
+        // Find any HTML file, preferring ones not in source folders
+        $htmlFiles = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
 
-    /**
+        foreach ($iterator as $file) {
+            if ($file->isFile() && strtolower($file->getExtension()) === 'html') {
+                $htmlFiles[] = $file->getPathname();
+            }
+        }
+
+        if (!empty($htmlFiles)) {
+            // Prefer HTML files not in src, source, or similar folders
+            foreach ($htmlFiles as $htmlFile) {
+                if (!preg_match('/\/(src|source|scss|sass|less|node_modules)\//', $htmlFile)) {
+                    return $htmlFile;
+                }
+            }
+            return $htmlFiles[0]; // Fallback to first HTML file
+        }
+
+        return null;
+    }    /**
      * Find file recursively in directory
      */
     protected function findFileRecursive(string $dir, string $filename): ?string
@@ -313,28 +395,54 @@ class FullTemplateImporterService
     {
         $assets = [];
 
-        // CSS files
-        $cssLinks = $xpath->query('//link[@rel="stylesheet"]/@href');
+        // CSS files - look for both link and @import
+        $cssLinks = $xpath->query('//link[@rel="stylesheet"]/@href | //link[@type="text/css"]/@href');
         foreach ($cssLinks as $href) {
             $url = $this->resolveUrl($href->nodeValue, $baseUrl);
-            $assets[] = ['type' => 'css', 'url' => $url, 'local_path' => 'css/' . basename($url)];
+            if ($this->isValidAssetUrl($url)) {
+                $assets[] = ['type' => 'css', 'url' => $url, 'local_path' => 'css/' . $this->getAssetFilename($url, 'css')];
+            }
         }
 
         // JavaScript files
         $jsScripts = $xpath->query('//script[@src]/@src');
         foreach ($jsScripts as $src) {
             $url = $this->resolveUrl($src->nodeValue, $baseUrl);
-            $assets[] = ['type' => 'js', 'url' => $url, 'local_path' => 'js/' . basename($url)];
+            if ($this->isValidAssetUrl($url)) {
+                $assets[] = ['type' => 'js', 'url' => $url, 'local_path' => 'js/' . $this->getAssetFilename($url, 'js')];
+            }
         }
 
-        // Images
-        $images = $xpath->query('//img/@src');
-        foreach ($images as $src) {
-            $url = $this->resolveUrl($src->nodeValue, $baseUrl);
-            $assets[] = ['type' => 'image', 'url' => $url, 'local_path' => 'images/' . basename($url)];
+        // Images - all types
+        $images = $xpath->query('//img/@src | //img/@data-src | //*[@style]');
+        foreach ($images as $node) {
+            if ($node->nodeName === 'src' || $node->nodeName === 'data-src') {
+                $url = $this->resolveUrl($node->nodeValue, $baseUrl);
+            } else {
+                // Extract background images from style attribute
+                $style = $node->nodeValue;
+                if (preg_match('/background-image\s*:\s*url\(["\']?([^"\'\)]+)["\']?\)/', $style, $matches)) {
+                    $url = $this->resolveUrl($matches[1], $baseUrl);
+                } else {
+                    continue;
+                }
+            }
+
+            if ($this->isValidAssetUrl($url) && $this->isImageUrl($url)) {
+                $assets[] = ['type' => 'image', 'url' => $url, 'local_path' => 'images/' . $this->getAssetFilename($url, 'img')];
+            }
         }
 
-        return $assets;
+        // Fonts
+        $fontLinks = $xpath->query('//link[contains(@href, "font") or contains(@href, ".woff") or contains(@href, ".ttf")]/@href');
+        foreach ($fontLinks as $href) {
+            $url = $this->resolveUrl($href->nodeValue, $baseUrl);
+            if ($this->isValidAssetUrl($url)) {
+                $assets[] = ['type' => 'font', 'url' => $url, 'local_path' => 'fonts/' . $this->getAssetFilename($url, 'font')];
+            }
+        }
+
+        return array_unique($assets, SORT_REGULAR);
     }
 
     /**
@@ -413,5 +521,117 @@ class FullTemplateImporterService
         }
 
         return rtrim($baseUrl, '/') . '/' . ltrim($url, '/');
+    }
+
+    /**
+     * Get all files in directory for debugging
+     */
+    protected function getAllFiles(string $dir): array
+    {
+        $files = [];
+        if (!is_dir($dir)) {
+            return $files;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile()) {
+                $files[] = str_replace($dir . '/', '', $file->getPathname());
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Check if directory looks like source code repo (not built template)
+     */
+    protected function looksLikeSourceRepo(string $dir): bool
+    {
+        $sourceIndicators = [
+            'package.json',
+            'webpack.config.js',
+            'gulpfile.js',
+            'src/',
+            'source/',
+            'scss/',
+            'sass/',
+            'less/',
+            'node_modules/',
+            '.git/'
+        ];
+
+        foreach ($sourceIndicators as $indicator) {
+            if (file_exists($dir . '/' . $indicator) || is_dir($dir . '/' . $indicator)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if URL is valid for asset download
+     */
+    protected function isValidAssetUrl(string $url): bool
+    {
+        // Skip data URLs, javascript, etc.
+        if (str_starts_with($url, 'data:') ||
+            str_starts_with($url, 'javascript:') ||
+            str_starts_with($url, 'mailto:') ||
+            str_starts_with($url, '#')) {
+            return false;
+        }
+
+        // Must be valid URL
+        return filter_var($url, FILTER_VALIDATE_URL) !== false;
+    }
+
+    /**
+     * Check if URL points to an image
+     */
+    protected function isImageUrl(string $url): bool
+    {
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico'];
+        $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+        return in_array($extension, $imageExtensions);
+    }
+
+    /**
+     * Generate safe filename for asset
+     */
+    protected function getAssetFilename(string $url, string $type): string
+    {
+        $parsed = parse_url($url);
+        $path = $parsed['path'] ?? '';
+        $filename = basename($path);
+
+        // If no filename, generate one
+        if (empty($filename) || strpos($filename, '.') === false) {
+            $extension = $this->getDefaultExtension($type);
+            $filename = 'asset_' . substr(md5($url), 0, 8) . '.' . $extension;
+        }
+
+        // Sanitize filename
+        $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+
+        return $filename;
+    }
+
+    /**
+     * Get default file extension for asset type
+     */
+    protected function getDefaultExtension(string $type): string
+    {
+        return match($type) {
+            'css' => 'css',
+            'js' => 'js',
+            'img', 'image' => 'jpg',
+            'font' => 'woff',
+            default => 'txt'
+        };
     }
 }
