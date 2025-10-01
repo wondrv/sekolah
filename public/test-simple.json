@@ -1,0 +1,33 @@
+{
+  "name": "Test Template Simple",
+  "description": "Template test sederhana untuk debugging",
+  "template_data": {
+    "templates": [
+      {
+        "name": "Test Homepage",
+        "slug": "test-homepage",
+        "description": "Homepage test",
+        "active": true,
+        "type": "page",
+        "sections": [
+          {
+            "name": "Test Section",
+            "key": "test-section",
+            "order": 1,
+            "active": true,
+            "blocks": [
+              {
+                "type": "rich_text",
+                "order": 1,
+                "active": true,
+                "data": {
+                  "content": "<h1>Test Content</h1><p>This is a test template for debugging import functionality.</p>"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

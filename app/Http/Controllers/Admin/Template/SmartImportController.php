@@ -324,23 +324,53 @@ class SmartImportController extends Controller
             'user_id' => Auth::id(),
             'has_file' => $request->hasFile('file'),
             'file_name' => $request->hasFile('file') ? $request->file('file')->getClientOriginalName() : null,
+            'file_extension' => $request->hasFile('file') ? $request->file('file')->getClientOriginalExtension() : null,
+            'file_mime_type' => $request->hasFile('file') ? $request->file('file')->getMimeType() : null,
             'csrf_token' => $request->header('X-CSRF-TOKEN') ? 'present' : 'missing'
         ]);
 
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:json,zip,html,htm|max:10240', // 10MB max
+            'file' => 'required|file|mimes:json,zip,html,htm,txt|mimetypes:application/json,application/zip,text/html,text/plain,application/octet-stream|max:10240', // 10MB max
             'template_name' => 'string|max:255',
             'auto_activate' => 'boolean'
         ]);
 
         if ($validator->fails()) {
-            Log::error('Smart Import Validation Failed', $validator->errors()->toArray());
+            // Manual validation for JSON files as backup
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $extension = strtolower($file->getClientOriginalExtension());
+                $allowedExtensions = ['json', 'zip', 'html', 'htm'];
 
-            return response()->json([
-                'success' => false,
-                'error' => 'Validation failed: ' . $validator->errors()->first(),
-                'errors' => $validator->errors()
-            ], 422);
+                if (in_array($extension, $allowedExtensions)) {
+                    Log::info('File passed manual extension validation', [
+                        'filename' => $file->getClientOriginalName(),
+                        'extension' => $extension,
+                        'mime_type' => $file->getMimeType()
+                    ]);
+                } else {
+                    Log::error('Smart Import Validation Failed - Extension not allowed', [
+                        'filename' => $file->getClientOriginalName(),
+                        'extension' => $extension,
+                        'mime_type' => $file->getMimeType(),
+                        'validation_errors' => $validator->errors()->toArray()
+                    ]);
+
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'File type not supported. Allowed: JSON, ZIP, HTML',
+                        'errors' => $validator->errors()
+                    ], 422);
+                }
+            } else {
+                Log::error('Smart Import Validation Failed - No file', $validator->errors()->toArray());
+
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Validation failed: ' . $validator->errors()->first(),
+                    'errors' => $validator->errors()
+                ], 422);
+            }
         }        try {
             $file = $request->file('file');
             $userId = Auth::id();
@@ -460,16 +490,38 @@ class SmartImportController extends Controller
      */
     protected function processJsonFile($file, int $userId, ?string $templateName, bool $autoActivate): array
     {
+        Log::info('Processing JSON file', [
+            'filename' => $file->getClientOriginalName(),
+            'size' => $file->getSize(),
+            'user_id' => $userId
+        ]);
+
         $content = file_get_contents($file->getPathname());
+
+        Log::info('JSON file content loaded', [
+            'content_length' => strlen($content),
+            'content_preview' => substr($content, 0, 200)
+        ]);
+
         $templateData = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('JSON decode failed', [
+                'error' => json_last_error_msg(),
+                'error_code' => json_last_error()
+            ]);
+
             return [
                 'success' => false,
                 'error' => 'Invalid JSON file: ' . json_last_error_msg(),
                 'code' => 'INVALID_JSON'
             ];
         }
+
+        Log::info('JSON decoded successfully', [
+            'data_keys' => array_keys($templateData),
+            'has_template_data' => isset($templateData['template_data'])
+        ]);
 
         // Normalize template structure
         $normalizedData = $this->normalizeTemplateData($templateData);
