@@ -121,18 +121,7 @@
                                         <i class="fas fa-tag mr-2 w-3"></i>
                                         {{ ucfirst($template->source) }}
                                     </div>
-                                    @if($template->template_files)
-                                    <div class="flex items-center text-xs text-gray-500">
-                                        <i class="fas fa-files mr-2 w-3"></i>
-                                        {{ count($template->template_files) }} files
-                                    </div>
-                                    @endif
-                                    @if(isset($template->template_data['templates']))
-                                    <div class="flex items-center text-xs text-gray-500">
-                                        <i class="fas fa-cubes mr-2 w-3"></i>
-                                        {{ count($template->template_data['templates']) }} templates
-                                    </div>
-                                    @endif
+                                                                        @if($template->template_files)\n                                    <div class=\"flex items-center text-xs text-gray-500\">\n                                        <i class=\"fas fa-files mr-2 w-3\"></i>\n                                        {{ count($template->template_files) }} files\n                                        @if(isset($template->template_data['view_count']))\n                                            ({{ $template->template_data['view_count'] }} views)\n                                        @endif\n                                    </div>\n                                    @endif\n                                    @if(isset($template->template_data['templates']))\n                                    <div class=\"flex items-center text-xs text-gray-500\">\n                                        <i class=\"fas fa-cubes mr-2 w-3\"></i>\n                                        {{ count($template->template_data['templates']) }} templates\n                                    </div>\n                                    @elseif(isset($template->template_data['available_pages']))\n                                    <div class=\"flex items-center text-xs text-gray-500\">\n                                        <i class=\"fas fa-file-code mr-2 w-3\"></i>\n                                        {{ count($template->template_data['available_pages']) }} pages\n                                    </div>\n                                    @endif\n                                    @if($template->template_type === 'blade_views')\n                                    <div class=\"flex items-center text-xs text-green-600\">\n                                        <i class=\"fas fa-laravel mr-2 w-3\"></i>\n                                        Laravel Blade Template\n                                    </div>\n                                    @endif"
                                 </div>
 
                                 <!-- Actions -->

@@ -998,69 +998,103 @@ class SmartImportController extends Controller
     }
 
     /**
-     * Process ZIP as file-based template (WordPress-like)
+     * Process ZIP as Blade views template (Laravel-focused)
      */
     protected function processZipFileBasedTemplate($zip, string $htmlFile, array $extractedFiles, int $userId, ?string $templateName, bool $autoActivate): array
     {
         try {
-            // Extract main HTML content
-            $content = $zip->getFromName($htmlFile);
+            // Look for views folder structure
+            $viewFiles = [];
+            $layoutFile = null;
+            $homeFile = null;
 
-            if ($content === false) {
+            foreach ($extractedFiles as $filename => $fileData) {
+                // Focus on .blade.php files
+                if (str_ends_with(strtolower($filename), '.blade.php')) {
+                    $viewPath = str_replace(['views/', 'resources/views/'], '', $filename);
+                    $viewName = str_replace(['/', '\\'], '.', str_replace('.blade.php', '', $viewPath));
+
+                    $viewFiles[$viewName] = [
+                        'filename' => $filename,
+                        'content' => base64_decode($fileData['content']),
+                        'view_name' => $viewName,
+                        'type' => $this->getBladeViewType($viewName)
+                    ];
+
+                    // Identify key files
+                    if (str_contains($viewName, 'layouts.app') || str_contains($viewName, 'layout')) {
+                        $layoutFile = $viewName;
+                    }
+                    if (str_contains($viewName, 'home') || str_contains($viewName, 'index')) {
+                        $homeFile = $viewName;
+                    }
+                }
+            }
+
+            if (empty($viewFiles)) {
                 return [
                     'success' => false,
-                    'error' => 'Could not extract HTML file from ZIP',
-                    'code' => 'EXTRACT_ERROR'
+                    'error' => 'No Blade view files (.blade.php) found in ZIP. Please ensure your ZIP contains a views/ folder with Laravel Blade templates.',
+                    'code' => 'NO_BLADE_VIEWS'
                 ];
             }
 
-            // Extract title from HTML if no template name provided
+            // Extract template name
             if (!$templateName) {
-                if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $content, $matches)) {
-                    $templateName = trim(strip_tags($matches[1]));
-                }
-                if (!$templateName) {
-                    $templateName = pathinfo($htmlFile, PATHINFO_FILENAME);
+                $templateName = 'Template Sekolah ' . date('Y-m-d H:i');
+
+                // Try to extract name from layout or home file
+                foreach ($viewFiles as $viewData) {
+                    if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $viewData['content'], $matches)) {
+                        $title = trim(strip_tags($matches[1]));
+                        if ($title && !str_contains($title, '{{')) {
+                            $templateName = $title;
+                            break;
+                        }
+                    }
                 }
             }
 
-            // Create template data structure for file-based template
+            // Create template data structure for Blade views
             $templateData = [
-                'type' => 'file_based',
-                'main_file' => $htmlFile,
-                'description' => 'File-based template imported from ZIP',
-                'files' => array_keys($extractedFiles)
+                'type' => 'blade_views',
+                'views' => array_keys($viewFiles),
+                'layout_file' => $layoutFile,
+                'home_file' => $homeFile ?: (isset($viewFiles['home']) ? 'home' : array_keys($viewFiles)[0]),
+                'view_count' => count($viewFiles),
+                'available_pages' => $this->extractAvailablePages($viewFiles)
             ];
 
-            // Create user template with file-based type
+            // Create user template with Blade views type
             $template = UserTemplate::create([
                 'user_id' => $userId,
                 'name' => $templateName,
                 'slug' => Str::slug($templateName) . '-' . time(),
-                'description' => 'File-based template imported from ZIP',
+                'description' => 'Laravel Blade template dengan ' . count($viewFiles) . ' halaman: ' . implode(', ', array_slice(array_keys($viewFiles), 0, 5)) . (count($viewFiles) > 5 ? '...' : ''),
                 'template_data' => $templateData,
-                'template_files' => $extractedFiles,
-                'template_type' => 'files', // File-based template
+                'template_files' => $extractedFiles, // Store all files
+                'template_type' => 'blade_views',
                 'source' => 'imported',
                 'is_active' => false,
                 'customizations' => [
-                    'import_method' => 'zip_file_based',
-                    'main_file' => $htmlFile,
+                    'import_method' => 'zip_blade_views',
+                    'view_files' => $viewFiles,
                     'imported_at' => now()->toISOString()
                 ]
             ]);
 
             // Auto-activate if requested
             if ($autoActivate) {
-                $template->activate();
+                $this->activateBladeTemplate($template);
             }
 
             // Generate stats
             $stats = [
                 'templates_created' => 1,
-                'files_stored' => count($extractedFiles),
-                'main_file' => $htmlFile,
-                'template_type' => 'file_based',
+                'view_files' => count($viewFiles),
+                'layout_file' => $layoutFile,
+                'home_file' => $templateData['home_file'],
+                'template_type' => 'blade_views',
                 'import_method' => 'zip'
             ];
 
@@ -1073,6 +1107,91 @@ class SmartImportController extends Controller
         } catch (\Exception $e) {
             throw $e;
         }
+    }    /**
+     * Get Blade view type based on filename
+     */
+    protected function getBladeViewType(string $viewName): string
+    {
+        $viewName = strtolower($viewName);
+
+        if (str_contains($viewName, 'layout')) {
+            return 'layout';
+        }
+        if (str_contains($viewName, 'home') || str_contains($viewName, 'index')) {
+            return 'home';
+        }
+        if (str_contains($viewName, 'profil') || str_contains($viewName, 'about')) {
+            return 'page';
+        }
+        if (str_contains($viewName, 'kontak') || str_contains($viewName, 'contact')) {
+            return 'contact';
+        }
+        if (str_contains($viewName, 'galeri') || str_contains($viewName, 'gallery')) {
+            return 'gallery';
+        }
+
+        return 'page';
+    }
+
+    /**
+     * Extract available pages from view files
+     */
+    protected function extractAvailablePages(array $viewFiles): array
+    {
+        $pages = [];
+
+        foreach ($viewFiles as $viewName => $viewData) {
+            if ($viewData['type'] !== 'layout') {
+                $pageName = str_replace(['.', '_'], ' ', $viewName);
+                $pageName = ucwords($pageName);
+
+                $pages[] = [
+                    'view' => $viewName,
+                    'name' => $pageName,
+                    'type' => $viewData['type'],
+                    'route' => '/' . str_replace('.', '/', $viewName)
+                ];
+            }
+        }
+
+        return $pages;
+    }
+
+    /**
+     * Activate Blade template by storing views to filesystem
+     */
+    protected function activateBladeTemplate(UserTemplate $template): void
+    {
+        if ($template->template_type !== 'blade_views') {
+            return;
+        }
+
+        $viewFiles = $template->customizations['view_files'] ?? [];
+        $viewsPath = resource_path('views/templates/' . $template->slug);
+
+        // Create template directory
+        if (!is_dir($viewsPath)) {
+            mkdir($viewsPath, 0755, true);
+        }
+
+        // Write view files to filesystem
+        foreach ($viewFiles as $viewName => $viewData) {
+            $filePath = $viewsPath . '/' . str_replace('.', '/', $viewName) . '.blade.php';
+            $fileDir = dirname($filePath);
+
+            if (!is_dir($fileDir)) {
+                mkdir($fileDir, 0755, true);
+            }
+
+            file_put_contents($filePath, $viewData['content']);
+        }
+
+        // Activate the template
+        $template->activate();
+
+        // Store template path in settings
+        \App\Models\Setting::set('active_blade_template_path', 'templates.' . $template->slug);
+        \App\Models\Setting::set('active_blade_template_id', $template->id);
     }
 
     /**
