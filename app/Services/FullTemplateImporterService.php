@@ -32,6 +32,7 @@ class FullTemplateImporterService
             $userTemplate = UserTemplate::create([
                 'user_id' => $userId,
                 'name' => $importResult['template_name'],
+                'slug' => Str::slug($importResult['template_name'] . '-' . time()),
                 'description' => $importResult['description'] ?? 'Imported full template',
                 'template_data' => [
                     'type' => 'full_template',

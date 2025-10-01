@@ -73,6 +73,9 @@ class UserTemplate extends Model
         'source',
         'is_active',
         'customizations',
+        'status',
+        'version',
+        'settings',
     ];
 
     protected $casts = [
@@ -80,6 +83,7 @@ class UserTemplate extends Model
         'draft_template_data' => 'array',
         'is_active' => 'boolean',
         'customizations' => 'array',
+        'settings' => 'array',
     ];
 
     public function revisions()

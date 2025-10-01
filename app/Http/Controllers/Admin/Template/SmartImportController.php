@@ -1025,6 +1025,13 @@ class SmartImportController extends Controller
             }
 
         } catch (\Exception $e) {
+            Log::error('Full template import failed', [
+                'source' => $request->source,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Import failed: ' . $e->getMessage()
@@ -1077,6 +1084,12 @@ class SmartImportController extends Controller
             }
 
         } catch (\Exception $e) {
+            Log::error('Full template ZIP upload failed', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Upload failed: ' . $e->getMessage()
