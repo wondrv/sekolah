@@ -108,8 +108,9 @@
                         </div>
                     </div>
 
-                    <form id="fileImportForm" class="space-y-4" enctype="multipart/form-data">
+                    <form id="fileImportForm" class="space-y-4" method="POST" action="{{ route('admin.templates.smart-import.import-file') }}" enctype="multipart/form-data">
                         @csrf
+
                         <div>
                             <label for="template_file" class="block text-sm font-medium text-gray-700 mb-2">Template File</label>
                             <div class="relative">
@@ -121,6 +122,11 @@
                                        required>
                                 <div class="mt-1 text-xs text-gray-500">
                                     Supports JSON, ZIP, and HTML files (max 10MB)
+                                </div>
+                                <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                                    💡 <strong>Test file tersedia:</strong>
+                                    <a href="/sample-template.json" download class="text-blue-600 underline">Download sample-template.json</a>
+                                    untuk testing
                                 </div>
                             </div>
                         </div>
@@ -139,9 +145,11 @@
                             <label for="file_auto_activate" class="ml-2 text-sm text-gray-700">Activate template after import</label>
                         </div>
 
-                        <button type="submit" id="fileImportBtn" class="btn btn-primary w-full bg-purple-600 hover:bg-purple-700">
-                            <i class="fas fa-upload mr-2"></i>Import Template
-                        </button>
+                        <div class="flex">
+                            <button type="submit" id="fileImportBtn" class="btn btn-primary flex-1 bg-purple-600 hover:bg-purple-700">
+                                <i class="fas fa-upload mr-2"></i>Import Template
+                            </button>
+                        </div>
                     </form>
 
                     <!-- File Analysis Results -->
@@ -413,17 +421,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // File Import
+    // File Import with comprehensive error handling
     fileImportForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        console.log('File import form submitted');
+        e.preventDefault(); // PREVENT default form submission
+
+        console.log('Form submit intercepted - using AJAX instead');
+
+        // Validate file selection
+        const fileInput = document.getElementById('template_file');
+        if (!fileInput.files.length) {
+            showErrorNotification('Silakan pilih file untuk diimpor');
+            return;
+        }        const file = fileInput.files[0];
+        console.log('Importing file:', file.name, 'Size:', file.size, 'Type:', file.type);
 
         const formData = new FormData(fileImportForm);
-        console.log('FormData created:', formData);
+
+        // Show loading state
+        showLoadingNotification('Mengimpor template...');
 
         try {
             fileImportBtn.disabled = true;
-            fileImportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...';
+            fileImportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengimpor...';
             fileAnalysisResults.classList.add('hidden');
 
             const response = await fetch('{{ route("admin.templates.smart-import.import-file") }}', {
@@ -434,34 +453,182 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData
             });
 
-            console.log('Response received:', response.status);
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response:', text.substring(0, 500));
+                throw new Error('Server mengembalikan response yang tidak valid');
+            }
+
             const result = await response.json();
-            console.log('Response data:', result);
+            console.log('=== FULL IMPORT RESULT ===');
+            console.log('Success:', result.success);
+            console.log('Message:', result.message);
+            console.log('Template:', result.template);
+            console.log('Error:', result.error);
+            console.log('Complete result:', result);
 
             if (result.success) {
+                console.log('SUCCESS BRANCH - Calling hideLoadingNotification...');
+                hideLoadingNotification();
+
+                console.log('SUCCESS BRANCH - Calling showFileAnalysisResults...');
                 showFileAnalysisResults(result);
-                if (result.template.is_active) {
-                    showSuccessModal('Template imported and activated!', result.template.name);
+
+                console.log('SUCCESS BRANCH - Calling showSuccessNotification...');
+                showSuccessNotification(
+                    result.message || 'Template berhasil diimpor!',
+                    result.template.name
+                );
+
+                console.log('SUCCESS BRANCH - Form reset...');
+                // Clear form
+                fileImportForm.reset();                // Auto redirect after showing success
+                if (result.redirect) {
                     setTimeout(() => {
-                        if (confirm('Template is now active! View homepage?')) {
+                        window.location.href = result.redirect;
+                    }, 2000);
+                } else if (result.template.is_active) {
+                    setTimeout(() => {
+                        if (confirm('Template telah aktif! Lihat homepage?')) {
                             window.open('/', '_blank');
                         }
-                    }, 1000);
-                } else {
-                    showSuccessModal('Template imported successfully!', result.template.name);
+                    }, 1500);
                 }
             } else {
-                showFileError(result.error);
+                console.log('ERROR BRANCH - Response failed');
+                hideLoadingNotification();
+                const errorMsg = result.error || result.message || 'Import gagal';
+                console.error('Import failed:', result);
+                console.log('ERROR BRANCH - Calling showErrorNotification with:', errorMsg);
+                showErrorNotification(errorMsg);
+                showFileError(errorMsg);
             }
         } catch (error) {
-            showFileError('Import failed: ' + error.message);
+            console.log('CATCH BRANCH - Exception occurred');
+            hideLoadingNotification();
+            console.error('Import error:', error);
+            const errorMsg = `Import gagal: ${error.message}`;
+            console.log('CATCH BRANCH - Calling showErrorNotification with:', errorMsg);
+            showErrorNotification(errorMsg);
+            showFileError(errorMsg);
+
+            // Fallback: submit form normally if AJAX fails completely
+            if (error.message.includes('fetch')) {
+                console.log('AJAX failed, falling back to normal form submit');
+                showErrorNotification('Menggunakan fallback method...');
+                setTimeout(() => {
+                    fileImportForm.submit();
+                }, 1000);
+            }
         } finally {
             fileImportBtn.disabled = false;
             fileImportBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Import Template';
         }
     });
 
-    // File change handler for auto-detection
+    // Removed test notification button and handlers
+
+    // Notification System
+    function showSuccessNotification(message, templateName) {
+        console.log('showSuccessNotification called with:', message, templateName);
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-md';
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-check-circle mr-3 text-xl"></i>
+                <div>
+                    <div class="font-semibold">Berhasil!</div>
+                    <div class="text-sm">${message}</div>
+                    ${templateName ? `<div class="text-sm opacity-90">Template: ${templateName}</div>` : ''}
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        document.body.appendChild(notification);
+        console.log('Success notification added to DOM');
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+                console.log('Success notification auto-removed');
+            }
+        }, 5000);
+    }
+
+    function showErrorNotification(message) {
+        console.log('showErrorNotification called with:', message);
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-md';
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-circle mr-3 text-xl"></i>
+                <div>
+                    <div class="font-semibold">Error!</div>
+                    <div class="text-sm">${message}</div>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        document.body.appendChild(notification);
+        console.log('Error notification added to DOM');
+
+        // Auto remove after 8 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+                console.log('Error notification auto-removed');
+            }
+        }, 8000);
+    }
+
+    function showLoadingNotification(message) {
+        console.log('showLoadingNotification called with:', message);
+        // Remove existing loading notification
+        const existing = document.getElementById('loadingNotification');
+        if (existing) existing.remove();
+
+        // Create loading notification
+        const notification = document.createElement('div');
+        notification.id = 'loadingNotification';
+        notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-md';
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-spinner fa-spin mr-3 text-xl"></i>
+                <div>
+                    <div class="font-semibold">Processing...</div>
+                    <div class="text-sm">${message}</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(notification);
+        console.log('Loading notification added to DOM');
+    }
+
+    function hideLoadingNotification() {
+        console.log('hideLoadingNotification called');
+        const notification = document.getElementById('loadingNotification');
+        if (notification) {
+            notification.remove();
+            console.log('Loading notification removed');
+        } else {
+            console.log('No loading notification found to remove');
+        }
+    }    // File change handler for auto-detection
     document.getElementById('template_file').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
