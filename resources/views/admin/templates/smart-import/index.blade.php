@@ -326,7 +326,13 @@
 
 @endsection
 
-@push('scripts')
+<script>
+// Immediate test to verify JavaScript is working
+console.log('=== SMART IMPORT JS LOADING ===');
+alert('JavaScript is working! Click OK to continue.');
+</script>
+
+@section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded - Smart Import initialized');
@@ -909,4 +915,4 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 </script>
-@endpush
+@endsection
