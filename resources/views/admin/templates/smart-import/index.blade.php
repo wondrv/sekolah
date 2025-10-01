@@ -329,9 +329,8 @@
 @endsection
 
 <script>
-// Immediate test to verify JavaScript is working
-console.log('=== SMART IMPORT JS LOADING ===');
-alert('JavaScript is working! Click OK to continue.');
+// Silent test to verify JavaScript is working
+console.log('=== SMART IMPORT JS LOADED SUCCESSFULLY ===');
 </script>
 
 @section('scripts')
