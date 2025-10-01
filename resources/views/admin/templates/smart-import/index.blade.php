@@ -329,6 +329,8 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Smart Import initialized');
+
     const urlImportForm = document.getElementById('urlImportForm');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const importBtn = document.getElementById('importBtn');
@@ -339,6 +341,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const importProgress = document.getElementById('importProgress');
     const successModal = document.getElementById('successModal');
 
+    console.log('Elements found:', {
+        analyzeBtn: !!analyzeBtn,
+        importBtn: !!importBtn,
+        urlImportForm: !!urlImportForm,
+        analysisResults: !!analysisResults
+    });
+
+    if (!analyzeBtn) {
+        console.error('CRITICAL: analyzeBtn element not found!');
+        return;
+    }
+
     // File import elements
     const fileImportForm = document.getElementById('fileImportForm');
     const fileImportBtn = document.getElementById('fileImportBtn');
@@ -346,13 +360,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Analyze URL
     analyzeBtn.addEventListener('click', async function() {
+        console.log('Analyze button clicked!');
         const url = document.getElementById('template_url').value;
+        console.log('URL to analyze:', url);
+
         if (!url) {
-            showErrorNotification('Please enter a URL to analyze');
+            console.log('No URL provided');
+            try {
+                showErrorNotification('Please enter a URL to analyze');
+            } catch (e) {
+                alert('Please enter a URL to analyze');
+            }
             return;
         }
 
         try {
+            console.log('Starting analysis...');
             analyzeBtn.disabled = true;
             analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
 
@@ -365,10 +388,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ url: url })
             });
 
+            console.log('Response received:', response.status, response.statusText);
+
             let result;
             const contentType = response.headers.get('content-type') || '';
+            console.log('Content-Type:', contentType);
+
             if (contentType.includes('application/json')) {
                 result = await response.json();
+                console.log('Analysis result:', result);
             } else {
                 const text = await response.text();
                 console.error('Non-JSON analyze response snippet:', text.substring(0, 300));
@@ -376,19 +404,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (result.success) {
+                console.log('Analysis successful');
                 showAnalysisResults(result.analysis);
-                showSuccessNotification('Analysis successful', result.analysis.title || 'Template');
+                try {
+                    showSuccessNotification('Analysis successful', result.analysis.title || 'Template');
+                } catch (e) {
+                    alert('Analysis successful: ' + (result.analysis.title || 'Template'));
+                }
             } else {
+                console.log('Analysis failed:', result.error, result.code);
                 const code = result.code ? '[' + result.code + '] ' : '';
-                showErrorNotification(code + (result.error || 'Analysis failed'));
+                const errorMsg = code + (result.error || 'Analysis failed');
+                try {
+                    showErrorNotification(errorMsg);
+                } catch (e) {
+                    alert('Analysis failed: ' + errorMsg);
+                }
             }
         } catch (error) {
-            showErrorNotification('Analysis failed: ' + error.message);
+            console.error('Analysis error:', error);
+            try {
+                showErrorNotification('Analysis failed: ' + error.message);
+            } catch (e) {
+                alert('Analysis failed: ' + error.message);
+            }
         } finally {
+            console.log('Analysis complete, restoring button');
             analyzeBtn.disabled = false;
             analyzeBtn.innerHTML = '<i class="fas fa-search mr-2"></i>Analyze First';
         }
     });
+
+    console.log('Analyze button event listener attached successfully');
 
     // Import from URL
     urlImportForm.addEventListener('submit', async function(e) {
