@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contoh Template Sekolah</title>
+    <meta name="description" content="Template website sekolah untuk testing import fitur Smart Import">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        header { background: #2c3e50; color: white; padding: 1rem 0; }
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4rem 0; text-align: center; }
+        .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.2rem; margin-bottom: 2rem; }
+        .features { padding: 4rem 0; background: #f8f9fa; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem; }
+        .feature-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .about { padding: 4rem 0; }
+        .stats { background: #2c3e50; color: white; padding: 3rem 0; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center; }
+        .stat-number { font-size: 3rem; font-weight: bold; color: #3498db; }
+        footer { background: #34495e; color: white; padding: 2rem 0; text-align: center; }
+        .btn { display: inline-block; background: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+        .btn:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0;">🏫 SMA Negeri 1 Contoh</h2>
+                <ul style="list-style: none; display: flex; margin: 0; padding: 0; gap: 2rem;">
+                    <li><a href="#" style="color: white; text-decoration: none;">Beranda</a></li>
+                    <li><a href="#" style="color: white; text-decoration: none;">Tentang</a></li>
+                    <li><a href="#" style="color: white; text-decoration: none;">Program</a></li>
+                    <li><a href="#" style="color: white; text-decoration: none;">Berita</a></li>
+                    <li><a href="#" style="color: white; text-decoration: none;">Kontak</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Selamat Datang di SMA Negeri 1 Contoh</h1>
+            <p>Membangun generasi unggul dengan pendidikan berkualitas dan berbasis karakter</p>
+            <a href="#" class="btn">Daftar Sekarang</a>
+            <a href="#" class="btn">Lihat Program</a>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 1rem;">Program Unggulan</h2>
+            <p style="text-align: center; color: #666;">Berbagai program terbaik untuk mendukung prestasi siswa</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🎯 Program MIPA</h3>
+                    <p>Program Matematika dan Ilmu Pengetahuan Alam dengan kurikulum terdepan dan laboratorium lengkap.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💼 Program IPS</h3>
+                    <p>Program Ilmu Pengetahuan Sosial yang mempersiapkan siswa untuk bidang ekonomi dan sosial.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🎨 Program Bahasa</h3>
+                    <p>Program Bahasa dan Budaya dengan fokus pada komunikasi dan keahlian linguistik.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;">
+                <div>
+                    <h2>Tentang Sekolah Kami</h2>
+                    <p>SMA Negeri 1 Contoh telah berdiri sejak tahun 1975 dan telah menghasilkan ribuan alumni yang sukses di berbagai bidang. Kami berkomitmen untuk memberikan pendidikan terbaik dengan fasilitas modern dan tenaga pengajar yang berkualitas.</p>
+                    <p>Dengan motto "Berakhlak, Berprestasi, dan Berkarakter", kami membentuk siswa yang tidak hanya cerdas secara akademik tetapi juga memiliki kepribadian yang baik.</p>
+                    <a href="#" class="btn">Selengkapnya</a>
+                </div>
+                <div>
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjhmOWZhIi8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjMwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzNDk4ZGIiLz4KPHRleHQgeD0iMjAwIiB5PSIxNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfj6sgU2Vrb2xhaDwvdGV4dD4KPC9zdmc+" alt="Gedung Sekolah" style="width: 100%; border-radius: 8px;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 2rem;">Statistik Sekolah</h2>
+            <div class="stats-grid">
+                <div>
+                    <div class="stat-number">1.200</div>
+                    <p>Siswa Aktif</p>
+                </div>
+                <div>
+                    <div class="stat-number">85</div>
+                    <p>Guru & Staff</p>
+                </div>
+                <div>
+                    <div class="stat-number">15</div>
+                    <p>Ruang Kelas</p>
+                </div>
+                <div>
+                    <div class="stat-number">98%</div>
+                    <p>Tingkat Kelulusan</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section style="padding: 4rem 0; background: #f8f9fa;">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 2rem;">Berita Terbaru</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <article style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h3>Prestasi Olimpiade Matematika</h3>
+                    <p style="color: #666; font-size: 0.9rem;">15 Oktober 2024</p>
+                    <p>Siswa SMA Negeri 1 Contoh berhasil meraih medali emas dalam Olimpiade Matematika tingkat provinsi.</p>
+                </article>
+                <article style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h3>Pembukaan Laboratorium Baru</h3>
+                    <p style="color: #666; font-size: 0.9rem;">10 Oktober 2024</p>
+                    <p>Fasilitas laboratorium komputer terbaru telah resmi dibuka untuk mendukung pembelajaran digital.</p>
+                </article>
+                <article style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h3>Penerimaan Siswa Baru</h3>
+                    <p style="color: #666; font-size: 0.9rem;">5 Oktober 2024</p>
+                    <p>Pendaftaran siswa baru untuk tahun ajaran 2025/2026 akan dibuka mulai November 2024.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+                <div>
+                    <h3>Kontak Kami</h3>
+                    <p>📍 Jl. Pendidikan No. 123, Kota Contoh</p>
+                    <p>📞 (021) 1234-5678</p>
+                    <p>✉️ info@sman1contoh.sch.id</p>
+                </div>
+                <div>
+                    <h3>Link Penting</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li><a href="#" style="color: #bdc3c7; text-decoration: none;">PPDB Online</a></li>
+                        <li><a href="#" style="color: #bdc3c7; text-decoration: none;">E-Learning</a></li>
+                        <li><a href="#" style="color: #bdc3c7; text-decoration: none;">Portal Siswa</a></li>
+                        <li><a href="#" style="color: #bdc3c7; text-decoration: none;">Perpustakaan Digital</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Media Sosial</h3>
+                    <div style="display: flex; gap: 1rem;">
+                        <a href="#" style="color: #3498db; text-decoration: none;">Facebook</a>
+                        <a href="#" style="color: #3498db; text-decoration: none;">Instagram</a>
+                        <a href="#" style="color: #3498db; text-decoration: none;">YouTube</a>
+                        <a href="#" style="color: #3498db; text-decoration: none;">Twitter</a>
+                    </div>
+                </div>
+            </div>
+            <hr style="border: none; border-top: 1px solid #4a5568; margin: 2rem 0;">
+            <p style="text-align: center; margin: 0;">&copy; 2024 SMA Negeri 1 Contoh. Semua hak dilindungi.</p>
+        </div>
+    </footer>
+</body>
+</html>

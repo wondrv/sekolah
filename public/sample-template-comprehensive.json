@@ -1,0 +1,218 @@
+{
+  "name": "Template Sekolah Modern",
+  "description": "Template website sekolah dengan desain modern dan responsif",
+  "version": "1.0.0",
+  "author": "School CMS",
+  "created_at": "2024-10-01T00:00:00Z",
+  "template_data": {
+    "templates": [
+      {
+        "name": "Homepage Sekolah Modern",
+        "slug": "homepage-modern",
+        "description": "Homepage dengan desain modern untuk website sekolah",
+        "active": true,
+        "type": "page",
+        "sections": [
+          {
+            "name": "Hero Section",
+            "key": "hero",
+            "order": 1,
+            "active": true,
+            "blocks": [
+              {
+                "type": "hero",
+                "order": 1,
+                "active": true,
+                "data": {
+                  "title": "Selamat Datang di Sekolah Kami",
+                  "subtitle": "Membangun generasi unggul dengan pendidikan berkualitas",
+                  "background_color": "bg-gradient-to-r from-blue-600 to-purple-600",
+                  "text_color": "text-white",
+                  "button_text": "Pelajari Lebih Lanjut",
+                  "button_link": "#about",
+                  "image_url": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "Program Unggulan",
+            "key": "programs",
+            "order": 2,
+            "active": true,
+            "blocks": [
+              {
+                "type": "card_grid",
+                "order": 1,
+                "active": true,
+                "data": {
+                  "title": "Program Unggulan",
+                  "subtitle": "Berbagai program terbaik untuk mendukung prestasi siswa",
+                  "cards": [
+                    {
+                      "title": "Program MIPA",
+                      "description": "Program Matematika dan Ilmu Pengetahuan Alam dengan kurikulum terdepan",
+                      "icon": "🔬",
+                      "link": "#"
+                    },
+                    {
+                      "title": "Program IPS",
+                      "description": "Program Ilmu Pengetahuan Sosial yang mempersiapkan siswa untuk bidang ekonomi",
+                      "icon": "📊",
+                      "link": "#"
+                    },
+                    {
+                      "title": "Program Bahasa",
+                      "description": "Program Bahasa dan Budaya dengan fokus pada komunikasi dan linguistik",
+                      "icon": "🗣️",
+                      "link": "#"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "Tentang Sekolah",
+            "key": "about",
+            "order": 3,
+            "active": true,
+            "blocks": [
+              {
+                "type": "rich_text",
+                "order": 1,
+                "active": true,
+                "data": {
+                  "content": "<h2>Tentang Sekolah Kami</h2><p>Sekolah kami telah berdiri sejak tahun 1975 dan telah menghasilkan ribuan alumni yang sukses di berbagai bidang. Kami berkomitmen untuk memberikan pendidikan terbaik dengan fasilitas modern dan tenaga pengajar yang berkualitas.</p><p>Dengan motto \"Berakhlak, Berprestasi, dan Berkarakter\", kami membentuk siswa yang tidak hanya cerdas secara akademik tetapi juga memiliki kepribadian yang baik.</p>"
+                }
+              }
+            ]
+          },
+          {
+            "name": "Statistik",
+            "key": "stats",
+            "order": 4,
+            "active": true,
+            "blocks": [
+              {
+                "type": "stats",
+                "order": 1,
+                "active": true,
+                "data": {
+                  "title": "Statistik Sekolah",
+                  "background_color": "bg-blue-900",
+                  "text_color": "text-white",
+                  "stats": [
+                    {
+                      "number": "1.200",
+                      "label": "Siswa Aktif",
+                      "icon": "👥"
+                    },
+                    {
+                      "number": "85",
+                      "label": "Guru & Staff",
+                      "icon": "👨‍🏫"
+                    },
+                    {
+                      "number": "15",
+                      "label": "Ruang Kelas",
+                      "icon": "🏫"
+                    },
+                    {
+                      "number": "98%",
+                      "label": "Tingkat Kelulusan",
+                      "icon": "🎓"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "Berita Terbaru",
+            "key": "news",
+            "order": 5,
+            "active": true,
+            "blocks": [
+              {
+                "type": "card_grid",
+                "order": 1,
+                "active": true,
+                "data": {
+                  "title": "Berita Terbaru",
+                  "subtitle": "Informasi dan update terkini dari sekolah",
+                  "cards": [
+                    {
+                      "title": "Prestasi Olimpiade Matematika",
+                      "description": "Siswa kami berhasil meraih medali emas dalam Olimpiade Matematika tingkat provinsi",
+                      "date": "15 Oktober 2024",
+                      "link": "#"
+                    },
+                    {
+                      "title": "Pembukaan Laboratorium Baru",
+                      "description": "Fasilitas laboratorium komputer terbaru telah resmi dibuka untuk mendukung pembelajaran digital",
+                      "date": "10 Oktober 2024",
+                      "link": "#"
+                    },
+                    {
+                      "title": "Penerimaan Siswa Baru",
+                      "description": "Pendaftaran siswa baru untuk tahun ajaran 2025/2026 akan dibuka mulai November 2024",
+                      "date": "5 Oktober 2024",
+                      "link": "#"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "CTA Section",
+            "key": "cta",
+            "order": 6,
+            "active": true,
+            "blocks": [
+              {
+                "type": "cta_banner",
+                "order": 1,
+                "active": true,
+                "data": {
+                  "title": "Bergabunglah dengan Kami",
+                  "description": "Daftarkan diri Anda untuk menjadi bagian dari keluarga besar sekolah kami",
+                  "button_text": "Daftar Sekarang",
+                  "button_link": "#ppdb",
+                  "background_color": "bg-gradient-to-r from-green-500 to-blue-500",
+                  "text_color": "text-white"
+                }
+              }
+            ]
+          }
+        ],
+        "metadata": {
+          "framework": "tailwind",
+          "responsive": true,
+          "seo_optimized": true,
+          "created_for": "school_cms"
+        }
+      }
+    ]
+  },
+  "theme_settings": {
+    "primary_color": "#3498db",
+    "secondary_color": "#2c3e50",
+    "accent_color": "#e74c3c",
+    "font_family": "Inter, sans-serif",
+    "border_radius": "8px"
+  },
+  "features": [
+    "Responsive Design",
+    "SEO Optimized",
+    "Modern Layout",
+    "Customizable Colors",
+    "Multiple Content Blocks"
+  ],
+  "instructions": {
+    "installation": "Upload file ini melalui fitur Smart Import di admin panel",
+    "customization": "Edit konten melalui Template Builder setelah import",
+    "activation": "Aktifkan template setelah import untuk menerapkan ke website"
+  }
+}

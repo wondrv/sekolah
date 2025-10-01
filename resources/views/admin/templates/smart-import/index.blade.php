@@ -124,9 +124,11 @@
                                     Supports JSON, ZIP, and HTML files (max 10MB)
                                 </div>
                                 <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                                    💡 <strong>Test file tersedia:</strong>
-                                    <a href="/sample-template.json" download class="text-blue-600 underline">Download sample-template.json</a>
-                                    untuk testing
+                                    💡 <strong>Test files tersedia:</strong><br>
+                                    • <a href="/sample-template.json" download class="text-blue-600 underline">sample-template.json</a> (Basic)<br>
+                                    • <a href="/sample-template-comprehensive.json" download class="text-blue-600 underline">sample-template-comprehensive.json</a> (Lengkap)<br>
+                                    • <a href="/sample-template.html" download class="text-blue-600 underline">sample-template.html</a> (HTML Template)<br>
+                                    • <a href="/sample-template-comprehensive.zip" download class="text-blue-600 underline">sample-template-comprehensive.zip</a> (ZIP Package)
                                 </div>
                             </div>
                         </div>
