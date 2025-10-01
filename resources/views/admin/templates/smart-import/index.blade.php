@@ -187,6 +187,10 @@
                             <input type="checkbox" id="file_auto_activate" name="auto_activate" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
                             <label for="file_auto_activate" class="ml-2 text-sm text-gray-700">Activate template after import</label>
                         </div>
+                        <div class="mt-2 flex items-center">
+                            <input type="checkbox" id="file_homepage" name="homepage" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                            <label for="file_homepage" class="ml-2 text-sm text-gray-700">Set as Homepage (if activated)</label>
+                        </div>
 
                         <div class="flex">
                             <button type="submit" id="fileImportBtn" class="btn btn-primary flex-1 bg-purple-600 hover:bg-purple-700">
@@ -301,6 +305,24 @@
                                 Import Complete Project
                             </button>
                         </form>
+
+                        <div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded text-xs leading-relaxed">
+                            <h4 class="font-semibold text-gray-800 mb-2">ZIP Packaging Guide</h4>
+                            <p class="mb-2">To import a project as an editable homepage template, structure your ZIP like:</p>
+                            <pre class="bg-white border rounded p-3 overflow-x-auto text-[10px] mb-3">my-template.zip
+    ├─ template.json            (preferred)  ← contains templates[].sections[].blocks[]
+    ├─ assets/ (optional)
+    │   ├─ images/
+    │   └─ css/
+    └─ index.html (fallback if no JSON)</pre>
+                            <ul class="list-disc ml-5 space-y-1">
+                                <li><strong>template.json</strong> keys: { "templates": [ { "name", "slug", "sections": [ { "name", "blocks": [ { "type", "data" } ] } ] } ] }</li>
+                                <li>Block types auto-normalized: hero, stats (statistics/items), card_grid (card-grid/cardgrid)</li>
+                                <li>Links in card_grid auto-wrapped to { url, text }</li>
+                                <li>Embedded site meta (site_name, menus) extracted automatically</li>
+                                <li>If only <code>index.html</code> exists, it becomes one rich_text block</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -625,7 +647,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }        const file = fileInput.files[0];
         console.log('Importing file:', file.name, 'Size:', file.size, 'Type:', file.type);
 
-        const formData = new FormData(fileImportForm);
+    const formData = new FormData(fileImportForm);
+    // If homepage checked but auto_activate not checked, homepage flag will be ignored server-side.
+    const homepageRequested = formData.get('homepage') !== null;
 
         // Show loading state
         showLoadingNotification('Mengimpor template...');
@@ -691,18 +715,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 console.log('SUCCESS BRANCH - Form reset...');
                 // Clear form
-                fileImportForm.reset();                // Auto redirect after showing success
-                if (result.redirect) {
-                    setTimeout(() => {
+                // Potential homepage activation follow-up
+                const maybeRedirect = async () => {
+                    if (homepageRequested && result.template && result.template.id && result.template.is_active) {
+                        try {
+                            await fetch(`/admin/templates/my-templates/${result.template.id}/activate-homepage`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'Accept': 'application/json'
+                                }
+                            });
+                        } catch (err) {
+                            console.warn('Homepage activation endpoint failed', err);
+                        }
+                    }
+                    if (result.redirect) {
                         window.location.href = result.redirect;
-                    }, 2000);
-                } else if (result.template.is_active) {
-                    setTimeout(() => {
+                    } else if (result.template.is_active) {
                         if (confirm('Template telah aktif! Lihat homepage?')) {
                             window.open('/', '_blank');
                         }
-                    }, 1500);
-                }
+                    }
+                };
+                fileImportForm.reset();
+                setTimeout(maybeRedirect, 1800);
             } else {
                 console.log('ERROR BRANCH - Response failed');
                 hideLoadingNotification();

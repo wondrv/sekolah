@@ -307,6 +307,14 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::get('my-templates/{userTemplate}/edit', [Admin\Template\MyTemplatesController::class, 'edit'])->name('my-templates.edit');
         Route::put('my-templates/{userTemplate}', [Admin\Template\MyTemplatesController::class, 'update'])->name('my-templates.update');
         Route::post('my-templates/{userTemplate}/activate', [Admin\Template\MyTemplatesController::class, 'activate'])->name('my-templates.activate');
+        // Quick endpoint to activate and mark as homepage in one call (used post-import)
+        Route::post('my-templates/{userTemplate}/activate-homepage', function(\App\Models\UserTemplate $userTemplate) {
+            if ($userTemplate->user_id !== Auth::id()) { abort(403); }
+            $userTemplate->activate();
+            \App\Models\Setting::set('homepage_template_type', 'user_template');
+            \App\Models\Setting::set('active_user_template_id', $userTemplate->id);
+            return response()->json(['success' => true, 'message' => 'Homepage updated']);
+        })->name('my-templates.activate-homepage');
         Route::post('my-templates/{userTemplate}/deactivate', [Admin\Template\MyTemplatesController::class, 'deactivate'])->name('my-templates.deactivate');
         Route::post('my-templates/{userTemplate}/duplicate', [Admin\Template\MyTemplatesController::class, 'duplicate'])->name('my-templates.duplicate');
         Route::delete('my-templates/{userTemplate}', [Admin\Template\MyTemplatesController::class, 'destroy'])->name('my-templates.destroy');

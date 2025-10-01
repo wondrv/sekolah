@@ -866,6 +866,7 @@ class SmartImportController extends Controller
         try {
             // Look for template.json or similar files
             $templateFile = null;
+            $htmlFile = null;
             $availableFiles = [];
 
             for ($i = 0; $i < $zip->numFiles; $i++) {
@@ -879,14 +880,24 @@ class SmartImportController extends Controller
                 } elseif (preg_match('/\.json$/i', $filename) && !$templateFile) {
                     $templateFile = $filename;
                 }
+                // Look for index.html as fallback
+                elseif (preg_match('/index\.html?$/i', $filename) && !$htmlFile) {
+                    $htmlFile = $filename;
+                }
+            }
+
+            // If no JSON found, try HTML fallback
+            if (!$templateFile && $htmlFile) {
+                Log::info('No JSON found in ZIP, using HTML fallback', ['html_file' => $htmlFile]);
+                return $this->processZipHtmlFallback($zip, $htmlFile, $userId, $templateName, $autoActivate);
             }
 
             if (!$templateFile) {
                 $zip->close();
-                Log::warning('No JSON file found in ZIP', ['available_files' => array_slice($availableFiles, 0, 20)]);
+                Log::warning('No JSON or HTML file found in ZIP', ['available_files' => array_slice($availableFiles, 0, 20)]);
                 return [
                     'success' => false,
-                    'error' => 'No JSON template file found in ZIP archive. Available files: ' . implode(', ', array_slice($availableFiles, 0, 5)) . (count($availableFiles) > 5 ? '...' : ''),
+                    'error' => 'No template.json or index.html found in ZIP archive. Available files: ' . implode(', ', array_slice($availableFiles, 0, 5)) . (count($availableFiles) > 5 ? '...' : ''),
                     'code' => 'NO_TEMPLATE_FILE'
                 ];
             }
@@ -919,6 +930,105 @@ class SmartImportController extends Controller
             );
 
             return $this->processJsonFile($mockFile, $userId, $templateName, $autoActivate);
+
+        } catch (\Exception $e) {
+            $zip->close();
+            throw $e;
+        }
+    }
+
+    /**
+     * Process HTML fallback from ZIP file
+     */
+    protected function processZipHtmlFallback($zip, string $htmlFile, int $userId, ?string $templateName, bool $autoActivate): array
+    {
+        try {
+            $content = $zip->getFromName($htmlFile);
+            $zip->close();
+
+            if ($content === false) {
+                return [
+                    'success' => false,
+                    'error' => 'Could not extract HTML file from ZIP',
+                    'code' => 'EXTRACT_ERROR'
+                ];
+            }
+
+            Log::info('Processing HTML from ZIP', [
+                'html_file' => $htmlFile,
+                'content_length' => strlen($content)
+            ]);
+
+            // Extract title from HTML if no template name provided
+            if (!$templateName) {
+                if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $content, $matches)) {
+                    $templateName = trim(strip_tags($matches[1]));
+                }
+                if (!$templateName) {
+                    $templateName = pathinfo($htmlFile, PATHINFO_FILENAME);
+                }
+            }
+
+            // Extract body content
+            $bodyContent = $content;
+            if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $content, $matches)) {
+                $bodyContent = trim($matches[1]);
+            }
+
+            // Create template data structure
+            $templateData = [
+                'templates' => [[
+                    'name' => $templateName,
+                    'slug' => Str::slug($templateName),
+                    'description' => 'Imported from ZIP HTML file',
+                    'active' => true,
+                    'type' => 'page',
+                    'sections' => [[
+                        'name' => 'HTML Content',
+                        'key' => 'html-content',
+                        'order' => 1,
+                        'active' => true,
+                        'blocks' => [[
+                            'type' => 'rich_text',
+                            'order' => 1,
+                            'active' => true,
+                            'data' => [
+                                'content' => $bodyContent
+                            ]
+                        ]]
+                    ]]
+                ]]
+            ];
+
+            // Create user template
+            $template = UserTemplate::create([
+                'user_id' => $userId,
+                'name' => $templateName,
+                'slug' => Str::slug($templateName) . '-' . time(),
+                'description' => 'Imported from ZIP HTML file',
+                'template_data' => $templateData,
+                'source' => 'imported',
+                'is_active' => false,
+                'customizations' => [
+                    'import_method' => 'zip_html_fallback',
+                    'original_filename' => $htmlFile,
+                    'imported_at' => now()->toISOString()
+                ]
+            ]);
+
+            // Auto-activate if requested
+            if ($autoActivate) {
+                $template->activate();
+            }
+
+            // Generate stats
+            $stats = $this->generateImportStats($template);
+
+            return [
+                'success' => true,
+                'template' => $template,
+                'stats' => $stats
+            ];
 
         } catch (\Exception $e) {
             $zip->close();
