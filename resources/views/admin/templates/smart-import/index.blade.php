@@ -145,7 +145,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900">Import from File</h3>
-                            <p class="text-sm text-gray-600">Upload JSON, ZIP, or HTML template files</p>
+                            <p class="text-sm text-gray-600">Upload Laravel Blade templates, JSON, ZIP, atau HTML files</p>
                         </div>
                     </div>
 
@@ -162,7 +162,7 @@
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                        required>
                                 <div class="mt-1 text-xs text-gray-500">
-                                    Supports JSON, ZIP, and HTML files (max 10MB)
+                                    Supports: <strong>.blade.php</strong> (Laravel), JSON, ZIP, dan HTML files (max 10MB)
                                 </div>
                                 <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
                                     💡 <strong>Test files tersedia:</strong><br>
@@ -307,21 +307,34 @@
                         </form>
 
                         <div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded text-xs leading-relaxed">
-                            <h4 class="font-semibold text-gray-800 mb-2">ZIP Packaging Guide</h4>
-                            <p class="mb-2">To import a project as an editable homepage template, structure your ZIP like:</p>
-                            <pre class="bg-white border rounded p-3 overflow-x-auto text-[10px] mb-3">my-template.zip
-    ├─ template.json            (preferred)  ← contains templates[].sections[].blocks[]
-    ├─ assets/ (optional)
-    │   ├─ images/
-    │   └─ css/
-    └─ index.html (fallback if no JSON)</pre>
-                            <ul class="list-disc ml-5 space-y-1">
-                                <li><strong>template.json</strong> keys: { "templates": [ { "name", "slug", "sections": [ { "name", "blocks": [ { "type", "data" } ] } ] } ] }</li>
-                                <li>Block types auto-normalized: hero, stats (statistics/items), card_grid (card-grid/cardgrid)</li>
-                                <li>Links in card_grid auto-wrapped to { url, text }</li>
-                                <li>Embedded site meta (site_name, menus) extracted automatically</li>
-                                <li>If only <code>index.html</code> exists, it becomes one rich_text block</li>
-                            </ul>
+                            <h4 class="font-semibold text-gray-800 mb-2">📁 Template Laravel Blade - Struktur ZIP</h4>
+                            <p class="mb-2">Untuk template sekolah siap pakai dengan Laravel Blade views:</p>
+                            <pre class="bg-white border rounded p-3 overflow-x-auto text-[10px] mb-3">template-sekolah.zip
+├─ views/
+│   ├─ layouts/
+│   │   └─ app.blade.php           ← Layout utama
+│   ├─ home.blade.php              ← Halaman beranda
+│   ├─ profil.blade.php            ← Halaman profil sekolah
+│   ├─ fasilitas.blade.php         ← Halaman fasilitas
+│   ├─ guru.blade.php              ← Halaman guru/staff
+│   ├─ prestasi.blade.php          ← Halaman prestasi
+│   ├─ galeri.blade.php            ← Halaman galeri
+│   └─ kontak.blade.php            ← Halaman kontak
+└─ assets/ (optional)
+    ├─ css/
+    ├─ js/
+    └─ images/</pre>
+                            <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
+                                <p class="text-blue-800 text-xs mb-2"><strong>🎯 Keunggulan Template Blade:</strong></p>
+                                <ul class="list-disc ml-5 space-y-1 text-blue-700 text-xs">
+                                    <li>File <code>.blade.php</code> otomatis terdeteksi</li>
+                                    <li>Langsung bisa di-<strong>switch</strong> antar template</li>
+                                    <li>Support <strong>@extends, @section, @include</strong></li>
+                                    <li>Bisa pakai data dinamis dari database</li>
+                                    <li>Struktur Laravel native - mudah dikustomisasi</li>
+                                </ul>
+                            </div>
+                            <p class="text-xs text-gray-600"><strong>✨ Tips:</strong> Pastikan ada file <code>layouts/app.blade.php</code> sebagai layout utama, dan <code>home.blade.php</code> untuk halaman beranda.</p>
                         </div>
                     </div>
                 </div>
