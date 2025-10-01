@@ -268,6 +268,15 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::post('smart-import/analyze', [Admin\Template\SmartImportController::class, 'analyzeUrl'])->name('smart-import.analyze');
         Route::post('smart-import/import-url', [Admin\Template\SmartImportController::class, 'importFromUrl'])->name('smart-import.import-url');
         Route::post('smart-import/import-file', [Admin\Template\SmartImportController::class, 'importFromFile'])->name('smart-import.import-file');
+
+        // Full Template Import (WordPress-like)
+        Route::get('full-import', [Admin\Template\FullTemplateImportController::class, 'index'])->name('full-import.index');
+        Route::post('full-import/import', [Admin\Template\FullTemplateImportController::class, 'import'])->name('full-import.import');
+        Route::post('full-import/upload', [Admin\Template\FullTemplateImportController::class, 'uploadZip'])->name('full-import.upload');
+        Route::get('full-import/list', [Admin\Template\FullTemplateImportController::class, 'list'])->name('full-import.list');
+        Route::get('full-import/{template}/preview', [Admin\Template\FullTemplateImportController::class, 'preview'])->name('full-import.preview');
+        Route::post('full-import/{template}/activate', [Admin\Template\FullTemplateImportController::class, 'activate'])->name('full-import.activate');
+        Route::delete('full-import/{template}', [Admin\Template\FullTemplateImportController::class, 'delete'])->name('full-import.delete');
         Route::post('smart-import/install-external', [Admin\Template\SmartImportController::class, 'installExternal'])->name('smart-import.install-external');
         Route::get('smart-import/progress', [Admin\Template\SmartImportController::class, 'getProgress'])->name('smart-import.progress');
 
