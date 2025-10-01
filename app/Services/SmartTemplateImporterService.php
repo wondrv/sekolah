@@ -160,18 +160,75 @@ class SmartTemplateImporterService
                 ];
             }
 
-            // Special handling for GitHub repository pages
+            // Special handling for GitHub repository pages and files
             if (stripos(parse_url($url, PHP_URL_HOST) ?? '', 'github.com') !== false) {
-                Log::info('Analyze detected GitHub repository page', ['url' => $url]);
+                Log::info('Analyze detected GitHub URL', ['url' => $url]);
 
-                // Extract repository info from URL
-                if (preg_match('/github\.com\/([^\/]+)\/([^\/]+)/', $url, $matches)) {
+                // Check if this is a direct GitHub file URL (raw content)
+                if (str_contains($url, '/raw/') || str_contains($url, 'raw.githubusercontent.com')) {
+                    // This is already a raw file URL, proceed normally
+                    Log::info('GitHub raw file URL detected', ['url' => $url]);
+                } else if (preg_match('/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+\.(json|html|htm))$/i', $url, $matches)) {
+                    // Convert GitHub blob URL to raw URL for JSON/HTML files
+                    $owner = $matches[1];
+                    $repo = $matches[2];
+                    $branch = $matches[3];
+                    $filePath = $matches[4];
+                    $extension = strtolower($matches[5]);
+
+                    $rawUrl = "https://raw.githubusercontent.com/{$owner}/{$repo}/{$branch}/{$filePath}";
+                    Log::info('Converting GitHub blob URL to raw URL', [
+                        'original' => $url,
+                        'raw_url' => $rawUrl,
+                        'extension' => $extension
+                    ]);
+
+                    // Re-fetch with the raw URL
+                    $response = Http::timeout(30)
+                        ->withHeaders([
+                            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 SchoolCMSBot/1.0',
+                            'Accept' => $extension === 'json' ? 'application/json,text/plain' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                            'Accept-Language' => 'en-US,en;q=0.9,id;q=0.8'
+                        ])->get($rawUrl);
+
+                    if (!$response->successful()) {
+                        Log::warning('Failed to fetch GitHub raw file', ['raw_url' => $rawUrl, 'status' => $response->status()]);
+                        return [
+                            'success' => false,
+                            'error' => 'Failed to fetch GitHub file content (HTTP ' . $response->status() . ')',
+                            'code' => 'GITHUB_FETCH_ERROR',
+                            'http_status' => $response->status()
+                        ];
+                    }
+
+                    $html = $response->body();
+
+                    // If it's a JSON file, validate it
+                    if ($extension === 'json') {
+                        $jsonData = json_decode($html, true);
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            return [
+                                'success' => false,
+                                'error' => 'Invalid JSON file from GitHub: ' . json_last_error_msg(),
+                                'code' => 'INVALID_GITHUB_JSON'
+                            ];
+                        }
+                        Log::info('Valid JSON fetched from GitHub', ['file' => $filePath]);
+                    }
+
+                    $url = $rawUrl; // Update URL for logging
+                } else if (preg_match('/github\.com\/([^\/]+)\/([^\/]+)(?:\/.*)?$/', $url, $matches)) {
+                    // This is a GitHub repository page, not a direct file
                     $owner = $matches[1];
                     $repo = $matches[2];
 
-                    // Create meaningful content from repository context
-                    $html = $this->generateGitHubTemplateContent($owner, $repo, $html);
-                    Log::info('Generated GitHub template content', ['owner' => $owner, 'repo' => $repo]);
+                    Log::info('GitHub repository page detected', ['owner' => $owner, 'repo' => $repo]);
+                    return [
+                        'success' => false,
+                        'error' => 'Please provide a direct link to a template file (JSON or HTML), not the repository page. Example: https://github.com/owner/repo/blob/main/template.json',
+                        'code' => 'GITHUB_REPO_PAGE',
+                        'suggestion' => "Browse to a specific template file in the repository and use that URL instead."
+                    ];
                 }
             }
 

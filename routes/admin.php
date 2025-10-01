@@ -264,7 +264,16 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
         // Smart Template Import
         Route::get('smart-import', [Admin\Template\SmartImportController::class, 'index'])->name('smart-import.index');
+        Route::get('import-guide', function() { return view('admin.templates.import-guide'); })->name('import-guide');
         Route::post('smart-import/discover', [Admin\Template\SmartImportController::class, 'discover'])->name('smart-import.discover');
+        Route::post('smart-import/complete-github', [Admin\Template\SmartImportController::class, 'importCompleteProjectFromGitHub'])->name('smart-import.complete-github');
+        Route::post('smart-import/complete-zip', [Admin\Template\SmartImportController::class, 'importCompleteProjectFromZip'])->name('smart-import.complete-zip');
+        Route::post('smart-import/activate-complete/{template}', [Admin\Template\SmartImportController::class, 'activateCompleteProject'])->name('smart-import.activate-complete');
+
+        // Complete Project Import (Redirect to Smart Import)
+        Route::get('complete-import', function() {
+            return redirect()->route('admin.templates.smart-import.index')->with('tab', 'complete');
+        });
         Route::post('smart-import/analyze', [Admin\Template\SmartImportController::class, 'analyzeUrl'])->name('smart-import.analyze');
         Route::post('smart-import/import-url', [Admin\Template\SmartImportController::class, 'importFromUrl'])->name('smart-import.import-url');
         Route::post('smart-import/import-file', [Admin\Template\SmartImportController::class, 'importFromFile'])->name('smart-import.import-file');

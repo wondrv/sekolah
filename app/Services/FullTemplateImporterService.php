@@ -129,7 +129,21 @@ class FullTemplateImporterService
             throw new \Exception('Failed to download GitHub repository. Tried branches: ' . implode(', ', $branches));
         }
 
-        Log::info('GitHub download successful', ['branch' => $successfulBranch, 'size' => strlen($response->body())]);        // Save ZIP temporarily
+        Log::info('GitHub download successful', ['branch' => $successfulBranch, 'size' => strlen($response->body())]);
+
+        // Validate that we got a ZIP file, not HTML error page
+        $contentType = $response->header('Content-Type');
+        $content = $response->body();
+
+        if (str_starts_with(trim($content), '<!DOCTYPE') || str_starts_with(trim($content), '<html')) {
+            throw new \Exception('GitHub returned an HTML page instead of repository archive. This usually means the repository or branch does not exist, or the repository is private.');
+        }
+
+        if ($contentType && !str_contains(strtolower($contentType), 'zip') && !str_contains(strtolower($contentType), 'octet-stream')) {
+            Log::warning('Unexpected content type from GitHub', ['content_type' => $contentType, 'content_preview' => substr($content, 0, 100)]);
+        }
+
+        // Save ZIP temporarily
         $tempZipPath = storage_path('app/temp/' . Str::uuid() . '.zip');
         File::ensureDirectoryExists(dirname($tempZipPath));
         File::put($tempZipPath, $response->body());

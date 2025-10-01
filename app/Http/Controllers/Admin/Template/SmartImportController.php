@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\SmartTemplateImporterService;
 use App\Services\FullTemplateImporterService;
 use App\Services\ExternalTemplateService;
+use App\Services\AdvancedTemplateImporterService;
 use App\Models\UserTemplate;
 use App\Models\TemplateGallery;
 use Illuminate\Http\Request;
@@ -20,15 +21,18 @@ class SmartImportController extends Controller
     protected SmartTemplateImporterService $importer;
     protected FullTemplateImporterService $fullImporter;
     protected ExternalTemplateService $externalService;
+    protected AdvancedTemplateImporterService $advancedImporter;
 
     public function __construct(
         SmartTemplateImporterService $importer,
         FullTemplateImporterService $fullImporter,
-        ExternalTemplateService $externalService
+        ExternalTemplateService $externalService,
+        AdvancedTemplateImporterService $advancedImporter
     ) {
         $this->importer = $importer;
         $this->fullImporter = $fullImporter;
         $this->externalService = $externalService;
+        $this->advancedImporter = $advancedImporter;
     }
 
     /**
@@ -36,8 +40,15 @@ class SmartImportController extends Controller
      */
     public function index()
     {
+        $recentCompleteProjects = UserTemplate::where('user_id', Auth::id())
+            ->where('settings->template_type', 'complete_project')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
         return view('admin.templates.smart-import.index', [
             'recent_imports' => $this->getRecentImports(),
+            'recent_complete_projects' => $recentCompleteProjects,
             'import_stats' => $this->getImportStats(),
             'supported_sources' => $this->getSupportedSources()
         ]);
@@ -335,48 +346,26 @@ class SmartImportController extends Controller
         ]);
 
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:json,zip,html,htm,txt|mimetypes:application/json,application/zip,text/html,text/plain,application/octet-stream|max:10240', // 10MB max
-            'template_name' => 'string|max:255',
-            'auto_activate' => 'boolean'
+            // Simplified: rely on extension; JSON/HTML content will still be parsed/validated manually
+            'file' => 'required|file|mimes:json,zip,html,htm,txt|max:10240', // 10MB
+            'template_name' => 'nullable|string|max:255',
+            'auto_activate' => 'nullable|boolean'
         ]);
 
         if ($validator->fails()) {
-            // Manual validation for JSON files as backup
-            if ($request->hasFile('file')) {
-                $file = $request->file('file');
-                $extension = strtolower($file->getClientOriginalExtension());
-                $allowedExtensions = ['json', 'zip', 'html', 'htm'];
+            Log::warning('Smart Import Validation Failed', [
+                'user_id' => Auth::id(),
+                'errors' => $validator->errors()->toArray()
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+                'code' => 'VALIDATION_FAILED'
+            ], 422)->header('Content-Type', 'application/json');
+        }
 
-                if (in_array($extension, $allowedExtensions)) {
-                    Log::info('File passed manual extension validation', [
-                        'filename' => $file->getClientOriginalName(),
-                        'extension' => $extension,
-                        'mime_type' => $file->getMimeType()
-                    ]);
-                } else {
-                    Log::error('Smart Import Validation Failed - Extension not allowed', [
-                        'filename' => $file->getClientOriginalName(),
-                        'extension' => $extension,
-                        'mime_type' => $file->getMimeType(),
-                        'validation_errors' => $validator->errors()->toArray()
-                    ]);
-
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'File type not supported. Allowed: JSON, ZIP, HTML',
-                        'errors' => $validator->errors()
-                    ], 422);
-                }
-            } else {
-                Log::error('Smart Import Validation Failed - No file', $validator->errors()->toArray());
-
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Validation failed: ' . $validator->errors()->first(),
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-        }        try {
+        try {
             $file = $request->file('file');
             $userId = Auth::id();
             $autoActivate = $request->boolean('auto_activate', false);
@@ -414,7 +403,7 @@ class SmartImportController extends Controller
                             'Template berhasil diimpor dan diaktifkan!' :
                             'Template berhasil diimpor!',
                         'redirect' => route('admin.templates.my-templates.show', $result['template']->id)
-                    ]);
+                    ])->header('Content-Type', 'application/json');
                 } else {
                     // Normal form submission - redirect with success message
                     return redirect()->route('admin.templates.my-templates.show', $result['template']->id)
@@ -428,18 +417,11 @@ class SmartImportController extends Controller
                     'code' => $result['code'] ?? 'UNKNOWN',
                     'user_id' => Auth::id()
                 ]);
-
-                if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json([
-                        'success' => false,
-                        'error' => $result['error'],
-                        'code' => $result['code'] ?? 'IMPORT_FAILED'
-                    ], 422);
-                } else {
-                    return redirect()->back()
-                        ->with('error', 'Import gagal: ' . $result['error'])
-                        ->withInput();
-                }
+                return response()->json([
+                    'success' => false,
+                    'error' => $result['error'],
+                    'code' => $result['code'] ?? 'IMPORT_FAILED'
+                ], 422)->header('Content-Type', 'application/json');
             }
 
         } catch (\Exception $e) {
@@ -453,7 +435,7 @@ class SmartImportController extends Controller
                 'success' => false,
                 'error' => 'Import failed: ' . $e->getMessage(),
                 'code' => 'UNEXPECTED_ERROR'
-            ], 500);
+            ], 500)->header('Content-Type', 'application/json');
         }
     }
 
@@ -508,17 +490,33 @@ class SmartImportController extends Controller
             'content_preview' => substr($content, 0, 200)
         ]);
 
+        // Check if content looks like HTML instead of JSON
+        $contentPreview = substr(trim($content), 0, 20);
+        if (str_starts_with($contentPreview, '<!DOCTYPE') || str_starts_with($contentPreview, '<html')) {
+            Log::error('File contains HTML instead of JSON', [
+                'filename' => $file->getClientOriginalName(),
+                'content_preview' => $contentPreview
+            ]);
+            return [
+                'success' => false,
+                'error' => 'The uploaded file contains HTML content instead of JSON. Please upload a valid JSON template file.',
+                'code' => 'HTML_NOT_JSON'
+            ];
+        }
+
         $templateData = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             Log::error('JSON decode failed', [
+                'filename' => $file->getClientOriginalName(),
                 'error' => json_last_error_msg(),
-                'error_code' => json_last_error()
+                'error_code' => json_last_error(),
+                'content_preview' => substr($content, 0, 500)
             ]);
 
             return [
                 'success' => false,
-                'error' => 'Invalid JSON file: ' . json_last_error_msg(),
+                'error' => 'Invalid JSON file "' . $file->getClientOriginalName() . '": ' . json_last_error_msg() . '. Please ensure the file contains valid JSON format.',
                 'code' => 'INVALID_JSON'
             ];
         }
@@ -539,6 +537,16 @@ class SmartImportController extends Controller
         }
         $templateData = $normalizedData;
 
+        // Sanitize structure (auto-repair missing fields / legacy shapes)
+        $templateData = $this->sanitizeTemplateData($templateData);
+
+    // Apply domain-specific transformations (hero / statistics / card_grid mapping, metadata extraction)
+    $templateData = $this->transformDomainSpecificBlocks($templateData);
+
+    // Collect diagnostics for easier debugging of 422 issues
+    $diagnostics = $this->collectTemplateDiagnostics($templateData);
+    Log::info('Template diagnostics after transformation', $diagnostics);
+
         // Generate template name if not provided
         if (!$templateName) {
             $templateName = $templateData['name'] ??
@@ -558,7 +566,8 @@ class SmartImportController extends Controller
                 'import_method' => 'json_file',
                 'original_filename' => $file->getClientOriginalName(),
                 'imported_at' => now()->toISOString()
-            ]
+            ],
+            'settings' => $templateData['site_meta'] ?? null,
         ]);
 
         // Auto-activate if requested
@@ -569,11 +578,273 @@ class SmartImportController extends Controller
         // Generate stats
         $stats = $this->generateImportStats($template);
 
+        // Attempt to derive and store a preview image from hero block background (non-blocking)
+        try {
+            $this->extractPreviewImage($templateData, $template);
+        } catch (\Exception $e) {
+            Log::warning('Preview image extraction failed', [
+                'template_id' => $template->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         return [
             'success' => true,
             'template' => $template,
             'stats' => $stats
         ];
+    }
+
+    /**
+     * Attempt to sanitize / normalize blocks & sections shape to expected internal format.
+     * - Adds missing keys (order, active, key)
+     * - Converts block 'content' -> 'data'
+     * - Wraps raw unknown block objects (without 'type') into a 'raw' block preserving original payload
+     */
+    protected function sanitizeTemplateData(array $data): array
+    {
+        if (!isset($data['templates']) || !is_array($data['templates'])) {
+            return $data; // nothing to do
+        }
+
+        foreach ($data['templates'] as $tIndex => $tpl) {
+            // Ensure template has sections array
+            if (!isset($tpl['sections']) || !is_array($tpl['sections'])) {
+                $data['templates'][$tIndex]['sections'] = [];
+                continue;
+            }
+            foreach ($tpl['sections'] as $sIndex => $section) {
+                // Ensure blocks array
+                if (!isset($section['blocks']) || !is_array($section['blocks'])) {
+                    $data['templates'][$tIndex]['sections'][$sIndex]['blocks'] = [];
+                }
+                // Add default section metadata
+                if (!isset($section['name'])) {
+                    $data['templates'][$tIndex]['sections'][$sIndex]['name'] = 'Section '.($sIndex+1);
+                }
+                if (!isset($section['key'])) {
+                    $data['templates'][$tIndex]['sections'][$sIndex]['key'] = Str::slug($data['templates'][$tIndex]['sections'][$sIndex]['name']);
+                }
+                if (!isset($section['order'])) {
+                    $data['templates'][$tIndex]['sections'][$sIndex]['order'] = $sIndex + 1;
+                }
+                if (!isset($section['active'])) {
+                    $data['templates'][$tIndex]['sections'][$sIndex]['active'] = true;
+                }
+
+                // Process blocks
+                foreach ($data['templates'][$tIndex]['sections'][$sIndex]['blocks'] as $bIndex => $block) {
+                    // If block missing type, wrap it as raw
+                    if (!isset($block['type'])) {
+                        $data['templates'][$tIndex]['sections'][$sIndex]['blocks'][$bIndex] = [
+                            'type' => 'raw',
+                            'order' => $bIndex + 1,
+                            'active' => true,
+                            'data' => [ 'raw' => $block ]
+                        ];
+                        continue;
+                    }
+                    // Map legacy 'content' -> 'data'
+                    if (!isset($block['data']) && isset($block['content'])) {
+                        $block['data'] = $block['content'];
+                        unset($block['content']);
+                    }
+                    if (!isset($block['data'])) {
+                        $block['data'] = [];
+                    }
+                    if (!isset($block['order'])) {
+                        $block['order'] = $bIndex + 1;
+                    }
+                    if (!isset($block['active'])) {
+                        $block['active'] = true;
+                    }
+                    $data['templates'][$tIndex]['sections'][$sIndex]['blocks'][$bIndex] = $block;
+                }
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * Apply domain-specific transformations:
+     * - Hero block: map background_image_url/image -> background_image
+     * - Statistics block: map items[value=>number] -> stats[number]
+     * - Card grid: normalize link field into object {url,text}
+     * - Normalize block type aliases (statistics->stats, card-grid->card_grid)
+     * - Extract site / menu metadata if embedded inside blocks
+     */
+    protected function transformDomainSpecificBlocks(array $data): array
+    {
+        if (!isset($data['templates']) || !is_array($data['templates'])) {
+            return $data;
+        }
+
+        $siteMeta = $data['site_meta'] ?? [];
+        $movedMetaCount = 0;
+
+        foreach ($data['templates'] as $tIndex => $tpl) {
+            if (!isset($tpl['sections']) || !is_array($tpl['sections'])) {
+                continue;
+            }
+            foreach ($tpl['sections'] as $sIndex => $section) {
+                if (!isset($section['blocks']) || !is_array($section['blocks'])) {
+                    continue;
+                }
+                foreach ($section['blocks'] as $bIndex => $block) {
+                    if (!isset($block['type'])) {
+                        continue; // already sanitized earlier (raw)
+                    }
+
+                    $originalType = $block['type'];
+                    $type = str_replace('-', '_', strtolower($originalType));
+
+                    // Aliases
+                    if ($type === 'statistics') { $type = 'stats'; }
+                    if ($type === 'cardgrid') { $type = 'card_grid'; }
+
+                    $block['type'] = $type; // persist normalization
+                    $dataField = $block['data'] ?? [];
+                    if (!is_array($dataField)) { $dataField = []; }
+
+                    // Hero mapping
+                    if ($type === 'hero') {
+                        if (isset($dataField['background_image_url']) && !isset($dataField['background_image'])) {
+                            $dataField['background_image'] = $dataField['background_image_url'];
+                        }
+                        if (isset($dataField['image']) && !isset($dataField['background_image'])) {
+                            $dataField['background_image'] = $dataField['image'];
+                        }
+                        // Single button object -> array
+                        if (isset($dataField['buttons']) && is_array($dataField['buttons']) && array_keys($dataField['buttons']) !== range(0, count($dataField['buttons']) - 1)) {
+                            $dataField['buttons'] = [$dataField['buttons']];
+                        }
+                    }
+
+                    // Stats mapping
+                    if ($type === 'stats') {
+                        if (!isset($dataField['stats']) && isset($dataField['items']) && is_array($dataField['items'])) {
+                            $converted = [];
+                            foreach ($dataField['items'] as $item) {
+                                if (!is_array($item)) { continue; }
+                                $converted[] = [
+                                    'number' => $item['value'] ?? ($item['number'] ?? null),
+                                    'label' => $item['label'] ?? ($item['title'] ?? ''),
+                                    'description' => $item['description'] ?? ($item['text'] ?? null),
+                                ];
+                            }
+                            if ($converted) { $dataField['stats'] = $converted; }
+                        }
+                    }
+
+                    // Card grid mapping
+                    if ($type === 'card_grid') {
+                        if (isset($dataField['cards']) && is_array($dataField['cards'])) {
+                            foreach ($dataField['cards'] as $cIdx => $card) {
+                                if (!is_array($card)) { continue; }
+                                // Plain link string
+                                if (isset($card['link']) && is_string($card['link'])) {
+                                    $dataField['cards'][$cIdx]['link'] = [
+                                        'url' => $card['link'],
+                                        'text' => 'Selengkapnya',
+                                    ];
+                                } elseif (!isset($card['link']) && isset($card['url'])) {
+                                    $dataField['cards'][$cIdx]['link'] = [
+                                        'url' => $card['url'],
+                                        'text' => $card['link_text'] ?? ($card['title'] ?? 'Detail'),
+                                    ];
+                                }
+                            }
+                        }
+                    }
+
+                    // Attempt to detect site metadata accidentally embedded as a block
+                    $possibleMetaKeys = ['site_name','site_title','tagline','menus','navigation','contact_email'];
+                    $intersects = array_intersect($possibleMetaKeys, array_keys($dataField));
+                    if (count($intersects) > 1) { // treat as meta block
+                        foreach ($possibleMetaKeys as $mk) {
+                            if (isset($dataField[$mk]) && !isset($siteMeta[$mk])) {
+                                $siteMeta[$mk] = $dataField[$mk];
+                            }
+                        }
+                        $movedMetaCount++;
+                    }
+
+                    $block['data'] = $dataField; // assign mutated data
+                    $data['templates'][$tIndex]['sections'][$sIndex]['blocks'][$bIndex] = $block;
+                }
+            }
+        }
+
+        if ($siteMeta) {
+            $data['site_meta'] = $siteMeta;
+            if ($movedMetaCount > 0) {
+                $data['site_meta']['_extracted_from_blocks'] = $movedMetaCount;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Collect lightweight diagnostics for logging/debugging.
+     */
+    protected function collectTemplateDiagnostics(array $data): array
+    {
+        $templates = $data['templates'] ?? [];
+        $sectionCount = 0; $blockCount = 0; $types = [];
+        foreach ($templates as $tpl) {
+            foreach ($tpl['sections'] ?? [] as $section) {
+                $sectionCount++;
+                foreach ($section['blocks'] ?? [] as $block) {
+                    $blockCount++;
+                    $t = $block['type'] ?? 'unknown';
+                    $types[$t] = ($types[$t] ?? 0) + 1;
+                }
+            }
+        }
+        return [
+            'templates' => count($templates),
+            'sections' => $sectionCount,
+            'blocks' => $blockCount,
+            'block_types' => $types,
+            'has_site_meta' => isset($data['site_meta']),
+        ];
+    }
+
+    /**
+     * Try to fetch a hero background image and store it as preview.
+     */
+    protected function extractPreviewImage(array $data, UserTemplate $template): void
+    {
+        if ($template->preview_image) { return; }
+        $heroImage = null;
+        foreach (($data['templates'] ?? []) as $tpl) {
+            foreach ($tpl['sections'] ?? [] as $section) {
+                foreach ($section['blocks'] ?? [] as $block) {
+                    if (($block['type'] ?? null) === 'hero') {
+                        $heroImage = $block['data']['background_image'] ?? ($block['data']['background_image_url'] ?? null);
+                        break 3;
+                    }
+                }
+            }
+        }
+        if (!$heroImage || !is_string($heroImage)) { return; }
+        if (!str_starts_with($heroImage, 'http')) { return; }
+        try {
+            $contents = @file_get_contents($heroImage);
+            if ($contents === false) { return; }
+            $ext = 'jpg';
+            if (str_contains(strtolower($heroImage), '.png')) { $ext = 'png'; }
+            $path = 'previews/template-'.$template->id.'-hero.'. $ext;
+            \Illuminate\Support\Facades\Storage::disk('public')->put($path, $contents);
+            $template->update(['preview_image' => $path]);
+            Log::info('Preview image stored', ['template_id' => $template->id, 'path' => $path]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to download hero image for preview', [
+                'template_id' => $template->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -595,23 +866,32 @@ class SmartImportController extends Controller
         try {
             // Look for template.json or similar files
             $templateFile = null;
+            $availableFiles = [];
+
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $filename = $zip->getNameIndex($i);
-                if (preg_match('/template\.json$/i', $filename) ||
-                    preg_match('/\.json$/i', $filename)) {
+                $availableFiles[] = $filename;
+
+                // Prioritize template.json, then any .json file
+                if (preg_match('/template\.json$/i', $filename)) {
                     $templateFile = $filename;
                     break;
+                } elseif (preg_match('/\.json$/i', $filename) && !$templateFile) {
+                    $templateFile = $filename;
                 }
             }
 
             if (!$templateFile) {
                 $zip->close();
+                Log::warning('No JSON file found in ZIP', ['available_files' => array_slice($availableFiles, 0, 20)]);
                 return [
                     'success' => false,
-                    'error' => 'No template JSON file found in ZIP archive',
+                    'error' => 'No JSON template file found in ZIP archive. Available files: ' . implode(', ', array_slice($availableFiles, 0, 5)) . (count($availableFiles) > 5 ? '...' : ''),
                     'code' => 'NO_TEMPLATE_FILE'
                 ];
             }
+
+            Log::info('Found JSON file in ZIP', ['template_file' => $templateFile]);
 
             // Extract and process the template file
             $content = $zip->getFromName($templateFile);
