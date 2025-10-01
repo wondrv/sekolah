@@ -9,7 +9,7 @@ Route::get('/quick-login', function() {
     $user = \App\Models\User::where('email', 'admin@school.local')->first();
     if ($user) {
         Auth::login($user);
-        return redirect()->route('admin.dashboard')->with('success', 'Logged in successfully!');
+        return redirect('/admin/dashboard')->with('success', 'Logged in as admin!');
     }
     return 'Admin user not found';
 })->name('admin.quick-login');

@@ -1,0 +1,50 @@
+{
+    "name": "Test Import Template",
+    "description": "Template test untuk verifikasi import berfungsi",
+    "templates": [
+        {
+            "name": "Sample Homepage",
+            "slug": "sample-homepage",
+            "description": "Homepage template sederhana untuk testing",
+            "active": true,
+            "type": "page",
+            "sections": [
+                {
+                    "name": "Hero Section",
+                    "key": "hero-test",
+                    "order": 1,
+                    "active": true,
+                    "blocks": [
+                        {
+                            "type": "hero",
+                            "order": 1,
+                            "active": true,
+                            "data": {
+                                "title": "Template Test Berhasil!",
+                                "subtitle": "Jika Anda melihat ini, berarti import template berhasil",
+                                "background_color": "bg-green-600",
+                                "text_color": "text-white"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Content Section",
+                    "key": "content-test",
+                    "order": 2,
+                    "active": true,
+                    "blocks": [
+                        {
+                            "type": "rich_text",
+                            "order": 1,
+                            "active": true,
+                            "data": {
+                                "content": "<h2>Import Berhasil!</h2><p>Template ini berhasil diimpor melalui Smart Import system. Sistem bekerja dengan baik!</p><p>✅ File JSON berhasil dibaca<br>✅ Template data valid<br>✅ Konversi ke format CMS berhasil</p>"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

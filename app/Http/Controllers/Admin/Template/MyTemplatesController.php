@@ -75,6 +75,41 @@ class MyTemplatesController extends Controller
         return view('admin.templates.my-templates.show', compact('userTemplate'));
     }
 
+    /**
+     * Show edit form for template
+     */
+    public function edit(UserTemplate $userTemplate)
+    {
+        $this->authorize('update', $userTemplate);
+
+        $userTemplate->load(['galleryTemplate', 'templates.sections.blocks']);
+
+        return view('admin.templates.my-templates.edit', compact('userTemplate'));
+    }
+
+    /**
+     * Update template
+     */
+    public function update(Request $request, UserTemplate $userTemplate)
+    {
+        $this->authorize('update', $userTemplate);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'template_data' => 'sometimes|array'
+        ]);
+
+        try {
+            $userTemplate->update($validated);
+
+            return redirect()->route('admin.templates.my-templates.show', $userTemplate)
+                ->with('success', 'Template berhasil diupdate!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengupdate template: ' . $e->getMessage());
+        }
+    }
+
     public function activate(UserTemplate $userTemplate)
     {
         $this->authorize('update', $userTemplate);
