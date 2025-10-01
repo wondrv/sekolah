@@ -1,0 +1,147 @@
+{
+  "name": "Template Sekolah Contoh",
+  "description": "Template sekolah modern untuk testing import file",
+  "version": "1.0.0",
+  "author": "Smart Import System",
+  "template_data": {
+    "templates": [
+      {
+        "name": "Homepage Sekolah Contoh",
+        "slug": "home",
+        "description": "Halaman utama sekolah yang diimpor dari file",
+        "active": true,
+        "type": "page",
+        "sections": [
+          {
+            "name": "Hero Section",
+            "order": 1,
+            "settings": {
+              "background_color": "bg-blue-600"
+            },
+            "blocks": [
+              {
+                "type": "hero",
+                "name": "Hero Utama",
+                "order": 1,
+                "content": {
+                  "title": "Selamat Datang di Sekolah Contoh",
+                  "subtitle": "Template ini diimpor dari file JSON dan siap digunakan langsung!",
+                  "button_text": "Pelajari Lebih Lanjut",
+                  "button_url": "/tentang",
+                  "background_color": "bg-gradient-to-r from-blue-600 to-purple-600"
+                },
+                "active": true
+              }
+            ]
+          },
+          {
+            "name": "Keunggulan Section",
+            "order": 2,
+            "blocks": [
+              {
+                "type": "card_grid",
+                "name": "Keunggulan Sekolah",
+                "order": 1,
+                "content": {
+                  "title": "Keunggulan Sekolah Kami",
+                  "subtitle": "Mengapa memilih sekolah kami untuk masa depan yang cerah",
+                  "cards": [
+                    {
+                      "title": "Pendidikan Berkualitas",
+                      "description": "Kurikulum terintegrasi dengan standar nasional dan internasional",
+                      "icon": "🎓",
+                      "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=300"
+                    },
+                    {
+                      "title": "Fasilitas Modern",
+                      "description": "Laboratorium lengkap, perpustakaan digital, dan fasilitas olahraga",
+                      "icon": "🏫",
+                      "image": "https://images.unsplash.com/photo-1562774053-701939374585?w=400&h=300"
+                    },
+                    {
+                      "title": "Guru Berpengalaman",
+                      "description": "Tim pengajar profesional dan berpengalaman di bidangnya",
+                      "icon": "👨‍🏫",
+                      "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300"
+                    }
+                  ]
+                },
+                "active": true
+              }
+            ]
+          },
+          {
+            "name": "Statistik Section",
+            "order": 3,
+            "blocks": [
+              {
+                "type": "stats",
+                "name": "Statistik Sekolah",
+                "order": 1,
+                "content": {
+                  "title": "Pencapaian Kami",
+                  "stats": [
+                    {
+                      "number": "800+",
+                      "label": "Siswa Aktif"
+                    },
+                    {
+                      "number": "65+",
+                      "label": "Guru & Staff"
+                    },
+                    {
+                      "number": "98%",
+                      "label": "Tingkat Kelulusan"
+                    },
+                    {
+                      "number": "25+",
+                      "label": "Prestasi Nasional"
+                    }
+                  ]
+                },
+                "active": true
+              }
+            ]
+          },
+          {
+            "name": "CTA Section",
+            "order": 4,
+            "blocks": [
+              {
+                "type": "cta_banner",
+                "name": "Call to Action",
+                "order": 1,
+                "content": {
+                  "title": "Mulai Perjalanan Pendidikan Terbaik",
+                  "description": "Bergabunglah dengan ribuan siswa yang telah merasakan pendidikan berkualitas di sekolah kami",
+                  "button_text": "Daftar Sekarang",
+                  "button_url": "/pendaftaran",
+                  "background_color": "bg-gradient-to-r from-green-500 to-blue-600"
+                },
+                "active": true
+              }
+            ]
+          }
+        ],
+        "assignments": [
+          {
+            "route_pattern": "home",
+            "priority": 100,
+            "active": true
+          },
+          {
+            "route_pattern": "/",
+            "priority": 100,
+            "active": true
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "import_method": "json_file",
+    "compatible_version": "1.0.0",
+    "created_at": "2025-10-01T00:00:00Z",
+    "tags": ["sekolah", "education", "modern", "responsive"]
+  }
+}

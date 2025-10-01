@@ -10,6 +10,8 @@ use App\Models\UserTemplate;
 use Illuminate\Http\Request;
 use App\Http\Requests\TemplateImportRequest;
 use Illuminate\Support\Facades\Log;
+use App\Events\TemplateImported;
+use App\Services\PreviewImageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use App\Support\Theme;
@@ -232,44 +234,77 @@ class TemplateController extends Controller
 
         try {
             if (in_array($ext, ['json', 'txt'])) {
-                // Existing JSON import path
-                $data = json_decode(file_get_contents($uploaded->getRealPath()), true);
+                // Unified JSON -> UserTemplate import
+                $raw = file_get_contents($uploaded->getRealPath());
+                $data = json_decode($raw, true);
                 if (!is_array($data)) {
                     return back()->with('error', 'File JSON tidak valid.');
                 }
-
-                $tpl = $data['template'] ?? [];
-                $sections = $data['sections'] ?? [];
-                if (empty($tpl) || !is_array($sections)) {
-                    return back()->with('error', 'Struktur JSON tidak sesuai.');
+                $templateData = $data['template_data'] ?? null;
+                // Support legacy structure { template: {}, sections: [] }
+                if (!$templateData && isset($data['template']) && isset($data['sections'])) {
+                    $templateData = [
+                        'templates' => [[
+                            'name' => $data['template']['name'] ?? 'Imported',
+                            'slug' => Str::slug($data['template']['slug'] ?? $data['template']['name'] ?? 'imported'),
+                            'description' => $data['template']['description'] ?? null,
+                            'active' => $data['template']['active'] ?? true,
+                            'type' => 'page',
+                            'sections' => $data['sections'],
+                        ]],
+                    ];
                 }
-
-                // Create template with unique slug if needed
-                $baseSlug = Str::slug($tpl['slug'] ?? $tpl['name'] ?? 'template');
-                $slug = $baseSlug;
-                $i = 1;
-                while (\App\Models\Template::where('slug', $slug)->exists()) {
-                    $slug = $baseSlug.'-'.(++$i);
+                if (!is_array($templateData) || !isset($templateData['templates']) || !is_array($templateData['templates']) || empty($templateData['templates'])) {
+                    return back()->with('error', 'Struktur JSON tidak memiliki templates valid.');
                 }
-
-                $template = Template::create([
-                    'name' => $templateNameOverride ?: ($tpl['name'] ?? 'Imported Template'),
-                    'description' => $tpl['description'] ?? null,
-                    'slug' => $slug,
-                    'active' => $activate ? true : (bool) ($tpl['active'] ?? true),
-                ]);
-
-                $this->hydrateSectionsAndBlocks($template, $sections);
-
-                Theme::clearCache();
-                Log::info('Template JSON imported', [
+                // Deep validation
+                $allowedBlocks = ['hero','card_grid','rich_text','stats','cta_banner','gallery_teaser','events_teaser','posts_teaser','announcements_teaser'];
+                foreach ($templateData['templates'] as $tIndex => $tplNode) {
+                    if (!isset($tplNode['sections']) || !is_array($tplNode['sections'])) {
+                        return back()->with('error', "Template index $tIndex tidak memiliki sections array.");
+                    }
+                    foreach ($tplNode['sections'] as $sIndex => $sec) {
+                        if (!isset($sec['name'])) { return back()->with('error', "Section #$sIndex nama wajib ada."); }
+                        if (isset($sec['blocks']) && is_array($sec['blocks'])) {
+                            foreach ($sec['blocks'] as $bIndex => $blk) {
+                                $type = $blk['type'] ?? 'rich_text';
+                                if (!in_array($type, $allowedBlocks)) {
+                                    return back()->with('error', "Block type '$type' tidak diizinkan (index $bIndex).");
+                                }
+                            }
+                        }
+                    }
+                }
+                $first = $templateData['templates'][0];
+                $baseSlug = Str::slug($templateNameOverride ?: ($first['slug'] ?? $first['name'] ?? 'imported-template'));
+                if (!$baseSlug) { $baseSlug = 'imported-template'; }
+                $slug = $baseSlug; $i = 1;
+                while (UserTemplate::where('slug', $slug)->exists()) { $slug = $baseSlug.'-'.(++$i); }
+                $previewService = new PreviewImageService();
+                $preview = $request->boolean('generate_preview') ? $previewService->generate(['seed' => $slug]) : null;
+                $userTemplate = UserTemplate::create([
                     'user_id' => Auth::id(),
+                    'name' => $templateNameOverride ?: ($first['name'] ?? 'Imported Template'),
                     'slug' => $slug,
-                    'sections' => count($sections),
-                    'blocks_total' => collect($sections)->sum(fn($s) => isset($s['blocks']) ? count($s['blocks']) : 0),
+                    'description' => $first['description'] ?? ($data['description'] ?? 'Imported template'),
+                    'template_data' => $templateData,
+                    'source' => 'imported',
+                    'is_active' => $activate,
+                    'preview_image' => $preview,
                 ]);
-                return redirect()->route('admin.templates.edit', $template)
-                    ->with('success', 'Template JSON berhasil diimpor.');
+                if ($activate) { $userTemplate->activate(); }
+                Theme::clearCache();
+                $sectionsCount = collect($templateData['templates'])->sum(fn($t) => isset($t['sections']) ? count($t['sections']) : 0);
+                $blocksTotal = 0; foreach ($templateData['templates'] as $tplNode) { foreach (($tplNode['sections'] ?? []) as $sec) { $blocksTotal += isset($sec['blocks']) ? count($sec['blocks']) : 0; }}
+                Log::info('Template JSON imported (UserTemplate)', [
+                    'user_id' => Auth::id(), 'slug' => $slug, 'sections' => $sectionsCount, 'blocks_total' => $blocksTotal,
+                ]);
+                event(new TemplateImported($userTemplate, 'json', $activate, [
+                    'sections' => $sectionsCount,
+                    'blocks_total' => $blocksTotal,
+                ]));
+                return redirect()->route('admin.templates.my-templates.show', $userTemplate)
+                    ->with('success', 'Template JSON berhasil diimpor ke My Templates.');
             }
             elseif (in_array($ext, ['html', 'htm'])) {
                 // HTML import: create UserTemplate with template_data, auto-activate if requested
@@ -331,6 +366,9 @@ class TemplateController extends Controller
                     'slug' => $slug,
                     'body_length' => strlen($body),
                 ]);
+                event(new TemplateImported($userTemplate, 'html', $activate, [
+                    'body_length' => strlen($body),
+                ]));
                 return redirect()->route('admin.templates.my-templates.show', $userTemplate)
                     ->with('success', 'File HTML berhasil diimpor ke My Templates dan siap dipakai!');
             }
@@ -415,6 +453,10 @@ class TemplateController extends Controller
                     'origin_file' => $foundFileName,
                     'body_length' => strlen($body),
                 ]);
+                event(new TemplateImported($userTemplate, 'zip', $activate, [
+                    'origin_file' => $foundFileName,
+                    'body_length' => strlen($body),
+                ]));
                 return redirect()->route('admin.templates.my-templates.show', $userTemplate)
                     ->with('success', 'ZIP berhasil diimpor ke My Templates dan siap dipakai!');
             }

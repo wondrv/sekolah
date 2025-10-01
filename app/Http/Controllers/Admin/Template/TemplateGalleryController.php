@@ -579,7 +579,7 @@ class TemplateGalleryController extends Controller
                 $message = 'Template eksternal berhasil diinstall!';
             }
 
-            return redirect()->route('admin.templates.my-templates')
+            return redirect()->route('admin.templates.my-templates.index')
                 ->with('success', $message);
 
         } catch (\Exception $e) {

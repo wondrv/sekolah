@@ -8,8 +8,8 @@
         <nav class="flex" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-4">
                 <li>
-                    <a href="{{ route('admin.templates.my-templates') }}" class="text-gray-400 hover:text-gray-500">
-                        My Templates
+                    <a href="{{ route('admin.templates.my-templates.index') }}" class="text-gray-400 hover:text-gray-500">
+                        Templates
                     </a>
                 </li>
                 <li>

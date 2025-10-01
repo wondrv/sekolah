@@ -60,8 +60,8 @@ class TemplateBuilderController extends Controller
                 'source' => 'custom',
             ]);
 
-            return redirect()->route('admin.templates.builder.edit', $userTemplate)
-                ->with('success', 'Template berhasil dibuat!');
+            return redirect()->route('admin.templates.my-templates.index')
+                ->with('success', 'Template berhasil dibuat dan disimpan!');
 
         } catch (\Exception $e) {
             return redirect()->back()

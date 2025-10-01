@@ -127,8 +127,8 @@ class MyTemplatesController extends Controller
 
             $userTemplate->delete();
 
-            return redirect()->route('admin.templates.my-templates')
-                ->with('success', 'Template berhasil dihapus!');
+            return redirect()->route('admin.templates.my-templates.index')
+                ->with('success', 'Template berhasil dihapus.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menghapus template: ' . $e->getMessage());
         }

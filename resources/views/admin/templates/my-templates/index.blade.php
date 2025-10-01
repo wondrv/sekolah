@@ -135,7 +135,7 @@
             </button>
 
             @if($request->search || $request->source)
-            <a href="{{ route('admin.templates.my-templates') }}"
+            <a href="{{ route('admin.templates.my-templates.index') }}"
                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 Clear
             </a>
@@ -321,52 +321,6 @@
             </div>
         </div>
         @endif
-    </div>
-
-    <!-- Import Section -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Import Template</h3>
-        <form method="POST" action="{{ route('admin.templates.import') }}" enctype="multipart/form-data" class="space-y-4">
-            @csrf
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="template_file" class="block text-sm font-medium text-gray-700">Template File</label>
-                    <input type="file"
-                           name="template_file"
-                           id="template_file"
-                           accept=".json,.zip"
-                           required
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    <p class="mt-1 text-xs text-gray-500">Supports JSON and ZIP files (max 10MB)</p>
-                </div>
-
-                <div>
-                    <label for="template_name" class="block text-sm font-medium text-gray-700">Template Name</label>
-                    <input type="text"
-                           name="template_name"
-                           id="template_name"
-                           required
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                </div>
-            </div>
-
-            <div class="flex items-center">
-                <input type="checkbox"
-                       name="activate_after_import"
-                       id="activate_after_import"
-                       value="1"
-                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                <label for="activate_after_import" class="ml-2 block text-sm text-gray-900">
-                    Activate template after import
-                </label>
-            </div>
-
-            <button type="submit"
-                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                <span class="mr-2">📥</span>
-                Import Template
-            </button>
-        </form>
     </div>
 </div>
 @endsection

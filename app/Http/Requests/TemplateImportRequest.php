@@ -18,6 +18,7 @@ class TemplateImportRequest extends FormRequest
             'template_file' => 'required_without:file|file|mimes:json,txt,zip,html,htm|max:10240',
             'template_name' => 'nullable|string|max:255',
             'activate_after_import' => 'nullable|boolean',
+            'generate_preview' => 'nullable|boolean',
         ];
     }
 

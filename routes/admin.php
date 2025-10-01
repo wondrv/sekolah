@@ -193,8 +193,8 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         'update' => 'admin.templates.update',
         'destroy' => 'admin.templates.destroy',
     ]);
-    // Template Import/Export (JSON)
-    Route::post('templates/import', [Admin\TemplateController::class, 'import'])->name('admin.templates.import');
+    // Template Import/Export (JSON) - Import functionality moved to Smart Import system
+    // Route::post('templates/import', [Admin\TemplateController::class, 'import'])->name('admin.templates.import');
     Route::post('templates/{template}/import', [Admin\TemplateController::class, 'importInto'])->name('admin.templates.import_into');
     Route::get('templates/{template}/export', [Admin\TemplateController::class, 'export'])->name('admin.templates.export');
     // Per-item deletes within templates
@@ -262,9 +262,26 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::get('gallery/{template}/live-preview', [Admin\Template\TemplateGalleryController::class, 'livePreview'])->name('gallery.live-preview');
         Route::post('gallery/{template}/install', [Admin\Template\TemplateGalleryController::class, 'install'])->name('gallery.install');
 
+        // Smart Template Import
+        Route::get('smart-import', [Admin\Template\SmartImportController::class, 'index'])->name('smart-import.index');
+        Route::post('smart-import/discover', [Admin\Template\SmartImportController::class, 'discover'])->name('smart-import.discover');
+        Route::post('smart-import/analyze', [Admin\Template\SmartImportController::class, 'analyzeUrl'])->name('smart-import.analyze');
+        Route::post('smart-import/import-url', [Admin\Template\SmartImportController::class, 'importFromUrl'])->name('smart-import.import-url');
+        Route::post('smart-import/import-file', [Admin\Template\SmartImportController::class, 'importFromFile'])->name('smart-import.import-file');
+        Route::post('smart-import/install-external', [Admin\Template\SmartImportController::class, 'installExternal'])->name('smart-import.install-external');
+        Route::get('smart-import/progress', [Admin\Template\SmartImportController::class, 'getProgress'])->name('smart-import.progress');
+
+        // Live Import (Quick Import)
+        Route::post('live-import/quick', [Admin\Template\LiveImportController::class, 'quickImport'])->name('live-import.quick');
+        Route::post('live-import/batch', [Admin\Template\LiveImportController::class, 'batchImport'])->name('live-import.batch');
+        Route::get('live-import/popular-urls', [Admin\Template\LiveImportController::class, 'getPopularUrls'])->name('live-import.popular-urls');
+        Route::post('live-import/test-language', [Admin\Template\LiveImportController::class, 'testLanguageDetection'])->name('live-import.test-language');
+
         // My Templates
-        Route::get('my-templates', [Admin\Template\MyTemplatesController::class, 'index'])->name('my-templates');
+        Route::get('my-templates', [Admin\Template\MyTemplatesController::class, 'index'])->name('my-templates.index');
         Route::get('my-templates/{userTemplate}', [Admin\Template\MyTemplatesController::class, 'show'])->name('my-templates.show');
+        Route::get('my-templates/{userTemplate}/edit', [Admin\Template\MyTemplatesController::class, 'edit'])->name('my-templates.edit');
+        Route::put('my-templates/{userTemplate}', [Admin\Template\MyTemplatesController::class, 'update'])->name('my-templates.update');
         Route::post('my-templates/{userTemplate}/activate', [Admin\Template\MyTemplatesController::class, 'activate'])->name('my-templates.activate');
         Route::post('my-templates/{userTemplate}/deactivate', [Admin\Template\MyTemplatesController::class, 'deactivate'])->name('my-templates.deactivate');
         Route::post('my-templates/{userTemplate}/duplicate', [Admin\Template\MyTemplatesController::class, 'duplicate'])->name('my-templates.duplicate');

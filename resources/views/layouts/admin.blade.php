@@ -142,7 +142,11 @@
                             <span style="margin-right: 0.375rem; font-size: 0.85rem;">🎨</span>
                             Template Gallery
                         </a>
-                        <a href="{{ route('admin.templates.my-templates') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.templates.my-templates*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                        <a href="{{ route('admin.templates.smart-import.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.templates.smart-import.*') ? 'background-color: #3b82f6; color: white;' : '' }}">
+                            <span style="margin-right: 0.375rem; font-size: 0.85rem;">🤖</span>
+                            Smart Import
+                        </a>
+                        <a href="{{ route('admin.templates.my-templates.index') }}" style="display: flex; align-items: center; padding: 0.375rem 0.5rem; border-radius: 0.375rem; text-decoration: none; color: #9ca3af; margin-bottom: 0.125rem; font-size: 0.85rem; {{ request()->routeIs('admin.templates.my-templates*') ? 'background-color: #3b82f6; color: white;' : '' }}">
                             <span style="margin-right: 0.375rem; font-size: 0.85rem;">📝</span>
                             My Templates
                         </a>
@@ -259,7 +263,7 @@
                                         @endif
                                     </div>
                                 @endforeach
-                                <a href="{{ route('admin.templates.my-templates') }}" style="display: block; margin-top: 0.5rem; text-align: center; font-size: 0.6875rem; color: #3b82f6; text-decoration: none;">Kelola Template »</a>
+                                <a href="{{ route('admin.templates.my-templates.index') }}" style="display: block; margin-top: 0.5rem; text-align: center; font-size: 0.6875rem; color: #3b82f6; text-decoration: none;">Kelola Template »</a>
                             </div>
                         </div>
                         @endif

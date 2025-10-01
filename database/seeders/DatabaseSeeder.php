@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SchoolDataSeeder::class,
             DefaultThemeSeeder::class,
+            SmartImportTemplateSeeder::class,
         ]);
     }
 }
