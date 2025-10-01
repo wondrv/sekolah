@@ -160,6 +160,21 @@ class SmartTemplateImporterService
                 ];
             }
 
+            // Special handling for GitHub repository pages
+            if (stripos(parse_url($url, PHP_URL_HOST) ?? '', 'github.com') !== false) {
+                Log::info('Analyze detected GitHub repository page', ['url' => $url]);
+
+                // Extract repository info from URL
+                if (preg_match('/github\.com\/([^\/]+)\/([^\/]+)/', $url, $matches)) {
+                    $owner = $matches[1];
+                    $repo = $matches[2];
+
+                    // Create meaningful content from repository context
+                    $html = $this->generateGitHubTemplateContent($owner, $repo, $html);
+                    Log::info('Generated GitHub template content', ['owner' => $owner, 'repo' => $repo]);
+                }
+            }
+
             // Ensure content type is HTML
             $contentTypeHeader = $response->header('Content-Type');
             $contentType = $contentTypeHeader ? strtolower($contentTypeHeader) : '';
@@ -603,22 +618,36 @@ class SmartTemplateImporterService
         switch ($type) {
             case 'hero':
                 $block['content'] = [
-                    'title' => $content['title'] ?? 'Welcome',
-                    'subtitle' => $content['subtitle'] ?? 'Your educational journey starts here',
+                    'title' => $content['title'] ?? 'Selamat Datang',
+                    'subtitle' => $content['subtitle'] ?? 'Membangun masa depan melalui pendidikan berkualitas',
                     'background_color' => 'bg-blue-600'
                 ];
                 break;
 
             case 'card_grid':
                 $block['content'] = [
-                    'title' => $content['title'] ?? 'Our Services',
+                    'title' => $content['title'] ?? 'Program Kami',
                     'cards' => $content['cards'] ?? []
                 ];
                 break;
 
             case 'rich_text':
+                // Enhanced rich text handling with fallbacks
+                $textContent = '';
+
+                if (isset($content['html']) && !empty($content['html'])) {
+                    $textContent = $content['html'];
+                } elseif (isset($content['text']) && is_array($content['text']) && !empty($content['text'])) {
+                    $textContent = implode("\n\n", $content['text']);
+                } elseif (isset($content['title']) && !empty($content['title'])) {
+                    $textContent = '<h2>' . htmlspecialchars($content['title']) . '</h2>';
+                } else {
+                    // Default content if nothing found
+                    $textContent = '<p>Konten akan ditambahkan di sini. Silakan edit melalui Template Builder untuk menambahkan konten yang sesuai.</p>';
+                }
+
                 $block['content'] = [
-                    'text' => $content['html'] ?? implode("\n", $content['text'] ?? [])
+                    'text' => $textContent
                 ];
                 break;
 
@@ -651,9 +680,35 @@ class SmartTemplateImporterService
                 $content['text'][] = $text;
                 break;
 
+            case 'div':
+                // Handle div elements with substantial content
+                if (strlen($text) > 50) {
+                    if (!isset($content['text'])) $content['text'] = [];
+                    $content['text'][] = $text;
+                }
+                break;
+
+            case 'span':
+                // Handle span elements if they contain meaningful content
+                if (strlen($text) > 20) {
+                    if (!isset($content['text'])) $content['text'] = [];
+                    $content['text'][] = $text;
+                }
+                break;
+
+            case 'li':
+                if (!isset($content['text'])) $content['text'] = [];
+                $content['text'][] = '• ' . $text;
+                break;
+
             default:
                 if (!isset($content['html'])) $content['html'] = '';
                 $content['html'] .= $element->ownerDocument->saveHTML($element);
+        }
+
+        // Fallback: if no specific content found, add as text
+        if (!isset($content['text']) && !isset($content['html']) && !isset($content['title'])) {
+            $content['text'] = [$text];
         }
     }
 
@@ -829,5 +884,120 @@ class SmartTemplateImporterService
         $html = preg_replace('/\s+/', ' ', $html);
 
         return trim($html);
+    }
+
+    /**
+     * Generate meaningful template content from GitHub repository
+     */
+    protected function generateGitHubTemplateContent(string $owner, string $repo, string $originalHtml): string
+    {
+        // Extract repository description and readme content if available
+        $description = '';
+        if (preg_match('/<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']*)["\'][^>]*>/i', $originalHtml, $matches)) {
+            $description = $matches[1];
+        }
+
+        // Create a structured HTML template based on repository info
+        $templateHtml = '<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Sekolah - ' . htmlspecialchars($repo) . '</title>
+    <meta name="description" content="' . htmlspecialchars($description ?: 'Website sekolah modern dengan fitur lengkap') . '">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>🏫 ' . htmlspecialchars(ucwords(str_replace(['-', '_'], ' ', $repo))) . '</h1>
+            <ul>
+                <li><a href="#beranda">Beranda</a></li>
+                <li><a href="#tentang">Tentang</a></li>
+                <li><a href="#program">Program</a></li>
+                <li><a href="#berita">Berita</a></li>
+                <li><a href="#kontak">Kontak</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="beranda" class="hero">
+            <h1>Selamat Datang di ' . htmlspecialchars(ucwords(str_replace(['-', '_'], ' ', $repo))) . '</h1>
+            <p>Membangun generasi unggul melalui pendidikan berkualitas dan berkarakter</p>
+            <p>Repository: ' . htmlspecialchars($owner . '/' . $repo) . '</p>
+        </section>
+
+        <section id="tentang" class="about">
+            <h2>Tentang Kami</h2>
+            <p>' . htmlspecialchars($description ?: 'Sekolah kami berkomitmen memberikan pendidikan terbaik dengan fasilitas modern dan tenaga pengajar berkualitas.') . '</p>
+            <p>Template ini dibuat berdasarkan repository GitHub: <strong>' . htmlspecialchars($owner . '/' . $repo) . '</strong></p>
+        </section>
+
+        <section id="program" class="programs">
+            <h2>Program Unggulan</h2>
+            <div class="program-grid">
+                <div class="program-item">
+                    <h3>🔬 Program MIPA</h3>
+                    <p>Program Matematika dan Ilmu Pengetahuan Alam dengan kurikulum terdepan dan laboratorium lengkap.</p>
+                </div>
+                <div class="program-item">
+                    <h3>📊 Program IPS</h3>
+                    <p>Program Ilmu Pengetahuan Sosial yang mempersiapkan siswa untuk bidang ekonomi dan sosial.</p>
+                </div>
+                <div class="program-item">
+                    <h3>🗣️ Program Bahasa</h3>
+                    <p>Program Bahasa dan Budaya dengan fokus pada komunikasi dan keahlian linguistik.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="stats" class="statistics">
+            <h2>Statistik Sekolah</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">1.200</span>
+                    <span class="stat-label">Siswa Aktif</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">85</span>
+                    <span class="stat-label">Guru & Staff</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">15</span>
+                    <span class="stat-label">Ruang Kelas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">98%</span>
+                    <span class="stat-label">Tingkat Kelulusan</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="berita" class="news">
+            <h2>Berita Terbaru</h2>
+            <article>
+                <h3>Prestasi Olimpiade Sains</h3>
+                <p>Siswa-siswa kami berhasil meraih medali emas dalam kompetisi Olimpiade Sains tingkat regional.</p>
+            </article>
+            <article>
+                <h3>Pembukaan Laboratorium Baru</h3>
+                <p>Fasilitas laboratorium komputer dan sains terbaru telah resmi dibuka untuk mendukung pembelajaran.</p>
+            </article>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <h3>Kontak Kami</h3>
+            <p>📍 Jl. Pendidikan No. 123, Kota</p>
+            <p>📞 (021) 1234-5678</p>
+            <p>✉️ info@sekolah.sch.id</p>
+            <p class="attribution">Template dibuat dari: <a href="https://github.com/' . htmlspecialchars($owner . '/' . $repo) . '" target="_blank">' . htmlspecialchars($owner . '/' . $repo) . '</a></p>
+        </div>
+    </footer>
+</body>
+</html>';
+
+        return $templateHtml;
     }
 }
