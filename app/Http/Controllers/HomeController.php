@@ -8,6 +8,8 @@ use App\Models\UserTemplate;
 use App\Models\Setting;
 use App\Support\Theme;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
@@ -20,6 +22,27 @@ class HomeController extends Controller
 
     public function index(Request $request)
     {
+        // Debug: Check for active UserTemplate with blade_views type first
+        Log::info('HomeController index() called');
+
+        $activeTemplate = UserTemplate::where('is_active', true)
+            ->where('template_type', 'blade_views')
+            ->first();
+
+        Log::info('Active template query result', [
+            'template_found' => $activeTemplate ? true : false,
+            'template_id' => $activeTemplate ? $activeTemplate->id : null,
+            'template_name' => $activeTemplate ? $activeTemplate->name : null,
+            'template_type' => $activeTemplate ? $activeTemplate->template_type : null
+        ]);
+
+        if ($activeTemplate) {
+            Log::info('Calling renderBladeTemplate');
+            return $this->renderBladeTemplate($activeTemplate);
+        }
+
+        Log::info('No active blade template found, proceeding with normal flow');
+
         // Check if we should use full template system
         $homepageType = Setting::get('homepage_template_type', 'cms');
 
@@ -40,6 +63,89 @@ class HomeController extends Controller
         // Fallback to original home template system
         $template = Theme::getHomeTemplate();
         return view('home-template', compact('template'));
+    }    /**
+     * Render blade template from UserTemplate
+     */
+    protected function renderBladeTemplate(UserTemplate $template)
+    {
+        // Log that we're trying to render the template
+        Log::info('Attempting to render blade template', [
+            'template_id' => $template->id,
+            'template_name' => $template->name
+        ]);
+
+        $templateFiles = $template->template_files;
+        $templateData = $template->template_data;
+
+        // Find the main view file (home.blade.php or similar)
+        $mainView = 'home.blade.php';
+        if (isset($templateFiles[$mainView])) {
+            $viewContent = $templateFiles[$mainView];
+
+            // Extract content if it's stored as array with content key
+            if (is_array($viewContent) && isset($viewContent['content'])) {
+                $content = $viewContent['content'];
+
+                Log::info('Found home.blade.php content', [
+                    'content_length' => strlen($content),
+                    'content_preview' => substr($content, 0, 100)
+                ]);
+
+                // For now, let's return a simple response to test if this method is called
+                return response("TEMPLATE WORKING! Template ID: {$template->id}, Name: {$template->name}<br><br>Content Preview:<br>" . htmlspecialchars(substr($content, 0, 500)));
+            }
+        }
+
+        // Log if we didn't find home.blade.php
+        Log::info('home.blade.php not found, checking other files', [
+            'available_files' => array_keys($templateFiles)
+        ]);
+
+        // If no home.blade.php, try to find any main view file
+        foreach ($templateFiles as $filename => $fileData) {
+            if (str_contains($filename, 'home') || str_contains($filename, 'index')) {
+                $content = is_array($fileData) && isset($fileData['content'])
+                    ? $fileData['content']
+                    : $fileData;
+                return response("FOUND MAIN VIEW: {$filename}<br><br>Content Preview:<br>" . htmlspecialchars(substr($content, 0, 500)));
+            }
+        }
+
+        // Fallback to CMS if no suitable view found
+        Log::warning('No suitable main view found, falling back to CMS', [
+            'available_files' => array_keys($templateFiles)
+        ]);
+        return $this->renderCmsTemplate();
+    }    /**
+     * Render dynamic view content
+     */
+    protected function renderDynamicView(string $content, UserTemplate $template)
+    {
+        // Create a temporary view file
+        $tempViewName = 'temp_' . md5($template->id . time());
+        $viewPath = resource_path("views/{$tempViewName}.blade.php");
+
+        try {
+            // Write content to temporary file
+            file_put_contents($viewPath, $content);
+
+            // Clear view cache to ensure fresh compilation
+            Artisan::call('view:clear');
+
+            // Render the view
+            $result = view($tempViewName, [
+                'template' => $template,
+                'settings' => Setting::all()->pluck('value', 'key')->toArray()
+            ]);
+
+            return $result;
+
+        } finally {
+            // Clean up temporary file
+            if (file_exists($viewPath)) {
+                unlink($viewPath);
+            }
+        }
     }
 
     /**

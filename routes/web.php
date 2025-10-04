@@ -94,10 +94,15 @@ Route::get('/tentang-kami/{slug}', function ($slug) {
     return redirect('/' . $slug, 301);
 });
 
+require __DIR__.'/auth.php';
+
+// Include template routes BEFORE the catch-all route
+if (file_exists(__DIR__ . '/template.php')) {
+    require __DIR__ . '/template.php';
+}
+
 // Pure CMS Routes - Handle all dynamic content
 // This should be the LAST route to catch all unmatched paths
 Route::get('/{path?}', [App\Http\Controllers\PureCMSController::class, 'handleRequest'])
     ->where('path', '.*')
     ->name('cms.dynamic');
-
-require __DIR__.'/auth.php';

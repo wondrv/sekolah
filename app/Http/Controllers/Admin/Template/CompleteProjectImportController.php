@@ -8,6 +8,7 @@ use App\Models\UserTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class CompleteProjectImportController extends Controller
@@ -133,7 +134,7 @@ class CompleteProjectImportController extends Controller
             ]);
 
             // Clean up temp file
-            \Illuminate\Support\Facades\Storage::delete($tempPath);
+            Storage::delete($tempPath);
 
             if ($result['success']) {
                 return response()->json([
@@ -244,7 +245,7 @@ class CompleteProjectImportController extends Controller
         try {
             // Delete all project files
             if (isset($template->settings['assets_path'])) {
-                \Illuminate\Support\Facades\Storage::deleteDirectory($template->settings['assets_path']);
+                Storage::deleteDirectory($template->settings['assets_path']);
             }
 
             // Delete template record

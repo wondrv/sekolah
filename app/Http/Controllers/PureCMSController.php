@@ -16,6 +16,8 @@ use App\Models\Category;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class PureCMSController extends Controller
 {
@@ -24,6 +26,20 @@ class PureCMSController extends Controller
      */
     public function handleRequest(Request $request, $path = '/')
     {
+        // First, check for active UserTemplate with blade_views type (imported templates)
+        if ($path === '/' || $path === 'home') {
+            $activeBladeTemplate = UserTemplate::where('is_active', true)
+                ->where('template_type', 'blade_views')
+                ->first();
+
+            if ($activeBladeTemplate) {
+                return $this->renderBladeTemplate($activeBladeTemplate);
+            } else {
+                // No active template, clean up any temporary template files
+                $this->cleanUpTemporaryTemplateFiles();
+            }
+        }
+
         // Determine route pattern
         $routePattern = $this->determineRoutePattern($request, $path);
 
@@ -46,6 +62,83 @@ class PureCMSController extends Controller
     }
 
     /**
+     * Render blade template from UserTemplate (imported templates)
+     */
+    protected function renderBladeTemplate(UserTemplate $template)
+    {
+        $templateFiles = $template->template_files;
+
+        try {
+            // Install controllers and routes if this is a full Laravel template
+            $this->installFullLaravelComponents($template);
+
+            // Create temporary view files for all template files
+            $tempFiles = [];
+            foreach ($templateFiles as $filename => $fileData) {
+                $content = is_array($fileData) && isset($fileData['content'])
+                    ? $fileData['content']
+                    : $fileData;
+
+                // Decode base64 content if it's encoded
+                if (base64_decode($content, true) !== false) {
+                    $content = base64_decode($content);
+                }
+
+                // Create subdirectory if needed (for layouts/app.blade.php)
+                $viewPath = resource_path('views/' . $filename);
+                $directory = dirname($viewPath);
+                if (!file_exists($directory)) {
+                    mkdir($directory, 0755, true);
+                }
+
+                // Write temporary file
+                file_put_contents($viewPath, $content);
+                $tempFiles[] = $viewPath;
+            }
+
+            // Clear view cache to ensure fresh compilation
+            Artisan::call('view:clear');
+
+            // Find and render main view
+            $mainView = 'home'; // home.blade.php -> 'home'
+            if (isset($templateFiles['home.blade.php'])) {
+                $result = view($mainView, [
+                    'template' => $template,
+                    'settings' => \App\Models\Setting::all()->pluck('value', 'key')->toArray()
+                ]);
+
+                return $result;
+            }
+
+            // If no home.blade.php, try to find any main view file
+            foreach ($templateFiles as $filename => $fileData) {
+                if (str_contains($filename, 'home') || str_contains($filename, 'index')) {
+                    $viewName = str_replace('.blade.php', '', $filename);
+                    return view($viewName, [
+                        'template' => $template,
+                        'settings' => \App\Models\Setting::all()->pluck('value', 'key')->toArray()
+                    ]);
+                }
+            }
+
+        } catch (\Exception $e) {
+            // Log error and fall back
+            Log::error('Error rendering blade template', [
+                'template_id' => $template->id,
+                'error' => $e->getMessage()
+            ]);
+        } finally {
+            // Clean up temporary files (optional - could keep them for caching)
+            // foreach ($tempFiles ?? [] as $tempFile) {
+            //     if (file_exists($tempFile)) {
+            //         unlink($tempFile);
+            //     }
+            // }
+        }
+
+        // Fallback to default template if rendering failed
+        return $this->renderDefaultTemplate(request(), '/');
+    }    /**
      * Determine route pattern from request
      */
     protected function determineRoutePattern(Request $request, $path)
@@ -471,5 +564,229 @@ class PureCMSController extends Controller
 
         // 404
         abort(404);
+    }
+
+    /**
+     * Clean up temporary template files when no template is active
+     */
+    protected function cleanUpTemporaryTemplateFiles()
+    {
+        try {
+            // List of common template files that might be left behind
+            $filesToClean = [
+                'home.blade.php',
+                'layouts/app.blade.php',
+                'profil.blade.php',
+                'fasilitas.blade.php',
+                'guru.blade.php',
+                'prestasi.blade.php',
+                'galeri.blade.php',
+                'kontak.blade.php'
+            ];
+
+            foreach ($filesToClean as $filename) {
+                $viewPath = resource_path('views/' . $filename);
+                if (file_exists($viewPath)) {
+                    // Check if this is a temporary template file (not original CMS file)
+                    // We can identify them by checking if they contain template-specific content
+                    $content = file_get_contents($viewPath);
+
+                    // If it contains template-specific markers, it's safe to delete
+                    if (str_contains($content, 'SD Negeri Contoh') ||
+                        str_contains($content, 'Selamat Datang di SD') ||
+                        str_contains($content, '@extends(\'layouts.app\')')) {
+                        unlink($viewPath);
+                        Log::info("Cleaned up temporary template file: {$filename}");
+                    }
+                }
+            }
+
+            // Clean up empty layouts directory if it exists
+            $layoutsDir = resource_path('views/layouts');
+            if (is_dir($layoutsDir) && count(scandir($layoutsDir)) == 2) { // Only . and ..
+                rmdir($layoutsDir);
+                Log::info("Cleaned up empty layouts directory");
+            }
+
+            // Clear view cache to ensure no compiled views remain
+            Artisan::call('view:clear');
+
+        } catch (\Exception $e) {
+            Log::error('Error cleaning up temporary template files', [
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Install Full Laravel Components (controllers and routes) from template
+     */
+    protected function installFullLaravelComponents(UserTemplate $template)
+    {
+        $templateData = $template->template_data;
+        $templateFiles = $template->template_files;
+
+        // Check if this is a full Laravel template with controllers and routes
+        if (!isset($templateData['structure'])) {
+            return;
+        }
+
+        $structure = $templateData['structure'];
+
+        try {
+            // Install Controllers
+            if (!empty($structure['controller_files'])) {
+                foreach ($structure['controller_files'] as $controllerFile) {
+                    $this->installController($controllerFile, $templateFiles[$controllerFile]);
+                }
+                Log::info('Installed controllers from template', [
+                    'template_id' => $template->id,
+                    'controllers' => count($structure['controller_files'])
+                ]);
+            }
+
+            // Install Routes
+            if (!empty($structure['route_files'])) {
+                foreach ($structure['route_files'] as $routeFile) {
+                    $this->installRoutes($routeFile, $templateFiles[$routeFile]);
+                }
+                Log::info('Installed routes from template', [
+                    'template_id' => $template->id,
+                    'routes' => count($structure['route_files'])
+                ]);
+            }
+
+            // Install Assets
+            $assetFiles = array_merge(
+                $structure['css_files'] ?? [],
+                $structure['js_files'] ?? [],
+                $structure['image_files'] ?? []
+            );
+
+            if (!empty($assetFiles)) {
+                foreach ($assetFiles as $assetFile) {
+                    if (isset($templateFiles[$assetFile])) {
+                        $this->installAsset($assetFile, $templateFiles[$assetFile]);
+                    }
+                }
+                Log::info('Installed assets from template', [
+                    'template_id' => $template->id,
+                    'assets' => count($assetFiles)
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error installing Laravel components', [
+                'template_id' => $template->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Install controller file
+     */
+    protected function installController(string $filename, array $fileData)
+    {
+        try {
+            $content = base64_decode($fileData['content']);
+
+            // Determine target path
+            $relativePath = str_replace(['app/Http/Controllers/', 'app\\Http\\Controllers\\'], '', $filename);
+            $targetPath = app_path('Http/Controllers/' . $relativePath);
+
+            // Create directory if needed
+            $directory = dirname($targetPath);
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            // Write controller file
+            file_put_contents($targetPath, $content);
+
+            Log::info('Controller installed', ['path' => $targetPath]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to install controller', [
+                'filename' => $filename,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Install routes from template
+     */
+    protected function installRoutes(string $filename, array $fileData)
+    {
+        try {
+            $content = base64_decode($fileData['content']);
+
+            // Create template routes file
+            $templateRoutesFile = base_path('routes/template.php');
+
+            // Add route content with proper formatting
+            $routeContent = "\n\n// Routes from template: {$filename}\n";
+            $routeContent .= "// Installed on: " . now()->format('Y-m-d H:i:s') . "\n";
+            $routeContent .= $content . "\n";
+
+            file_put_contents($templateRoutesFile, $routeContent, FILE_APPEND | LOCK_EX);
+
+            // Include the routes file in web.php if not already included
+            $this->includeTemplateRoutes();
+
+            Log::info('Routes installed', ['path' => $templateRoutesFile]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to install routes', [
+                'filename' => $filename,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Include template routes in main web.php
+     */
+    protected function includeTemplateRoutes()
+    {
+        $webRoutesPath = base_path('routes/web.php');
+        $webContent = file_get_contents($webRoutesPath);
+
+        $includeStatement = "\n// Include template routes\nif (file_exists(__DIR__ . '/template.php')) {\n    require __DIR__ . '/template.php';\n}\n";
+
+        // Check if already included
+        if (!str_contains($webContent, 'template.php')) {
+            file_put_contents($webRoutesPath, $webContent . $includeStatement);
+            Log::info('Template routes included in web.php');
+        }
+    }
+
+    /**
+     * Install asset file
+     */
+    protected function installAsset(string $filename, array $fileData)
+    {
+        try {
+            $content = base64_decode($fileData['content']);
+
+            // Determine target path in public/template-assets/
+            $relativePath = str_replace(['public/', 'assets/'], '', $filename);
+            $targetPath = public_path('template-assets/' . $relativePath);
+
+            // Create directory if needed
+            $directory = dirname($targetPath);
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            file_put_contents($targetPath, $content);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to install asset', [
+                'filename' => $filename,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

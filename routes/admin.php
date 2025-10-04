@@ -262,38 +262,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::get('gallery/{template}/live-preview', [Admin\Template\TemplateGalleryController::class, 'livePreview'])->name('gallery.live-preview');
         Route::post('gallery/{template}/install', [Admin\Template\TemplateGalleryController::class, 'install'])->name('gallery.install');
 
-        // Smart Template Import
+        // Template Import (Simplified)
         Route::get('smart-import', [Admin\Template\SmartImportController::class, 'index'])->name('smart-import.index');
-        Route::get('import-guide', function() { return view('admin.templates.import-guide'); })->name('import-guide');
-        Route::post('smart-import/discover', [Admin\Template\SmartImportController::class, 'discover'])->name('smart-import.discover');
-        Route::post('smart-import/complete-github', [Admin\Template\SmartImportController::class, 'importCompleteProjectFromGitHub'])->name('smart-import.complete-github');
-        Route::post('smart-import/complete-zip', [Admin\Template\SmartImportController::class, 'importCompleteProjectFromZip'])->name('smart-import.complete-zip');
-        Route::post('smart-import/activate-complete/{template}', [Admin\Template\SmartImportController::class, 'activateCompleteProject'])->name('smart-import.activate-complete');
-
-        // Complete Project Import (Redirect to Smart Import)
-        Route::get('complete-import', function() {
-            return redirect()->route('admin.templates.smart-import.index')->with('tab', 'complete');
-        });
-        Route::post('smart-import/analyze', [Admin\Template\SmartImportController::class, 'analyzeUrl'])->name('smart-import.analyze');
-        Route::post('smart-import/import-url', [Admin\Template\SmartImportController::class, 'importFromUrl'])->name('smart-import.import-url');
-        Route::post('smart-import/import-file', [Admin\Template\SmartImportController::class, 'importFromFile'])->name('smart-import.import-file');
-
-        // Full Template Import (integrated into Smart Import)
-        Route::post('smart-import/full-import', [Admin\Template\SmartImportController::class, 'importFullTemplate'])->name('smart-import.full-import');
-        Route::post('smart-import/full-upload', [Admin\Template\SmartImportController::class, 'uploadFullTemplate'])->name('smart-import.full-upload');
-        Route::get('smart-import/full-templates', [Admin\Template\SmartImportController::class, 'listFullTemplates'])->name('smart-import.full-templates');
-        Route::post('smart-import/full-activate/{template}', [Admin\Template\SmartImportController::class, 'activateFullTemplate'])->name('smart-import.full-activate');
-
-        // Full Template Import (WordPress-like)
-        Route::get('full-import', [Admin\Template\FullTemplateImportController::class, 'index'])->name('full-import.index');
-        Route::post('full-import/import', [Admin\Template\FullTemplateImportController::class, 'import'])->name('full-import.import');
-        Route::post('full-import/upload', [Admin\Template\FullTemplateImportController::class, 'uploadZip'])->name('full-import.upload');
-        Route::get('full-import/list', [Admin\Template\FullTemplateImportController::class, 'list'])->name('full-import.list');
-        Route::get('full-import/{template}/preview', [Admin\Template\FullTemplateImportController::class, 'preview'])->name('full-import.preview');
-        Route::post('full-import/{template}/activate', [Admin\Template\FullTemplateImportController::class, 'activate'])->name('full-import.activate');
-        Route::delete('full-import/{template}', [Admin\Template\FullTemplateImportController::class, 'delete'])->name('full-import.delete');
-        Route::post('smart-import/install-external', [Admin\Template\SmartImportController::class, 'installExternal'])->name('smart-import.install-external');
-        Route::get('smart-import/progress', [Admin\Template\SmartImportController::class, 'getProgress'])->name('smart-import.progress');
+        Route::post('smart-import/import-file', [Admin\Template\SmartImportController::class, 'importFile'])->name('smart-import.import-file');
 
         // Live Import (Quick Import)
         Route::post('live-import/quick', [Admin\Template\LiveImportController::class, 'quickImport'])->name('live-import.quick');
@@ -301,7 +272,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::get('live-import/popular-urls', [Admin\Template\LiveImportController::class, 'getPopularUrls'])->name('live-import.popular-urls');
         Route::post('live-import/test-language', [Admin\Template\LiveImportController::class, 'testLanguageDetection'])->name('live-import.test-language');
 
-        // Template Switching\n        Route::get('template-switcher', function() {\n            $activeTemplate = \\App\\Models\\UserTemplate::where('user_id', Auth::id())->where('is_active', true)->first();\n            $templates = \\App\\Models\\UserTemplate::where('user_id', Auth::id())->orderBy('created_at', 'desc')->get();\n            return view('admin.templates.switcher', compact('activeTemplate', 'templates'));\n        })->name('template-switcher');\n\n        // My Templates
+        // Template Switching\n        Route::get('template-switcher', function() {\n            $activeTemplate = \\App\\Models\\UserTemplate::where('user_id', Auth::id())->where('is_active', true)->first();\n            $templates = \\App\\Models\\UserTemplate::where('user_id', Auth::id())->orderBy('created_at', 'desc')->get();\n            return view('admin.templates.switcher', compact('activeTemplate', 'templates'));\n        })->name('template-switcher');
         Route::get('my-templates', [Admin\Template\MyTemplatesController::class, 'index'])->name('my-templates.index');
         Route::get('my-templates/{userTemplate}', [Admin\Template\MyTemplatesController::class, 'show'])->name('my-templates.show');
         Route::get('my-templates/{userTemplate}/edit', [Admin\Template\MyTemplatesController::class, 'edit'])->name('my-templates.edit');

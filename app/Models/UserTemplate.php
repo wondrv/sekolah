@@ -19,9 +19,14 @@ use Illuminate\Support\Facades\Log;
  * @property string|null $preview_image
  * @property array|null $template_data
  * @property array|null $draft_template_data
- * @property string $source  // gallery|custom|imported
+ * @property array|null $template_files
+ * @property string $template_type
+ * @property string $source
  * @property bool $is_active
  * @property array|null $customizations
+ * @property string|null $status
+ * @property string|null $version
+ * @property array|null $settings
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  *
@@ -35,27 +40,6 @@ use Illuminate\Support\Facades\Log;
  * @method static static custom()
  * @method static static fromGallery()
  * @method static static imported()
- */
-/**
- * Class UserTemplate
- *
- * @property int $id
- * @property int $user_id
- * @property int|null $gallery_template_id
- * @property string $name
- * @property string $slug
- * @property string|null $description
- * @property string|null $preview_image
- * @property array|null $template_data
- * @property array|null $draft_template_data
- * @property string $source
- * @property bool $is_active
- * @property array|null $customizations
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- * @property-read TemplateGallery|null $galleryTemplate
- * @property-read \Illuminate\Database\Eloquent\Collection|Template[] $templates
- * @property-read \Illuminate\Database\Eloquent\Collection|TemplateRevision[] $revisions
  */
 class UserTemplate extends Model
 {
@@ -83,7 +67,8 @@ class UserTemplate extends Model
     protected $casts = [
         'template_data' => 'array',
         'draft_template_data' => 'array',
-        'template_files' => 'array', // Cast to array for file storage
+        'template_files' => 'array',
+        'template_type' => 'string',
         'is_active' => 'boolean',
         'customizations' => 'array',
         'settings' => 'array',

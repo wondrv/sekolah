@@ -127,10 +127,9 @@
 
                         <div class="bg-blue-50 p-3 rounded border border-blue-200">
                             <h4 class="font-semibold text-blue-900 mb-2">🔧 Format JSON Yang Benar:</h4>
-                            <div class="text-xs">
-                                <a href="{{ url('sample-template.json') }}" target="_blank" class="text-blue-600 hover:underline">
-                                    📄 Download contoh template.json
-                                </a>
+                            <div class="text-xs text-blue-800">
+                                <p>File JSON harus mengandung struktur template dengan sections dan blocks yang valid.</p>
+                                <p>Lihat dokumentasi untuk format lengkap template JSON.</p>
                             </div>
                         </div>
 
@@ -335,11 +334,11 @@
                             </div>
                         </div>
 
-                        <div class="mt-4">
-                            <a href="{{ url('sample-template.json') }}" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800">
-                                <i class="fas fa-download mr-2"></i>
-                                Download Template JSON Lengkap
-                            </a>
+                        <div class="mt-4 bg-gray-100 p-3 rounded">
+                            <p class="text-sm text-gray-700">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Template JSON harus mengikuti struktur yang benar dengan sections, blocks, dan data yang valid.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -351,19 +350,16 @@
             <div class="p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">🎯 Resources & Links</h2>
 
-                <div class="grid md:grid-cols-3 gap-4">
-                    <a href="{{ url('sample-template.json') }}" target="_blank" class="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <a href="{{ route('admin.templates.smart-import.index') }}" class="bg-white p-4 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
                         <div class="flex items-center">
-                            <i class="fas fa-download text-blue-600 text-lg mr-3"></i>
+                            <i class="fas fa-upload text-green-600 text-lg mr-3"></i>
                             <div>
-                                <p class="font-semibold text-gray-900">Sample JSON</p>
-                                <p class="text-sm text-gray-600">Template contoh</p>
+                                <p class="font-semibold text-gray-900">Smart Import</p>
+                                <p class="text-sm text-gray-600">Import template otomatis</p>
                             </div>
                         </div>
                     </a>
-
-                    <a href="{{ route('admin.templates.smart-import.index') }}" class="bg-white p-4 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
-                        <div class="flex items-center">
                             <i class="fas fa-upload text-green-600 text-lg mr-3"></i>
                             <div>
                                 <p class="font-semibold text-gray-900">Start Import</p>

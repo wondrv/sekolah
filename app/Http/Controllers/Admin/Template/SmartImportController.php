@@ -3,377 +3,52 @@
 namespace App\Http\Controllers\Admin\Template;
 
 use App\Http\Controllers\Controller;
-use App\Services\SmartTemplateImporterService;
-use App\Services\FullTemplateImporterService;
-use App\Services\ExternalTemplateService;
-use App\Services\AdvancedTemplateImporterService;
 use App\Models\UserTemplate;
-use App\Models\TemplateGallery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class SmartImportController extends Controller
 {
-    protected SmartTemplateImporterService $importer;
-    protected FullTemplateImporterService $fullImporter;
-    protected ExternalTemplateService $externalService;
-    protected AdvancedTemplateImporterService $advancedImporter;
-
-    public function __construct(
-        SmartTemplateImporterService $importer,
-        FullTemplateImporterService $fullImporter,
-        ExternalTemplateService $externalService,
-        AdvancedTemplateImporterService $advancedImporter
-    ) {
-        $this->importer = $importer;
-        $this->fullImporter = $fullImporter;
-        $this->externalService = $externalService;
-        $this->advancedImporter = $advancedImporter;
-    }
-
-    /**
-     * Show smart import interface
-     */
     public function index()
     {
-        $recentCompleteProjects = UserTemplate::where('user_id', Auth::id())
-            ->where('settings->template_type', 'complete_project')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
         return view('admin.templates.smart-import.index', [
             'recent_imports' => $this->getRecentImports(),
-            'recent_complete_projects' => $recentCompleteProjects,
-            'import_stats' => $this->getImportStats(),
-            'supported_sources' => $this->getSupportedSources()
+            'import_stats' => $this->getImportStats()
         ]);
     }
 
     /**
-     * Discover templates from external sources
+     * Import template file
      */
-    public function discover(Request $request)
+    public function importFile(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'source' => 'string|in:all,github_school_templates,github_education_themes,free_css_school',
-            'limit' => 'integer|min:1|max:50'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         try {
-            $source = $request->get('source', 'all');
-            $limit = $request->get('limit', 20);
-
-            $templates = $this->externalService->discoverTemplates($source, $limit);
-
-            return response()->json([
-                'success' => true,
-                'templates' => $templates,
-                'total' => count($templates),
-                'source' => $source
+            $validator = Validator::make($request->all(), [
+                'file' => 'required|file|mimes:zip|max:51200', // 50MB max
+                'template_name' => 'nullable|string|max:255',
+                'auto_activate' => 'boolean'
             ]);
 
-        } catch (\Exception $e) {
-            Log::error('Template discovery failed', [
-                'error' => $e->getMessage(),
-                'source' => $request->get('source')
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to discover templates: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Import template from URL with smart analysis
-     */
-    public function importFromUrl(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'url' => 'required|url',
-            'auto_activate' => 'boolean',
-            'custom_name' => 'string|max:255',
-            'custom_description' => 'string|max:500'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $url = $request->get('url');
-            $userId = Auth::id();
-
-            $options = [
-                'auto_activate' => $request->boolean('auto_activate', false),
-                'custom_name' => $request->get('custom_name'),
-                'custom_description' => $request->get('custom_description')
-            ];
-
-            // Start the import process
-            $result = $this->importer->importFromUrl($url, $userId, $options);
-
-            if ($result['success']) {
-                $this->logImportSuccess($result);
-
-                return response()->json([
-                    'success' => true,
-                    'template' => [
-                        'id' => $result['template']->id,
-                        'name' => $result['template']->name,
-                        'slug' => $result['template']->slug,
-                        'preview_url' => $result['template']->preview_image_url,
-                        'is_active' => $result['template']->is_active
-                    ],
-                    'stats' => $result['stats'],
-                    'message' => $result['message'],
-                    'redirect' => route('admin.templates.my-templates.edit', $result['template']->id)
-                ]);
-            } else {
-                $this->logImportError($url, $result);
-
+            if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'error' => $result['error'],
-                    'code' => $result['code'] ?? 'IMPORT_FAILED'
+                    'error' => 'Validation failed: ' . $validator->errors()->first(),
+                    'code' => 'VALIDATION_FAILED'
                 ], 422);
             }
 
-        } catch (\Exception $e) {
-            Log::error('Smart import failed', [
-                'url' => $request->get('url'),
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Import failed due to an unexpected error. Please try again.',
-                'code' => 'UNEXPECTED_ERROR'
-            ], 500);
-        }
-    }
-
-    /**
-     * Install external template from discovery
-     */
-    public function installExternal(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'external_id' => 'required|string',
-            'template_data' => 'required|array',
-            'auto_activate' => 'boolean'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $userId = Auth::id();
-            $templateData = $request->get('template_data');
-
-            // Install the external template
-            $galleryTemplate = $this->externalService->installExternalTemplate($templateData, $userId);
-
-            if (!$galleryTemplate) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Failed to install external template',
-                    'code' => 'INSTALL_FAILED'
-                ], 422);
-            }
-
-            // Get the created user template
-            $userTemplate = $galleryTemplate->userTemplates()->where('user_id', $userId)->first();
-
-            if (!$userTemplate) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Template installed but user template not found',
-                    'code' => 'USER_TEMPLATE_NOT_FOUND'
-                ], 422);
-            }
-
-            // Auto-activate if requested
-            if ($request->boolean('auto_activate', false)) {
-                $userTemplate->activate();
-            }
-
-            return response()->json([
-                'success' => true,
-                'template' => [
-                    'id' => $userTemplate->id,
-                    'name' => $userTemplate->name,
-                    'slug' => $userTemplate->slug,
-                    'preview_url' => $userTemplate->preview_image_url,
-                    'is_active' => $userTemplate->is_active
-                ],
-                'message' => 'External template installed successfully',
-                'redirect' => route('admin.templates.my-templates.edit', $userTemplate->id)
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('External template installation failed', [
-                'external_id' => $request->get('external_id'),
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Installation failed: ' . $e->getMessage(),
-                'code' => 'INSTALLATION_ERROR'
-            ], 500);
-        }
-    }
-
-    /**
-     * Analyze URL before import (preview)
-     */
-    public function analyzeUrl(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'url' => 'required|url'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $url = $request->get('url');
-
-            // Use the same analysis method from the importer
-            $analysis = $this->importer->analyzeTemplate($url);
-
-            if ($analysis['success']) {
-                Log::info('Analyze successful', [
-                    'url' => $url,
-                    'framework' => $analysis['structure']['framework'] ?? null,
-                    'sections' => isset($analysis['structure']['sections']) ? count($analysis['structure']['sections']) : 0,
-                    'language' => $analysis['language']['primary_language'] ?? null,
-                    'html_size' => $analysis['stats']['html_size'] ?? null
-                ]);
-            } else {
-                Log::warning('Analyze failed', [
-                    'url' => $url,
-                    'code' => $analysis['code'] ?? null,
-                    'error' => $analysis['error'] ?? null
-                ]);
-            }
-
-            if ($analysis['success']) {
-                return response()->json([
-                    'success' => true,
-                    'analysis' => [
-                        'title' => $analysis['meta']['title'],
-                        'description' => $analysis['meta']['description'],
-                        'language' => [
-                            'detected' => $analysis['language']['primary_language'],
-                            'confidence' => $analysis['language']['confidence'],
-                            'needs_translation' => $analysis['language']['primary_language'] !== 'id'
-                        ],
-                        'structure' => [
-                            'framework' => $analysis['structure']['framework'],
-                            'has_header' => $analysis['structure']['has_header'],
-                            'has_footer' => $analysis['structure']['has_footer'],
-                            'sections_count' => count($analysis['structure']['sections'])
-                        ],
-                        'assets' => [
-                            'css_files' => count($analysis['assets']['css']),
-                            'js_files' => count($analysis['assets']['js']),
-                            'images' => count($analysis['assets']['images'])
-                        ],
-                        'stats' => $analysis['stats']
-                    ]
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'error' => $analysis['error'],
-                    'code' => $analysis['code'],
-                    'debug' => [
-                        'http_status' => $analysis['http_status'] ?? null
-                    ]
-                ], 422);
-            }
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => 'URL analysis failed: ' . $e->getMessage(),
-                'code' => 'ANALYSIS_ERROR'
-            ], 500);
-        }
-    }
-
-    /**
-     * Import template from uploaded file (JSON or ZIP)
-     */
-    public function importFromFile(Request $request)
-    {
-        Log::info('Smart Import Request Received', [
-            'user_id' => Auth::id(),
-            'has_file' => $request->hasFile('file'),
-            'file_name' => $request->hasFile('file') ? $request->file('file')->getClientOriginalName() : null,
-            'file_extension' => $request->hasFile('file') ? $request->file('file')->getClientOriginalExtension() : null,
-            'file_mime_type' => $request->hasFile('file') ? $request->file('file')->getMimeType() : null,
-            'csrf_token' => $request->header('X-CSRF-TOKEN') ? 'present' : 'missing'
-        ]);
-
-        $validator = Validator::make($request->all(), [
-            // Simplified: rely on extension; JSON/HTML content will still be parsed/validated manually
-            'file' => 'required|file|mimes:json,zip,html,htm,txt|max:10240', // 10MB
-            'template_name' => 'nullable|string|max:255',
-            'auto_activate' => 'nullable|boolean'
-        ]);
-
-        if ($validator->fails()) {
-            Log::warning('Smart Import Validation Failed', [
-                'user_id' => Auth::id(),
-                'errors' => $validator->errors()->toArray()
-            ]);
-            return response()->json([
-                'success' => false,
-                'error' => $validator->errors()->first(),
-                'errors' => $validator->errors(),
-                'code' => 'VALIDATION_FAILED'
-            ], 422)->header('Content-Type', 'application/json');
-        }
-
-        try {
             $file = $request->file('file');
-            $userId = Auth::id();
+            $templateName = $request->input('template_name');
             $autoActivate = $request->boolean('auto_activate', false);
-            $templateName = $request->get('template_name');
+            $userId = Auth::id();
 
-            Log::info('File import started', [
-                'filename' => $file->getClientOriginalName(),
-                'size' => $file->getSize(),
+            Log::info('Starting template import', [
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+                'template_name' => $templateName,
                 'user_id' => $userId
             ]);
 
@@ -381,543 +56,129 @@ class SmartImportController extends Controller
             $result = $this->processUploadedFile($file, $userId, $templateName, $autoActivate);
 
             if ($result['success']) {
-                Log::info('Smart Import Success', [
-                    'template_id' => $result['template']->id,
-                    'template_name' => $result['template']->name,
-                    'user_id' => Auth::id()
+                Log::info('Template import successful', [
+                    'template_id' => $result['template_id'] ?? null,
+                    'template_name' => $result['template_name'] ?? null
                 ]);
-
-                // Check if request expects JSON (AJAX) or normal redirect
-                if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json([
-                        'success' => true,
-                        'template' => [
-                            'id' => $result['template']->id,
-                            'name' => $result['template']->name,
-                            'slug' => $result['template']->slug,
-                            'preview_url' => $result['template']->preview_image_url ?? null,
-                            'is_active' => $result['template']->is_active
-                        ],
-                        'stats' => $result['stats'] ?? [],
-                        'message' => $autoActivate ?
-                            'Template berhasil diimpor dan diaktifkan!' :
-                            'Template berhasil diimpor!',
-                        'redirect' => route('admin.templates.my-templates.show', $result['template']->id)
-                    ])->header('Content-Type', 'application/json');
-                } else {
-                    // Normal form submission - redirect with success message
-                    return redirect()->route('admin.templates.my-templates.show', $result['template']->id)
-                        ->with('success', $autoActivate ?
-                            'Template berhasil diimpor dan diaktifkan!' :
-                            'Template berhasil diimpor!');
-                }
             } else {
-                Log::error('Smart Import Failed', [
-                    'error' => $result['error'],
-                    'code' => $result['code'] ?? 'UNKNOWN',
-                    'user_id' => Auth::id()
+                Log::warning('Template import failed', [
+                    'error' => $result['error'] ?? 'Unknown error',
+                    'code' => $result['code'] ?? 'UNKNOWN'
                 ]);
-                return response()->json([
-                    'success' => false,
-                    'error' => $result['error'],
-                    'code' => $result['code'] ?? 'IMPORT_FAILED'
-                ], 422)->header('Content-Type', 'application/json');
             }
 
+            return response()->json($result);
+
         } catch (\Exception $e) {
-            Log::error('File import failed', [
-                'filename' => $request->file('file')?->getClientOriginalName(),
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage()
+            Log::error('Template import exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'success' => false,
-                'error' => 'Import failed: ' . $e->getMessage(),
-                'code' => 'UNEXPECTED_ERROR'
-            ], 500)->header('Content-Type', 'application/json');
+                'error' => 'An unexpected error occurred while importing the template.',
+                'code' => 'IMPORT_EXCEPTION'
+            ], 500);
         }
     }
 
     /**
-     * Process uploaded template file
+     * Process uploaded file based on type
      */
     protected function processUploadedFile($file, int $userId, ?string $templateName, bool $autoActivate): array
     {
         $extension = strtolower($file->getClientOriginalExtension());
-        $originalName = $file->getClientOriginalName();
 
-        try {
-            switch ($extension) {
-                case 'json':
-                    return $this->processJsonFile($file, $userId, $templateName, $autoActivate);
-                case 'zip':
-                    return $this->processZipFile($file, $userId, $templateName, $autoActivate);
-                case 'html':
-                case 'htm':
-                    return $this->processHtmlFile($file, $userId, $templateName, $autoActivate);
-                default:
-                    return [
-                        'success' => false,
-                        'error' => 'Unsupported file type: ' . $extension,
-                        'code' => 'UNSUPPORTED_FILE_TYPE'
-                    ];
-            }
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Failed to process file: ' . $e->getMessage(),
-                'code' => 'FILE_PROCESSING_ERROR'
-            ];
+        switch ($extension) {
+            case 'zip':
+                return $this->processZipFile($file, $userId, $templateName, $autoActivate);
+            default:
+                return [
+                    'success' => false,
+                    'error' => 'Unsupported file type. Only ZIP files are supported.',
+                    'code' => 'UNSUPPORTED_FILE_TYPE'
+                ];
         }
     }
 
     /**
-     * Process JSON template file
-     */
-    protected function processJsonFile($file, int $userId, ?string $templateName, bool $autoActivate): array
-    {
-        Log::info('Processing JSON file', [
-            'filename' => $file->getClientOriginalName(),
-            'size' => $file->getSize(),
-            'user_id' => $userId
-        ]);
-
-        $content = file_get_contents($file->getPathname());
-
-        Log::info('JSON file content loaded', [
-            'content_length' => strlen($content),
-            'content_preview' => substr($content, 0, 200)
-        ]);
-
-        // Check if content looks like HTML instead of JSON
-        $contentPreview = substr(trim($content), 0, 20);
-        if (str_starts_with($contentPreview, '<!DOCTYPE') || str_starts_with($contentPreview, '<html')) {
-            Log::error('File contains HTML instead of JSON', [
-                'filename' => $file->getClientOriginalName(),
-                'content_preview' => $contentPreview
-            ]);
-            return [
-                'success' => false,
-                'error' => 'The uploaded file contains HTML content instead of JSON. Please upload a valid JSON template file.',
-                'code' => 'HTML_NOT_JSON'
-            ];
-        }
-
-        $templateData = json_decode($content, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            Log::error('JSON decode failed', [
-                'filename' => $file->getClientOriginalName(),
-                'error' => json_last_error_msg(),
-                'error_code' => json_last_error(),
-                'content_preview' => substr($content, 0, 500)
-            ]);
-
-            return [
-                'success' => false,
-                'error' => 'Invalid JSON file "' . $file->getClientOriginalName() . '": ' . json_last_error_msg() . '. Please ensure the file contains valid JSON format.',
-                'code' => 'INVALID_JSON'
-            ];
-        }
-
-        Log::info('JSON decoded successfully', [
-            'data_keys' => array_keys($templateData),
-            'has_template_data' => isset($templateData['template_data'])
-        ]);
-
-        // Normalize template structure
-        $normalizedData = $this->normalizeTemplateData($templateData);
-        if (!$normalizedData) {
-            return [
-                'success' => false,
-                'error' => 'Invalid template structure. Please ensure the JSON contains valid template data.',
-                'code' => 'INVALID_TEMPLATE_STRUCTURE'
-            ];
-        }
-        $templateData = $normalizedData;
-
-        // Sanitize structure (auto-repair missing fields / legacy shapes)
-        $templateData = $this->sanitizeTemplateData($templateData);
-
-    // Apply domain-specific transformations (hero / statistics / card_grid mapping, metadata extraction)
-    $templateData = $this->transformDomainSpecificBlocks($templateData);
-
-    // Collect diagnostics for easier debugging of 422 issues
-    $diagnostics = $this->collectTemplateDiagnostics($templateData);
-    Log::info('Template diagnostics after transformation', $diagnostics);
-
-        // Generate template name if not provided
-        if (!$templateName) {
-            $templateName = $templateData['name'] ??
-                           pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        }
-
-        // Create user template
-        $template = UserTemplate::create([
-            'user_id' => $userId,
-            'name' => $templateName,
-            'slug' => Str::slug($templateName) . '-' . time(),
-            'description' => $templateData['description'] ?? 'Imported from JSON file',
-            'template_data' => $templateData,
-            'source' => 'imported',
-            'is_active' => false,
-            'customizations' => [
-                'import_method' => 'json_file',
-                'original_filename' => $file->getClientOriginalName(),
-                'imported_at' => now()->toISOString()
-            ],
-            'settings' => $templateData['site_meta'] ?? null,
-        ]);
-
-        // Auto-activate if requested
-        if ($autoActivate) {
-            $template->activate();
-        }
-
-        // Generate stats
-        $stats = $this->generateImportStats($template);
-
-        // Attempt to derive and store a preview image from hero block background (non-blocking)
-        try {
-            $this->extractPreviewImage($templateData, $template);
-        } catch (\Exception $e) {
-            Log::warning('Preview image extraction failed', [
-                'template_id' => $template->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        return [
-            'success' => true,
-            'template' => $template,
-            'stats' => $stats
-        ];
-    }
-
-    /**
-     * Attempt to sanitize / normalize blocks & sections shape to expected internal format.
-     * - Adds missing keys (order, active, key)
-     * - Converts block 'content' -> 'data'
-     * - Wraps raw unknown block objects (without 'type') into a 'raw' block preserving original payload
-     */
-    protected function sanitizeTemplateData(array $data): array
-    {
-        if (!isset($data['templates']) || !is_array($data['templates'])) {
-            return $data; // nothing to do
-        }
-
-        foreach ($data['templates'] as $tIndex => $tpl) {
-            // Ensure template has sections array
-            if (!isset($tpl['sections']) || !is_array($tpl['sections'])) {
-                $data['templates'][$tIndex]['sections'] = [];
-                continue;
-            }
-            foreach ($tpl['sections'] as $sIndex => $section) {
-                // Ensure blocks array
-                if (!isset($section['blocks']) || !is_array($section['blocks'])) {
-                    $data['templates'][$tIndex]['sections'][$sIndex]['blocks'] = [];
-                }
-                // Add default section metadata
-                if (!isset($section['name'])) {
-                    $data['templates'][$tIndex]['sections'][$sIndex]['name'] = 'Section '.($sIndex+1);
-                }
-                if (!isset($section['key'])) {
-                    $data['templates'][$tIndex]['sections'][$sIndex]['key'] = Str::slug($data['templates'][$tIndex]['sections'][$sIndex]['name']);
-                }
-                if (!isset($section['order'])) {
-                    $data['templates'][$tIndex]['sections'][$sIndex]['order'] = $sIndex + 1;
-                }
-                if (!isset($section['active'])) {
-                    $data['templates'][$tIndex]['sections'][$sIndex]['active'] = true;
-                }
-
-                // Process blocks
-                foreach ($data['templates'][$tIndex]['sections'][$sIndex]['blocks'] as $bIndex => $block) {
-                    // If block missing type, wrap it as raw
-                    if (!isset($block['type'])) {
-                        $data['templates'][$tIndex]['sections'][$sIndex]['blocks'][$bIndex] = [
-                            'type' => 'raw',
-                            'order' => $bIndex + 1,
-                            'active' => true,
-                            'data' => [ 'raw' => $block ]
-                        ];
-                        continue;
-                    }
-                    // Map legacy 'content' -> 'data'
-                    if (!isset($block['data']) && isset($block['content'])) {
-                        $block['data'] = $block['content'];
-                        unset($block['content']);
-                    }
-                    if (!isset($block['data'])) {
-                        $block['data'] = [];
-                    }
-                    if (!isset($block['order'])) {
-                        $block['order'] = $bIndex + 1;
-                    }
-                    if (!isset($block['active'])) {
-                        $block['active'] = true;
-                    }
-                    $data['templates'][$tIndex]['sections'][$sIndex]['blocks'][$bIndex] = $block;
-                }
-            }
-        }
-        return $data;
-    }
-
-    /**
-     * Apply domain-specific transformations:
-     * - Hero block: map background_image_url/image -> background_image
-     * - Statistics block: map items[value=>number] -> stats[number]
-     * - Card grid: normalize link field into object {url,text}
-     * - Normalize block type aliases (statistics->stats, card-grid->card_grid)
-     * - Extract site / menu metadata if embedded inside blocks
-     */
-    protected function transformDomainSpecificBlocks(array $data): array
-    {
-        if (!isset($data['templates']) || !is_array($data['templates'])) {
-            return $data;
-        }
-
-        $siteMeta = $data['site_meta'] ?? [];
-        $movedMetaCount = 0;
-
-        foreach ($data['templates'] as $tIndex => $tpl) {
-            if (!isset($tpl['sections']) || !is_array($tpl['sections'])) {
-                continue;
-            }
-            foreach ($tpl['sections'] as $sIndex => $section) {
-                if (!isset($section['blocks']) || !is_array($section['blocks'])) {
-                    continue;
-                }
-                foreach ($section['blocks'] as $bIndex => $block) {
-                    if (!isset($block['type'])) {
-                        continue; // already sanitized earlier (raw)
-                    }
-
-                    $originalType = $block['type'];
-                    $type = str_replace('-', '_', strtolower($originalType));
-
-                    // Aliases
-                    if ($type === 'statistics') { $type = 'stats'; }
-                    if ($type === 'cardgrid') { $type = 'card_grid'; }
-
-                    $block['type'] = $type; // persist normalization
-                    $dataField = $block['data'] ?? [];
-                    if (!is_array($dataField)) { $dataField = []; }
-
-                    // Hero mapping
-                    if ($type === 'hero') {
-                        if (isset($dataField['background_image_url']) && !isset($dataField['background_image'])) {
-                            $dataField['background_image'] = $dataField['background_image_url'];
-                        }
-                        if (isset($dataField['image']) && !isset($dataField['background_image'])) {
-                            $dataField['background_image'] = $dataField['image'];
-                        }
-                        // Single button object -> array
-                        if (isset($dataField['buttons']) && is_array($dataField['buttons']) && array_keys($dataField['buttons']) !== range(0, count($dataField['buttons']) - 1)) {
-                            $dataField['buttons'] = [$dataField['buttons']];
-                        }
-                    }
-
-                    // Stats mapping
-                    if ($type === 'stats') {
-                        if (!isset($dataField['stats']) && isset($dataField['items']) && is_array($dataField['items'])) {
-                            $converted = [];
-                            foreach ($dataField['items'] as $item) {
-                                if (!is_array($item)) { continue; }
-                                $converted[] = [
-                                    'number' => $item['value'] ?? ($item['number'] ?? null),
-                                    'label' => $item['label'] ?? ($item['title'] ?? ''),
-                                    'description' => $item['description'] ?? ($item['text'] ?? null),
-                                ];
-                            }
-                            if ($converted) { $dataField['stats'] = $converted; }
-                        }
-                    }
-
-                    // Card grid mapping
-                    if ($type === 'card_grid') {
-                        if (isset($dataField['cards']) && is_array($dataField['cards'])) {
-                            foreach ($dataField['cards'] as $cIdx => $card) {
-                                if (!is_array($card)) { continue; }
-                                // Plain link string
-                                if (isset($card['link']) && is_string($card['link'])) {
-                                    $dataField['cards'][$cIdx]['link'] = [
-                                        'url' => $card['link'],
-                                        'text' => 'Selengkapnya',
-                                    ];
-                                } elseif (!isset($card['link']) && isset($card['url'])) {
-                                    $dataField['cards'][$cIdx]['link'] = [
-                                        'url' => $card['url'],
-                                        'text' => $card['link_text'] ?? ($card['title'] ?? 'Detail'),
-                                    ];
-                                }
-                            }
-                        }
-                    }
-
-                    // Attempt to detect site metadata accidentally embedded as a block
-                    $possibleMetaKeys = ['site_name','site_title','tagline','menus','navigation','contact_email'];
-                    $intersects = array_intersect($possibleMetaKeys, array_keys($dataField));
-                    if (count($intersects) > 1) { // treat as meta block
-                        foreach ($possibleMetaKeys as $mk) {
-                            if (isset($dataField[$mk]) && !isset($siteMeta[$mk])) {
-                                $siteMeta[$mk] = $dataField[$mk];
-                            }
-                        }
-                        $movedMetaCount++;
-                    }
-
-                    $block['data'] = $dataField; // assign mutated data
-                    $data['templates'][$tIndex]['sections'][$sIndex]['blocks'][$bIndex] = $block;
-                }
-            }
-        }
-
-        if ($siteMeta) {
-            $data['site_meta'] = $siteMeta;
-            if ($movedMetaCount > 0) {
-                $data['site_meta']['_extracted_from_blocks'] = $movedMetaCount;
-            }
-        }
-
-        return $data;
-    }
-
-    /**
-     * Collect lightweight diagnostics for logging/debugging.
-     */
-    protected function collectTemplateDiagnostics(array $data): array
-    {
-        $templates = $data['templates'] ?? [];
-        $sectionCount = 0; $blockCount = 0; $types = [];
-        foreach ($templates as $tpl) {
-            foreach ($tpl['sections'] ?? [] as $section) {
-                $sectionCount++;
-                foreach ($section['blocks'] ?? [] as $block) {
-                    $blockCount++;
-                    $t = $block['type'] ?? 'unknown';
-                    $types[$t] = ($types[$t] ?? 0) + 1;
-                }
-            }
-        }
-        return [
-            'templates' => count($templates),
-            'sections' => $sectionCount,
-            'blocks' => $blockCount,
-            'block_types' => $types,
-            'has_site_meta' => isset($data['site_meta']),
-        ];
-    }
-
-    /**
-     * Try to fetch a hero background image and store it as preview.
-     */
-    protected function extractPreviewImage(array $data, UserTemplate $template): void
-    {
-        if ($template->preview_image) { return; }
-        $heroImage = null;
-        foreach (($data['templates'] ?? []) as $tpl) {
-            foreach ($tpl['sections'] ?? [] as $section) {
-                foreach ($section['blocks'] ?? [] as $block) {
-                    if (($block['type'] ?? null) === 'hero') {
-                        $heroImage = $block['data']['background_image'] ?? ($block['data']['background_image_url'] ?? null);
-                        break 3;
-                    }
-                }
-            }
-        }
-        if (!$heroImage || !is_string($heroImage)) { return; }
-        if (!str_starts_with($heroImage, 'http')) { return; }
-        try {
-            $contents = @file_get_contents($heroImage);
-            if ($contents === false) { return; }
-            $ext = 'jpg';
-            if (str_contains(strtolower($heroImage), '.png')) { $ext = 'png'; }
-            $path = 'previews/template-'.$template->id.'-hero.'. $ext;
-            \Illuminate\Support\Facades\Storage::disk('public')->put($path, $contents);
-            $template->update(['preview_image' => $path]);
-            Log::info('Preview image stored', ['template_id' => $template->id, 'path' => $path]);
-        } catch (\Exception $e) {
-            Log::warning('Failed to download hero image for preview', [
-                'template_id' => $template->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
-     * Process ZIP template file
+     * Process ZIP file containing template files
      */
     protected function processZipFile($file, int $userId, ?string $templateName, bool $autoActivate): array
     {
         $zip = new \ZipArchive();
-        $result = $zip->open($file->getPathname());
+        $result = $zip->open($file->getRealPath());
 
         if ($result !== TRUE) {
             return [
                 'success' => false,
-                'error' => 'Could not open ZIP file: ' . $this->getZipError($result),
-                'code' => 'ZIP_OPEN_ERROR'
+                'error' => 'Failed to open ZIP file: ' . $this->getZipError($result),
+                'code' => 'ZIP_OPEN_FAILED'
             ];
         }
 
         try {
-            // Look for template.json or similar files
-            $templateFile = null;
-            $htmlFile = null;
-            $availableFiles = [];
-            $extractedFiles = []; // Store all files for template switching
+            // Extract all files for analysis
+            $extractedFiles = [];
+            $fileStructure = [
+                'blade_files' => [],
+                'php_files' => [],
+                'controller_files' => [],
+                'route_files' => [],
+                'css_files' => [],
+                'js_files' => [],
+                'image_files' => [],
+                'layout_files' => [],
+                'view_files' => [],
+                'has_views_folder' => false,
+                'has_resources_folder' => false,
+                'has_public_folder' => false,
+                'has_app_folder' => false,
+                'has_routes_folder' => false,
+                'has_controllers' => false,
+                'is_full_laravel_structure' => false,
+                'total_files' => 0
+            ];
+
+            Log::info('Analyzing ZIP structure', ['file' => $file->getClientOriginalName()]);
 
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $filename = $zip->getNameIndex($i);
-                $availableFiles[] = $filename;
 
-                // Extract all files to storage for template switching
-                if (!str_ends_with($filename, '/')) { // Skip directories
-                    $content = $zip->getFromName($filename);
-                    if ($content !== false) {
-                        $extractedFiles[$filename] = [
-                            'content' => base64_encode($content),
-                            'type' => $this->getFileType($filename),
-                            'size' => strlen($content)
-                        ];
-                    }
+                if (substr($filename, -1) === '/') {
+                    continue; // Skip directories
                 }
 
-                // Prioritize template.json, then any .json file
-                if (preg_match('/template\.json$/i', $filename)) {
-                    $templateFile = $filename;
-                    break;
-                } elseif (preg_match('/\.json$/i', $filename) && !$templateFile) {
-                    $templateFile = $filename;
+                $content = $zip->getFromIndex($i);
+                if ($content === false) {
+                    Log::warning('Failed to extract file from ZIP', ['filename' => $filename]);
+                    continue;
                 }
-                // Look for index.html as fallback
-                elseif (preg_match('/index\.html?$/i', $filename) && !$htmlFile) {
-                    $htmlFile = $filename;
-                }
-            }
 
-            // Determine template type and processing method
-            if ($templateFile) {
-                // Process as JSON-based template but also store files
-                $result = $this->processZipJsonTemplate($zip, $templateFile, $extractedFiles, $userId, $templateName, $autoActivate);
-            } elseif ($htmlFile) {
-                // Process as file-based template
-                $result = $this->processZipFileBasedTemplate($zip, $htmlFile, $extractedFiles, $userId, $templateName, $autoActivate);
-            } else {
-                $zip->close();
-                Log::warning('No JSON or HTML file found in ZIP', ['available_files' => array_slice($availableFiles, 0, 20)]);
-                return [
-                    'success' => false,
-                    'error' => 'No template.json or index.html found in ZIP archive. Available files: ' . implode(', ', array_slice($availableFiles, 0, 5)) . (count($availableFiles) > 5 ? '...' : ''),
-                    'code' => 'NO_TEMPLATE_FILE'
+                $extractedFiles[$filename] = [
+                    'content' => base64_encode($content),
+                    'size' => strlen($content)
                 ];
+
+                $fileStructure['total_files']++;
+                $this->analyzeFileStructure($filename, $fileStructure);
             }
 
             $zip->close();
-            return $result;
+
+            Log::info('ZIP structure analyzed', [
+                'total_files' => $fileStructure['total_files'],
+                'blade_files' => count($fileStructure['blade_files']),
+                'php_files' => count($fileStructure['php_files']),
+                'controller_files' => count($fileStructure['controller_files']),
+                'route_files' => count($fileStructure['route_files']),
+                'has_views_folder' => $fileStructure['has_views_folder'],
+                'is_full_laravel_structure' => $fileStructure['is_full_laravel_structure']
+            ]);
+
+            // Determine template type and process accordingly
+            return $this->processUnifiedTemplate($extractedFiles, $fileStructure, $userId, $templateName, $autoActivate);
 
         } catch (\Exception $e) {
             $zip->close();
@@ -926,562 +187,430 @@ class SmartImportController extends Controller
     }
 
     /**
-     * Get file type from filename
+     * Analyze file structure to determine template type
      */
-    protected function getFileType(string $filename): string
+    protected function analyzeFileStructure(string $filename, array &$structure): void
     {
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $path = strtolower(dirname($filename));
+        $basename = strtolower(basename($filename));
 
-        $typeMap = [
-            'html' => 'html',
-            'htm' => 'html',
-            'css' => 'css',
-            'js' => 'javascript',
-            'json' => 'json',
-            'php' => 'php',
-            'blade' => 'blade',
-            'jpg' => 'image',
-            'jpeg' => 'image',
-            'png' => 'image',
-            'gif' => 'image',
-            'svg' => 'image',
-            'pdf' => 'document',
-            'txt' => 'text',
-            'md' => 'markdown'
+        // Check for Laravel folder structures
+        if (str_contains($path, 'views') || str_contains($path, 'templates')) {
+            $structure['has_views_folder'] = true;
+        }
+        if (str_contains($path, 'resources')) {
+            $structure['has_resources_folder'] = true;
+        }
+        if (str_contains($path, 'public') || str_contains($path, 'assets')) {
+            $structure['has_public_folder'] = true;
+        }
+        if (str_contains($path, 'app/http/controllers') || str_contains($path, 'app\\http\\controllers')) {
+            $structure['has_app_folder'] = true;
+            $structure['has_controllers'] = true;
+        }
+        if (str_contains($path, 'routes')) {
+            $structure['has_routes_folder'] = true;
+        }
+
+        // Detect full Laravel structure
+        if ($structure['has_resources_folder'] && $structure['has_app_folder'] && $structure['has_public_folder']) {
+            $structure['is_full_laravel_structure'] = true;
+        }
+
+        // Categorize files
+        switch ($extension) {
+            case 'php':
+                if (str_contains($basename, '.blade.php')) {
+                    $structure['blade_files'][] = $filename;
+                    // Check if it's a layout file
+                    if (str_contains($basename, 'layout') || str_contains($basename, 'app.blade') || str_contains($basename, 'main.blade')) {
+                        $structure['layout_files'][] = $filename;
+                    } else {
+                        $structure['view_files'][] = $filename;
+                    }
+                } else {
+                    // Regular PHP files
+                    $structure['php_files'][] = $filename;
+
+                    // Check if it's a controller
+                    if (str_contains($path, 'controller') || str_contains($basename, 'controller.php')) {
+                        $structure['controller_files'][] = $filename;
+                    }
+
+                    // Check if it's a route file
+                    if (str_contains($path, 'routes') || $basename === 'web.php' || $basename === 'api.php') {
+                        $structure['route_files'][] = $filename;
+                    }
+                }
+                break;
+            case 'css':
+                $structure['css_files'][] = $filename;
+                break;
+            case 'js':
+                $structure['js_files'][] = $filename;
+                break;
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+            case 'svg':
+                $structure['image_files'][] = $filename;
+                break;
+        }
+    }
+
+    /**
+     * Process template based on detected structure
+     */
+    protected function processUnifiedTemplate(array $extractedFiles, array $fileStructure, int $userId, ?string $templateName, bool $autoActivate): array
+    {
+        // Priority 1: Full Laravel Structure (with controllers, routes, and views)
+        if ($fileStructure['is_full_laravel_structure'] && !empty($fileStructure['blade_files'])) {
+            Log::info('Processing as Full Laravel Template', [
+                'blade_files' => count($fileStructure['blade_files']),
+                'controller_files' => count($fileStructure['controller_files']),
+                'route_files' => count($fileStructure['route_files']),
+                'has_full_structure' => true
+            ]);
+            return $this->processFullLaravelTemplate($extractedFiles, $fileStructure, $userId, $templateName, $autoActivate);
+        }
+
+        // Priority 2: Laravel Blade Views (.blade.php files)
+        if (!empty($fileStructure['blade_files']) || ($fileStructure['has_views_folder'] && !empty($fileStructure['view_files']))) {
+            Log::info('Processing as Laravel Blade template', [
+                'blade_files' => count($fileStructure['blade_files']),
+                'layout_files' => count($fileStructure['layout_files']),
+                'view_files' => count($fileStructure['view_files'])
+            ]);
+            return $this->processBladeTemplate($extractedFiles, $fileStructure, $userId, $templateName, $autoActivate);
+        }
+
+        // Priority 3: PHP files (regular PHP templates)
+        if (!empty($fileStructure['php_files'])) {
+            Log::info('Processing as PHP template', [
+                'php_files' => count($fileStructure['php_files'])
+            ]);
+            return $this->processPhpTemplate($extractedFiles, $fileStructure, $userId, $templateName, $autoActivate);
+        }
+
+        // No supported files found
+        return [
+            'success' => false,
+            'error' => 'No supported template files found. Please ensure your ZIP contains Laravel Blade views (.blade.php), PHP files (.php), or a full Laravel structure.',
+            'code' => 'NO_SUPPORTED_FILES',
+            'debug' => [
+                'total_files' => $fileStructure['total_files'],
+                'blade_files' => count($fileStructure['blade_files'] ?? []),
+                'php_files' => count($fileStructure['php_files'] ?? []),
+                'controller_files' => count($fileStructure['controller_files'] ?? []),
+                'route_files' => count($fileStructure['route_files'] ?? []),
+                'has_views_folder' => $fileStructure['has_views_folder'],
+                'is_full_laravel_structure' => $fileStructure['is_full_laravel_structure']
+            ]
         ];
-
-        return $typeMap[$extension] ?? 'other';
     }
 
     /**
-     * Process ZIP with JSON template but also store files for switching
+     * Process Full Laravel Template (with controllers, routes, views, and assets)
      */
-    protected function processZipJsonTemplate($zip, string $templateFile, array $extractedFiles, int $userId, ?string $templateName, bool $autoActivate): array
+    protected function processFullLaravelTemplate(array $extractedFiles, array $fileStructure, int $userId, ?string $templateName, bool $autoActivate): array
     {
-        // Extract and process the template file
-        $content = $zip->getFromName($templateFile);
+        // For now, treat full Laravel structure the same as blade template but with enhanced metadata
+        // Future enhancement can add controller and route installation
 
-        if ($content === false) {
+        // Determine primary layout file
+        $primaryLayout = null;
+        if (!empty($fileStructure['layout_files'])) {
+            $primaryLayout = $fileStructure['layout_files'][0];
+        } elseif (!empty($fileStructure['blade_files'])) {
+            $primaryLayout = $fileStructure['blade_files'][0];
+        }
+
+        if (!$primaryLayout) {
             return [
                 'success' => false,
-                'error' => 'Could not extract template file from ZIP',
-                'code' => 'EXTRACT_ERROR'
+                'error' => 'No Blade template files found in the Laravel template.',
+                'code' => 'NO_BLADE_FILES'
             ];
         }
 
-        // Create temporary file and process as JSON
-        $tempFile = tmpfile();
-        fwrite($tempFile, $content);
-        $tempPath = stream_get_meta_data($tempFile)['uri'];
-
-        $mockFile = new \Illuminate\Http\UploadedFile(
-            $tempPath,
-            $templateFile,
-            'application/json',
-            null,
-            true
-        );
-
-        // Process the JSON template normally
-        $result = $this->processJsonFile($mockFile, $userId, $templateName, $autoActivate);
-
-        // If successful, also store the extracted files for template switching
-        if ($result['success']) {
-            $template = $result['template'];
-            $template->update([
-                'template_files' => $extractedFiles,
-                'template_type' => 'blocks' // JSON-based but with file storage
-            ]);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Process ZIP as Blade views template (Laravel-focused)
-     */
-    protected function processZipFileBasedTemplate($zip, string $htmlFile, array $extractedFiles, int $userId, ?string $templateName, bool $autoActivate): array
-    {
-        try {
-            // Look for views folder structure
-            $viewFiles = [];
-            $layoutFile = null;
-            $homeFile = null;
-
-            foreach ($extractedFiles as $filename => $fileData) {
-                // Focus on .blade.php files
-                if (str_ends_with(strtolower($filename), '.blade.php')) {
-                    $viewPath = str_replace(['views/', 'resources/views/'], '', $filename);
-                    $viewName = str_replace(['/', '\\'], '.', str_replace('.blade.php', '', $viewPath));
-
-                    $viewFiles[$viewName] = [
-                        'filename' => $filename,
-                        'content' => base64_decode($fileData['content']),
-                        'view_name' => $viewName,
-                        'type' => $this->getBladeViewType($viewName)
-                    ];
-
-                    // Identify key files
-                    if (str_contains($viewName, 'layouts.app') || str_contains($viewName, 'layout')) {
-                        $layoutFile = $viewName;
-                    }
-                    if (str_contains($viewName, 'home') || str_contains($viewName, 'index')) {
-                        $homeFile = $viewName;
-                    }
-                }
-            }
-
-            if (empty($viewFiles)) {
-                return [
-                    'success' => false,
-                    'error' => 'No Blade view files (.blade.php) found in ZIP. Please ensure your ZIP contains a views/ folder with Laravel Blade templates.',
-                    'code' => 'NO_BLADE_VIEWS'
-                ];
-            }
-
-            // Extract template name
-            if (!$templateName) {
-                $templateName = 'Template Sekolah ' . date('Y-m-d H:i');
-
-                // Try to extract name from layout or home file
-                foreach ($viewFiles as $viewData) {
-                    if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $viewData['content'], $matches)) {
-                        $title = trim(strip_tags($matches[1]));
-                        if ($title && !str_contains($title, '{{')) {
-                            $templateName = $title;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Create template data structure for Blade views
-            $templateData = [
-                'type' => 'blade_views',
-                'views' => array_keys($viewFiles),
-                'layout_file' => $layoutFile,
-                'home_file' => $homeFile ?: (isset($viewFiles['home']) ? 'home' : array_keys($viewFiles)[0]),
-                'view_count' => count($viewFiles),
-                'available_pages' => $this->extractAvailablePages($viewFiles)
-            ];
-
-            // Create user template with Blade views type
-            $template = UserTemplate::create([
-                'user_id' => $userId,
-                'name' => $templateName,
-                'slug' => Str::slug($templateName) . '-' . time(),
-                'description' => 'Laravel Blade template dengan ' . count($viewFiles) . ' halaman: ' . implode(', ', array_slice(array_keys($viewFiles), 0, 5)) . (count($viewFiles) > 5 ? '...' : ''),
-                'template_data' => $templateData,
-                'template_files' => $extractedFiles, // Store all files
-                'template_type' => 'blade_views',
-                'source' => 'imported',
-                'is_active' => false,
-                'customizations' => [
-                    'import_method' => 'zip_blade_views',
-                    'view_files' => $viewFiles,
-                    'imported_at' => now()->toISOString()
-                ]
-            ]);
-
-            // Auto-activate if requested
-            if ($autoActivate) {
-                $this->activateBladeTemplate($template);
-            }
-
-            // Generate stats
-            $stats = [
-                'templates_created' => 1,
-                'view_files' => count($viewFiles),
-                'layout_file' => $layoutFile,
-                'home_file' => $templateData['home_file'],
-                'template_type' => 'blade_views',
-                'import_method' => 'zip'
-            ];
-
-            return [
-                'success' => true,
-                'template' => $template,
-                'stats' => $stats
-            ];
-
-        } catch (\Exception $e) {
-            throw $e;
-        }
-    }    /**
-     * Get Blade view type based on filename
-     */
-    protected function getBladeViewType(string $viewName): string
-    {
-        $viewName = strtolower($viewName);
-
-        if (str_contains($viewName, 'layout')) {
-            return 'layout';
-        }
-        if (str_contains($viewName, 'home') || str_contains($viewName, 'index')) {
-            return 'home';
-        }
-        if (str_contains($viewName, 'profil') || str_contains($viewName, 'about')) {
-            return 'page';
-        }
-        if (str_contains($viewName, 'kontak') || str_contains($viewName, 'contact')) {
-            return 'contact';
-        }
-        if (str_contains($viewName, 'galeri') || str_contains($viewName, 'gallery')) {
-            return 'gallery';
-        }
-
-        return 'page';
-    }
-
-    /**
-     * Extract available pages from view files
-     */
-    protected function extractAvailablePages(array $viewFiles): array
-    {
-        $pages = [];
-
-        foreach ($viewFiles as $viewName => $viewData) {
-            if ($viewData['type'] !== 'layout') {
-                $pageName = str_replace(['.', '_'], ' ', $viewName);
-                $pageName = ucwords($pageName);
-
-                $pages[] = [
-                    'view' => $viewName,
-                    'name' => $pageName,
-                    'type' => $viewData['type'],
-                    'route' => '/' . str_replace('.', '/', $viewName)
-                ];
-            }
-        }
-
-        return $pages;
-    }
-
-    /**
-     * Activate Blade template by storing views to filesystem
-     */
-    protected function activateBladeTemplate(UserTemplate $template): void
-    {
-        if ($template->template_type !== 'blade_views') {
-            return;
-        }
-
-        $viewFiles = $template->customizations['view_files'] ?? [];
-        $viewsPath = resource_path('views/templates/' . $template->slug);
-
-        // Create template directory
-        if (!is_dir($viewsPath)) {
-            mkdir($viewsPath, 0755, true);
-        }
-
-        // Write view files to filesystem
-        foreach ($viewFiles as $viewName => $viewData) {
-            $filePath = $viewsPath . '/' . str_replace('.', '/', $viewName) . '.blade.php';
-            $fileDir = dirname($filePath);
-
-            if (!is_dir($fileDir)) {
-                mkdir($fileDir, 0755, true);
-            }
-
-            file_put_contents($filePath, $viewData['content']);
-        }
-
-        // Activate the template
-        $template->activate();
-
-        // Store template path in settings
-        \App\Models\Setting::set('active_blade_template_path', 'templates.' . $template->slug);
-        \App\Models\Setting::set('active_blade_template_id', $template->id);
-    }
-
-    /**
-     * Process HTML fallback from ZIP file
-     */
-    protected function processZipHtmlFallback($zip, string $htmlFile, int $userId, ?string $templateName, bool $autoActivate): array
-    {
-        try {
-            $content = $zip->getFromName($htmlFile);
-            $zip->close();
-
-            if ($content === false) {
-                return [
-                    'success' => false,
-                    'error' => 'Could not extract HTML file from ZIP',
-                    'code' => 'EXTRACT_ERROR'
-                ];
-            }
-
-            Log::info('Processing HTML from ZIP', [
-                'html_file' => $htmlFile,
-                'content_length' => strlen($content)
-            ]);
-
-            // Extract title from HTML if no template name provided
-            if (!$templateName) {
-                if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $content, $matches)) {
-                    $templateName = trim(strip_tags($matches[1]));
-                }
-                if (!$templateName) {
-                    $templateName = pathinfo($htmlFile, PATHINFO_FILENAME);
-                }
-            }
-
-            // Extract body content
-            $bodyContent = $content;
-            if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $content, $matches)) {
-                $bodyContent = trim($matches[1]);
-            }
-
-            // Create template data structure
-            $templateData = [
-                'templates' => [[
-                    'name' => $templateName,
-                    'slug' => Str::slug($templateName),
-                    'description' => 'Imported from ZIP HTML file',
-                    'active' => true,
-                    'type' => 'page',
-                    'sections' => [[
-                        'name' => 'HTML Content',
-                        'key' => 'html-content',
-                        'order' => 1,
-                        'active' => true,
-                        'blocks' => [[
-                            'type' => 'rich_text',
-                            'order' => 1,
-                            'active' => true,
-                            'data' => [
-                                'content' => $bodyContent
-                            ]
-                        ]]
-                    ]]
-                ]]
-            ];
-
-            // Create user template
-            $template = UserTemplate::create([
-                'user_id' => $userId,
-                'name' => $templateName,
-                'slug' => Str::slug($templateName) . '-' . time(),
-                'description' => 'Imported from ZIP HTML file',
-                'template_data' => $templateData,
-                'source' => 'imported',
-                'is_active' => false,
-                'customizations' => [
-                    'import_method' => 'zip_html_fallback',
-                    'original_filename' => $htmlFile,
-                    'imported_at' => now()->toISOString()
-                ]
-            ]);
-
-            // Auto-activate if requested
-            if ($autoActivate) {
-                $template->activate();
-            }
-
-            // Generate stats
-            $stats = $this->generateImportStats($template);
-
-            return [
-                'success' => true,
-                'template' => $template,
-                'stats' => $stats
-            ];
-
-        } catch (\Exception $e) {
-            $zip->close();
-            throw $e;
-        }
-    }
-
-    /**
-     * Process HTML template file
-     */
-    protected function processHtmlFile($file, int $userId, ?string $templateName, bool $autoActivate): array
-    {
-        $content = file_get_contents($file->getPathname());
-
-        if (empty($content)) {
-            return [
-                'success' => false,
-                'error' => 'HTML file is empty or could not be read',
-                'code' => 'EMPTY_HTML_FILE'
-            ];
-        }
-
-        // Extract title from HTML if no template name provided
+        // Generate template name
         if (!$templateName) {
-            if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $content, $matches)) {
-                $templateName = trim(strip_tags($matches[1]));
-            }
-            if (!$templateName) {
-                $templateName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            }
+            $templateName = 'Full Laravel Template ' . date('Y-m-d H:i:s');
         }
 
-        // Extract body content
-        $bodyContent = $content;
-        if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $content, $matches)) {
-            $bodyContent = trim($matches[1]);
-        }
-
-        // Create template data structure
-        $templateData = [
-            'templates' => [[
-                'name' => $templateName,
-                'slug' => Str::slug($templateName),
-                'description' => 'Imported from HTML file',
-                'active' => true,
-                'type' => 'page',
-                'sections' => [[
-                    'name' => 'HTML Content',
-                    'key' => 'html-content',
-                    'order' => 1,
-                    'active' => true,
-                    'blocks' => [[
-                        'type' => 'rich_text',
-                        'order' => 1,
-                        'active' => true,
-                        'data' => [
-                            'content' => $bodyContent
-                        ]
-                    ]]
-                ]]
-            ]]
+        // Create the template structure with enhanced metadata
+        $templateStructure = [
+            'template_type' => 'full_laravel',
+            'primary_file' => $primaryLayout,
+            'structure' => [
+                'blade_files' => $fileStructure['blade_files'],
+                'layout_files' => $fileStructure['layout_files'],
+                'view_files' => $fileStructure['view_files'],
+                'controller_files' => $fileStructure['controller_files'],
+                'route_files' => $fileStructure['route_files'],
+                'css_files' => $fileStructure['css_files'],
+                'js_files' => $fileStructure['js_files'],
+                'image_files' => $fileStructure['image_files']
+            ],
+            'metadata' => [
+                'total_files' => $fileStructure['total_files'],
+                'blade_count' => count($fileStructure['blade_files']),
+                'controller_count' => count($fileStructure['controller_files']),
+                'route_count' => count($fileStructure['route_files']),
+                'has_full_structure' => true,
+                'has_views_folder' => $fileStructure['has_views_folder'],
+                'has_resources_folder' => $fileStructure['has_resources_folder'],
+                'has_app_folder' => $fileStructure['has_app_folder'],
+                'has_public_folder' => $fileStructure['has_public_folder']
+            ]
         ];
 
-        // Create user template
+        // Create UserTemplate
         $template = UserTemplate::create([
             'user_id' => $userId,
             'name' => $templateName,
-            'slug' => Str::slug($templateName) . '-' . time(),
-            'description' => 'Imported from HTML file',
-            'template_data' => $templateData,
-            'source' => 'imported',
+            'slug' => Str::slug($templateName . '-' . time()),
+            'description' => "Full Laravel template with " . count($fileStructure['blade_files']) . " views, " . count($fileStructure['controller_files']) . " controllers, and " . count($fileStructure['route_files']) . " route files",
+            'template_type' => 'blade_views', // Use same type for compatibility with rendering system
+            'template_data' => $templateStructure,
+            'template_files' => $extractedFiles,
+            'source' => 'import',
             'is_active' => false,
-            'customizations' => [
-                'import_method' => 'html_file',
-                'original_filename' => $file->getClientOriginalName(),
-                'imported_at' => now()->toISOString()
+            'settings' => [
+                'import_date' => now()->toISOString(),
+                'file_count' => $fileStructure['total_files'],
+                'primary_file' => $primaryLayout,
+                'is_full_laravel' => true
             ]
         ]);
 
-        // Auto-activate if requested
+        // Activate template if requested
         if ($autoActivate) {
             $template->activate();
         }
 
-        // Generate stats
-        $stats = $this->generateImportStats($template);
+        Log::info('Full Laravel template created successfully', [
+            'template_id' => $template->id,
+            'template_name' => $template->name,
+            'blade_files' => count($fileStructure['blade_files']),
+            'controller_files' => count($fileStructure['controller_files']),
+            'route_files' => count($fileStructure['route_files'])
+        ]);
 
         return [
             'success' => true,
-            'template' => $template,
-            'stats' => $stats
+            'template_id' => $template->id,
+            'template_name' => $template->name,
+            'template_type' => 'full_laravel',
+            'message' => 'Full Laravel template imported successfully. Views will be available immediately. Controllers and routes are stored for future implementation.',
+            'stats' => [
+                'blade_files' => count($fileStructure['blade_files']),
+                'layout_files' => count($fileStructure['layout_files']),
+                'controller_files' => count($fileStructure['controller_files']),
+                'route_files' => count($fileStructure['route_files']),
+                'css_files' => count($fileStructure['css_files']),
+                'js_files' => count($fileStructure['js_files']),
+                'image_files' => count($fileStructure['image_files']),
+                'total_files' => $fileStructure['total_files']
+            ]
         ];
     }
 
     /**
-     * Normalize template data to consistent structure
+     * Process Laravel Blade template
      */
-    protected function normalizeTemplateData(array $data): ?array
+    protected function processBladeTemplate(array $extractedFiles, array $fileStructure, int $userId, ?string $templateName, bool $autoActivate): array
     {
-        // If it already has the expected structure
-        if (isset($data['templates']) && is_array($data['templates'])) {
-            return $data;
+        // Determine primary layout file
+        $primaryLayout = null;
+        if (!empty($fileStructure['layout_files'])) {
+            $primaryLayout = $fileStructure['layout_files'][0];
+        } elseif (!empty($fileStructure['blade_files'])) {
+            $primaryLayout = $fileStructure['blade_files'][0];
         }
 
-        // If it has template_data wrapper
-        if (isset($data['template_data'])) {
-            if (isset($data['template_data']['templates'])) {
-                return $data['template_data'];
-            }
-            return $data['template_data'];
-        }
-
-        // If it's a legacy structure with template and sections
-        if (isset($data['template']) && isset($data['sections'])) {
+        if (!$primaryLayout) {
             return [
-                'templates' => [[
-                    'name' => $data['template']['name'] ?? 'Imported Template',
-                    'slug' => $data['template']['slug'] ?? Str::slug($data['template']['name'] ?? 'imported'),
-                    'description' => $data['template']['description'] ?? null,
-                    'active' => $data['template']['active'] ?? true,
-                    'type' => 'page',
-                    'sections' => $data['sections']
-                ]]
+                'success' => false,
+                'error' => 'No Blade template files found in the ZIP.',
+                'code' => 'NO_BLADE_FILES'
             ];
         }
 
-        // If it's a direct template structure
-        if (isset($data['name']) && isset($data['sections'])) {
-            return [
-                'templates' => [$data]
-            ];
+        // Generate template name
+        if (!$templateName) {
+            $templateName = 'Blade Template ' . date('Y-m-d H:i:s');
         }
 
-        // If it's just sections array
-        if (isset($data['sections']) && is_array($data['sections'])) {
-            return [
-                'templates' => [[
-                    'name' => 'Imported Template',
-                    'slug' => 'imported-template',
-                    'description' => 'Imported template',
-                    'active' => true,
-                    'type' => 'page',
-                    'sections' => $data['sections']
-                ]]
-            ];
+        // Create the template structure
+        $templateStructure = [
+            'template_type' => 'blade',
+            'primary_file' => $primaryLayout,
+            'structure' => [
+                'blade_files' => $fileStructure['blade_files'],
+                'layout_files' => $fileStructure['layout_files'],
+                'view_files' => $fileStructure['view_files'],
+                'css_files' => $fileStructure['css_files'],
+                'js_files' => $fileStructure['js_files'],
+                'image_files' => $fileStructure['image_files']
+            ],
+            'metadata' => [
+                'total_files' => $fileStructure['total_files'],
+                'blade_count' => count($fileStructure['blade_files']),
+                'has_views_folder' => $fileStructure['has_views_folder']
+            ]
+        ];
+
+        // Create UserTemplate
+        $template = UserTemplate::create([
+            'user_id' => $userId,
+            'name' => $templateName,
+            'slug' => Str::slug($templateName . '-' . time()),
+            'description' => "Imported Laravel Blade template with " . count($fileStructure['blade_files']) . " Blade files",
+            'template_type' => 'blade_views', // Changed to match HomeController
+            'template_data' => $templateStructure,
+            'template_files' => $extractedFiles, // Store as array, not base64
+            'source' => 'import',
+            'is_active' => false, // Always create as inactive first
+            'settings' => [
+                'import_date' => now()->toISOString(),
+                'file_count' => $fileStructure['total_files'],
+                'primary_file' => $primaryLayout
+            ]
+        ]);
+
+        // Activate template if requested
+        if ($autoActivate) {
+            $template->activate();
         }
 
-        return null;
-    }
-
-    /**
-     * Validate template structure
-     */
-    protected function validateTemplateStructure(array $data): bool
-    {
-        // Check if it has template_data or direct templates array
-        if (isset($data['template_data']['templates']) || isset($data['templates'])) {
-            return true;
-        }
-
-        // Check if it's a direct template structure
-        if (isset($data['name']) && isset($data['sections'])) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Generate import statistics
-     */
-    protected function generateImportStats(UserTemplate $template): array
-    {
-        $templateData = $template->template_data;
-        $sectionsCount = 0;
-        $blocksCount = 0;
-
-        if (isset($templateData['templates'])) {
-            foreach ($templateData['templates'] as $tpl) {
-                if (isset($tpl['sections'])) {
-                    $sectionsCount += count($tpl['sections']);
-                    foreach ($tpl['sections'] as $section) {
-                        if (isset($section['blocks'])) {
-                            $blocksCount += count($section['blocks']);
-                        }
-                    }
-                }
-            }
-        }
+        Log::info('Blade template created successfully', [
+            'template_id' => $template->id,
+            'template_name' => $template->name,
+            'blade_files' => count($fileStructure['blade_files'])
+        ]);
 
         return [
-            'templates_created' => isset($templateData['templates']) ? count($templateData['templates']) : 1,
-            'sections_created' => $sectionsCount,
-            'blocks_created' => $blocksCount,
-            'import_method' => 'file',
-            'file_size' => 'N/A'
+            'success' => true,
+            'template_id' => $template->id,
+            'template_name' => $template->name,
+            'template_type' => 'blade',
+            'message' => 'Laravel Blade template imported successfully with ' . count($fileStructure['blade_files']) . ' Blade files.',
+            'stats' => [
+                'blade_files' => count($fileStructure['blade_files']),
+                'layout_files' => count($fileStructure['layout_files']),
+                'total_files' => $fileStructure['total_files']
+            ]
+        ];
+    }
+
+    /**
+     * Process PHP template
+     */
+    protected function processPhpTemplate(array $extractedFiles, array $fileStructure, int $userId, ?string $templateName, bool $autoActivate): array
+    {
+        // Find main PHP file
+        $mainPhpFile = null;
+        foreach ($fileStructure['php_files'] as $phpFile) {
+            $basename = strtolower(basename($phpFile));
+            if (str_contains($basename, 'index') || str_contains($basename, 'main') || str_contains($basename, 'home')) {
+                $mainPhpFile = $phpFile;
+                break;
+            }
+        }
+
+        if (!$mainPhpFile) {
+            $mainPhpFile = $fileStructure['php_files'][0];
+        }
+
+        // Generate template name
+        if (!$templateName) {
+            $templateName = 'PHP Template ' . date('Y-m-d H:i:s');
+        }
+
+        // Create the template structure
+        $templateStructure = [
+            'template_type' => 'php',
+            'primary_file' => $mainPhpFile,
+            'structure' => [
+                'php_files' => $fileStructure['php_files'],
+                'css_files' => $fileStructure['css_files'],
+                'js_files' => $fileStructure['js_files'],
+                'image_files' => $fileStructure['image_files']
+            ],
+            'metadata' => [
+                'total_files' => $fileStructure['total_files'],
+                'php_count' => count($fileStructure['php_files'])
+            ]
+        ];
+
+        // Create UserTemplate
+        $template = UserTemplate::create([
+            'user_id' => $userId,
+            'name' => $templateName,
+            'slug' => Str::slug($templateName . '-' . time()),
+            'description' => "Imported PHP template with " . count($fileStructure['php_files']) . " PHP files",
+            'template_type' => 'blade_views', // Use blade_views for compatibility
+            'template_data' => $templateStructure,
+            'template_files' => $extractedFiles,
+            'source' => 'import',
+            'is_active' => false,
+            'settings' => [
+                'import_date' => now()->toISOString(),
+                'file_count' => $fileStructure['total_files'],
+                'primary_file' => $mainPhpFile
+            ]
+        ]);
+
+        // Activate template if requested
+        if ($autoActivate) {
+            $template->activate();
+        }
+
+        Log::info('PHP template created successfully', [
+            'template_id' => $template->id,
+            'template_name' => $template->name,
+            'php_files' => count($fileStructure['php_files'])
+        ]);
+
+        return [
+            'success' => true,
+            'template_id' => $template->id,
+            'template_name' => $template->name,
+            'template_type' => 'php',
+            'message' => 'PHP template imported successfully with ' . count($fileStructure['php_files']) . ' PHP files.',
+            'stats' => [
+                'php_files' => count($fileStructure['php_files']),
+                'total_files' => $fileStructure['total_files']
+            ]
+        ];
+    }
+
+    /**
+     * Get recent imports for dashboard
+     */
+    protected function getRecentImports(): array
+    {
+        return UserTemplate::where('source', 'import')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Get import statistics
+     */
+    protected function getImportStats(): array
+    {
+        return [
+            'total_imported' => UserTemplate::where('source', 'import')->count(),
+            'active_templates' => UserTemplate::where('is_active', true)->count(),
+            'recent_count' => UserTemplate::where('source', 'import')
+                ->where('created_at', '>=', now()->subDays(7))
+                ->count()
         ];
     }
 
@@ -1514,293 +643,9 @@ class SmartImportController extends Controller
             \ZipArchive::ER_INTERNAL => 'Internal error',
             \ZipArchive::ER_INCONS => 'Zip archive inconsistent',
             \ZipArchive::ER_REMOVE => 'Can\'t remove file',
-            \ZipArchive::ER_DELETED => 'Entry has been deleted',
+            \ZipArchive::ER_DELETED => 'Entry has been deleted'
         ];
 
-        return $errors[$code] ?? 'Unknown error code: ' . $code;
-    }
-
-    /**
-     * Get import progress (for real-time updates)
-     */
-    public function getProgress(Request $request)
-    {
-        $importId = $request->get('import_id');
-
-        // For now, return mock progress
-        // In production, this would check a job queue or cache
-        return response()->json([
-            'success' => true,
-            'progress' => [
-                'step' => 'Converting template',
-                'percentage' => 75,
-                'message' => 'Converting HTML structure to CMS format...'
-            ]
-        ]);
-    }
-
-    /**
-     * Get recent imports for the current user
-     */
-    protected function getRecentImports()
-    {
-        return UserTemplate::where('user_id', Auth::id())
-            ->where('source', 'imported')
-            ->latest()
-            ->limit(5)
-            ->get(['id', 'name', 'preview_image', 'is_active', 'created_at']);
-    }
-
-    /**
-     * Get import statistics
-     */
-    protected function getImportStats()
-    {
-        $userId = Auth::id();
-
-        return [
-            'total_imports' => UserTemplate::where('user_id', $userId)->where('source', 'imported')->count(),
-            'active_imports' => UserTemplate::where('user_id', $userId)->where('source', 'imported')->where('is_active', true)->count(),
-            'successful_imports' => UserTemplate::where('user_id', $userId)->where('source', 'imported')->count(), // All in DB are successful
-            'last_import' => UserTemplate::where('user_id', $userId)->where('source', 'imported')->latest()->first()?->created_at
-        ];
-    }
-
-    /**
-     * Get supported import sources
-     */
-    protected function getSupportedSources()
-    {
-        return [
-            [
-                'id' => 'url',
-                'name' => 'Import from URL',
-                'description' => 'Import any school website template from a URL',
-                'icon' => 'fas fa-link',
-                'features' => ['Auto language detection', 'Smart conversion', 'Instant translation']
-            ],
-            [
-                'id' => 'github',
-                'name' => 'GitHub Templates',
-                'description' => 'Discover and import templates from GitHub',
-                'icon' => 'fab fa-github',
-                'features' => ['Curated selection', 'Quality templates', 'Open source']
-            ],
-            [
-                'id' => 'html_upload',
-                'name' => 'Upload HTML',
-                'description' => 'Upload HTML/CSS files directly',
-                'icon' => 'fas fa-upload',
-                'features' => ['File upload', 'Bulk import', 'Asset extraction']
-            ],
-            [
-                'id' => 'live_demo',
-                'name' => 'Live Demo Import',
-                'description' => 'Import from live demo websites',
-                'icon' => 'fas fa-globe',
-                'features' => ['Live capture', 'Real-time import', 'Preview generation']
-            ]
-        ];
-    }
-
-    /**
-     * Log successful import
-     */
-    protected function logImportSuccess(array $result)
-    {
-        Log::info('Template import successful', [
-            'template_id' => $result['template']->id,
-            'template_name' => $result['template']->name,
-            'user_id' => Auth::id(),
-            'stats' => $result['stats']
-        ]);
-    }
-
-    /**
-     * Log import error
-     */
-    protected function logImportError(string $url, array $result)
-    {
-        Log::warning('Template import failed', [
-            'url' => $url,
-            'user_id' => Auth::id(),
-            'error' => $result['error'],
-            'code' => $result['code'] ?? 'UNKNOWN_ERROR'
-        ]);
-    }
-
-    /**
-     * Import full template from various sources
-     */
-    public function importFullTemplate(Request $request)
-    {
-        $request->validate([
-            'source' => 'required|string',
-            'type' => 'required|in:github,url,zip',
-            'name' => 'nullable|string|max:255',
-            'branch' => 'nullable|string|max:50'
-        ]);
-
-        try {
-            $options = [];
-            if ($request->name) {
-                $options['name'] = $request->name;
-            }
-            if ($request->branch) {
-                $options['branch'] = $request->branch;
-            }
-
-            $result = $this->fullImporter->importFullTemplate(
-                $request->source,
-                Auth::id(),
-                $options
-            );
-
-            if ($result['success']) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $result['message'],
-                    'template_id' => $result['user_template']->id,
-                    'files_imported' => $result['files_imported'],
-                    'redirect' => route('admin.templates.smart-import.index')
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => $result['message']
-                ], 400);
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Full template import failed', [
-                'source' => $request->source,
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Import failed: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Upload and import full template ZIP
-     */
-    public function uploadFullTemplate(Request $request)
-    {
-        $request->validate([
-            'zip_file' => 'required|file|mimes:zip|max:50000', // 50MB max
-            'name' => 'nullable|string|max:255'
-        ]);
-
-        try {
-            $zipFile = $request->file('zip_file');
-            $tempPath = $zipFile->store('temp');
-            $fullPath = Storage::path($tempPath);
-
-            $options = [];
-            if ($request->name) {
-                $options['name'] = $request->name;
-            }
-
-            $result = $this->fullImporter->importFullTemplate(
-                $fullPath,
-                Auth::id(),
-                $options
-            );
-
-            // Clean up temp file
-            Storage::delete($tempPath);
-
-            if ($result['success']) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $result['message'],
-                    'template_id' => $result['user_template']->id,
-                    'files_imported' => $result['files_imported'],
-                    'redirect' => route('admin.templates.smart-import.index')
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => $result['message']
-                ], 400);
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Full template ZIP upload failed', [
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Upload failed: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * List full templates
-     */
-    public function listFullTemplates()
-    {
-        $templates = UserTemplate::where('user_id', Auth::id())
-            ->where('settings->template_type', 'full_template')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'templates' => $templates->map(function($template) {
-                return [
-                    'id' => $template->id,
-                    'name' => $template->name,
-                    'description' => $template->description,
-                    'status' => $template->status,
-                    'created_at' => $template->created_at->format('M d, Y'),
-                    'files_count' => count($template->template_data['files'] ?? [])
-                ];
-            })
-        ]);
-    }
-
-    /**
-     * Activate full template for homepage
-     */
-    public function activateFullTemplate(UserTemplate $template)
-    {
-        if ($template->user_id !== Auth::id()) {
-            abort(403);
-        }
-
-        try {
-            // Deactivate other full templates
-            UserTemplate::where('user_id', Auth::id())
-                ->where('settings->template_type', 'full_template')
-                ->update(['status' => 'inactive']);
-
-            // Activate this template
-            $template->update(['status' => 'active']);
-
-            // Set as homepage template
-            \App\Models\Setting::set('homepage_template_type', 'full_template');
-            \App\Models\Setting::set('active_full_template_id', $template->id);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Template activated successfully for homepage'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to activate template: ' . $e->getMessage()
-            ], 500);
-        }
+        return $errors[$code] ?? 'Unknown error';
     }
 }

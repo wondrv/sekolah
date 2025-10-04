@@ -1,249 +1,159 @@
 @extends('layouts.admin')
 
-@section('title', 'Smart Template Import')
+@section('title', 'Template Import')
 
 @section('content')
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="py-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Smart Template Import</h1>
-                        <p class="mt-2 text-gray-600">Import templates from GitHub, websites, or files with automatic detection and processing</p>
-                    </div>
-                    <div class="flex space-x-3">
-                        <a href="{{ route('admin.templates.my-templates.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left mr-2"></i>Back to Templates
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Template Import</h1>
+        <p class="text-gray-600 mt-2">Upload ZIP template untuk Laravel Blade views (.blade.php) dan PHP files</p>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Import Mode Tabs -->
-        <div class="bg-white rounded-lg shadow-sm border mb-8">
-            <div class="border-b border-gray-200">
-                <nav class="-mb-px flex">
-                    <button class="import-mode-tab active py-3 px-6 border-b-2 border-blue-500 text-blue-600 font-medium" data-mode="smart">
-                        🤖 Smart Import (CMS Blocks)
-                    </button>
-                    <button class="import-mode-tab py-3 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-mode="complete">
-                        🚀 Complete Project Import
-                    </button>
-                </nav>
-            </div>
-
-            <div class="p-6">
-                <div id="smart-mode-description" class="import-mode-description">
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                        <h4 class="font-medium text-blue-900 mb-2">Smart Import Mode</h4>
-                        <p class="text-blue-800 text-sm">Converts websites into CMS blocks that can be edited through the admin panel. Content is analyzed and converted into editable sections.</p>
+    <div class="max-w-4xl mx-auto">
+        <!-- Main Upload Section -->
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-upload text-blue-600 text-3xl"></i>
                     </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Upload Template ZIP</h2>
+                    <p class="text-gray-600">Upload file ZIP berisi Laravel Blade views (.blade.php) atau PHP template files</p>
                 </div>
 
-                <div id="complete-mode-description" class="import-mode-description hidden">
-                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-                        <h4 class="font-medium text-purple-900 mb-2">Complete Project Import Mode</h4>
-                        <p class="text-purple-800 text-sm">Import entire GitHub projects with ALL files preserved. Perfect for ready-to-use templates with complete structure, assets, and functionality.</p>
-                    </div>
-                </div>
-
-
-            </div>
-        </div>
-
-        <!-- Smart Import Mode -->
-        <div id="smart-import-content" class="import-mode-content">
-        <!-- Import Methods -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <!-- Import from URL -->
-            <div class="bg-white rounded-lg shadow-sm border">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <div class="bg-blue-100 p-3 rounded-lg mr-4">
-                            <i class="fas fa-link text-blue-600 text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Import from URL</h3>
-                            <p class="text-sm text-gray-600">Import any school template from a website URL</p>
-                        </div>
-                    </div>
-
-                    <form id="urlImportForm" class="space-y-4">
+                <div class="max-w-2xl mx-auto">
+                    <form id="templateImportForm" class="space-y-6" method="POST" action="{{ route('admin.templates.smart-import.import-file') }}" enctype="multipart/form-data">
                         @csrf
+
+                        <!-- File Upload -->
                         <div>
-                            <label for="template_url" class="block text-sm font-medium text-gray-700 mb-2">Template URL</label>
-                            <input type="url"
-                                   id="template_url"
-                                   name="url"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="https://example.com/school-template"
-                                   required>
-                            <div class="mt-1 text-xs text-gray-500">
-                                💡 <strong>Tips URL yang cocok:</strong><br>
-                                ✅ Website sekolah live (contoh: https://www.smkn1kampak.sch.id/)<br>
-                                ✅ Demo template HTML (contoh: https://demo.templatesite.com/school/)<br>
-                                ✅ GitHub Pages atau Netlify deployment<br>
-                                ❌ Repository GitHub (seperti github.com/user/repo) - akan dikonversi otomatis
+                            <label for="template_file" class="block text-sm font-medium text-gray-700 mb-3">Select ZIP File</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+                                <input type="file"
+                                       id="template_file"
+                                       name="file"
+                                       accept=".zip"
+                                       class="hidden"
+                                       required>
+                                <label for="template_file" class="cursor-pointer">
+                                    <div class="space-y-3">
+                                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                                        <div>
+                                            <p class="text-lg font-medium text-gray-700">Click to browse atau drag & drop</p>
+                                            <p class="text-sm text-gray-500">ZIP files only, max 50MB</p>
+                                        </div>
+                                    </div>
+                                </label>
+                                <div id="file-info" class="hidden mt-4 p-3 bg-blue-50 rounded-lg text-left">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-file-archive text-blue-600 mr-3"></i>
+                                        <div>
+                                            <p id="file-name" class="font-medium text-gray-900"></p>
+                                            <p id="file-size" class="text-sm text-gray-600"></p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Template Details -->
+                        <div class="grid md:grid-cols-2 gap-4">
                             <div>
-                                <label for="custom_name" class="block text-sm font-medium text-gray-700 mb-2">Custom Name (Optional)</label>
+                                <label for="template_name" class="block text-sm font-medium text-gray-700 mb-2">Template Name (Optional)</label>
                                 <input type="text"
-                                       id="custom_name"
-                                       name="custom_name"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="My Awesome Template">
+                                       id="template_name"
+                                       name="template_name"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Auto-detected from files">
                             </div>
                             <div class="flex items-end">
                                 <label class="flex items-center">
                                     <input type="checkbox" id="auto_activate" name="auto_activate" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="ml-2 text-sm text-gray-700">Activate immediately</span>
+                                    <span class="ml-2 text-sm text-gray-700">Aktifkan langsung setelah import</span>
                                 </label>
                             </div>
                         </div>
 
-                        <div>
-                            <label for="custom_description" class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
-                            <textarea id="custom_description"
-                                      name="custom_description"
-                                      rows="3"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      placeholder="Description for this template..."></textarea>
-                        </div>
-
-                        <div class="flex space-x-3">
-                            <button type="button" id="analyzeBtn" class="btn btn-secondary flex-1">
-                                <i class="fas fa-search mr-2"></i>Analyze First
-                            </button>
-                            <button type="submit" id="importBtn" class="btn btn-primary flex-1">
-                                <i class="fas fa-download mr-2"></i>Import Now
+                        <!-- Submit Button -->
+                        <div class="text-center">
+                            <button type="submit" id="importBtn" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-upload mr-2"></i>
+                                <span id="importBtnText">Import Template</span>
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Analysis Results -->
-                    <div id="analysisResults" class="hidden mt-6 p-4 bg-gray-50 rounded-lg">
-                        <h4 class="font-semibold text-gray-900 mb-3">Template Analysis</h4>
-                        <div id="analysisContent"></div>
+        <!-- Template Structure Guide -->
+        <div class="bg-white rounded-lg shadow-sm border mt-8">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">📁 Struktur ZIP yang Didukung</h3>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Laravel Blade Structure -->
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-blue-900 mb-3">🔧 Laravel Blade Views</h4>
+                        <pre class="text-xs bg-white p-3 rounded border overflow-x-auto">template.zip
+├── views/
+│   ├── layouts/
+│   │   └── main.blade.php     ← Layout utama
+│   ├── home.blade.php         ← Homepage
+│   ├── tentang.blade.php      ← About page
+│   ├── program.blade.php      ← Programs
+│   ├── berita.blade.php       ← News
+│   ├── galeri.blade.php       ← Gallery
+│   ├── kontak.blade.php       ← Contact
+│   └── ppdb.blade.php         ← Admission</pre>
+                        <p class="text-xs text-blue-800 mt-2">Perfect untuk template sekolah dengan struktur Laravel Blade views</p>
+                    </div>
+
+                    <!-- PHP Template Structure -->
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-green-900 mb-3">� PHP Template Files</h4>
+                        <pre class="text-xs bg-white p-3 rounded border overflow-x-auto">template.zip
+├── index.php              ← Main homepage file
+├── about.php              ← About page
+├── contact.php            ← Contact page
+├── includes/
+│   ├── header.php         ← Header include
+│   └── footer.php         ← Footer include
+├── css/
+│   └── style.css
+└── js/
+    └── script.js</pre>
+                        <p class="text-xs text-green-800 mt-2">Untuk template PHP tradisional dengan include files</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h4 class="font-semibold text-yellow-900 mb-2">💡 Tips Upload:</h4>
+                    <ul class="text-sm text-yellow-800 space-y-1">
+                        <li>• Sistem akan otomatis mendeteksi tipe template dari struktur ZIP</li>
+                        <li>• File .blade.php akan diproses sebagai Laravel Blade views (prioritas utama)</li>
+                        <li>• File .php akan diproses sebagai PHP template files</li>
+                        <li>• Template name akan auto-generate jika tidak diisi</li>
+                        <li>• Struktur views/ folder akan dideteksi otomatis</li>
+                    </ul>
+                </div>
+
+                <!-- Upload Instructions -->
+                <div class="mt-6 border-t pt-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">📝 Petunjuk Upload</h4>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <ul class="text-sm text-blue-800 space-y-1">
+                            <li>• Mendukung file ZIP, JSON, dan HTML (maksimal 10MB)</li>
+                            <li>• ZIP file dapat berisi struktur template kompleks</li>
+                            <li>• JSON file untuk konfigurasi template sederhana</li>
+                            <li>• HTML file akan dikonversi menjadi template CMS</li>
+                        </ul>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Import from File -->
-            <div class="bg-white rounded-lg shadow-sm border">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <div class="bg-purple-100 p-3 rounded-lg mr-4">
-                            <i class="fas fa-upload text-purple-600 text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Import from File</h3>
-                            <p class="text-sm text-gray-600">Upload Laravel Blade templates, JSON, ZIP, atau HTML files</p>
-                        </div>
-                    </div>
-
-                    <form id="fileImportForm" class="space-y-4" method="POST" action="{{ route('admin.templates.smart-import.import-file') }}" enctype="multipart/form-data">
-                        @csrf
-
-                        <div>
-                            <label for="template_file" class="block text-sm font-medium text-gray-700 mb-2">Template File</label>
-                            <div class="relative">
-                                <input type="file"
-                                       id="template_file"
-                                       name="file"
-                                       accept=".json,.zip,.html,.htm"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                       required>
-                                <div class="mt-1 text-xs text-gray-500">
-                                    Supports: <strong>.blade.php</strong> (Laravel), JSON, ZIP, dan HTML files (max 10MB)
-                                </div>
-                                <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                                    💡 <strong>Test files tersedia:</strong><br>
-                                    • <a href="/sample-template.json" download class="text-blue-600 underline">sample-template.json</a> (Basic)<br>
-                                    • <a href="/sample-template-comprehensive.json" download class="text-blue-600 underline">sample-template-comprehensive.json</a> (Lengkap)<br>
-                                    • <a href="/sample-template.html" download class="text-blue-600 underline">sample-template.html</a> (HTML Template)<br>
-                                    • <a href="/sample-template-comprehensive.zip" download class="text-blue-600 underline">sample-template-comprehensive.zip</a> (ZIP Package)
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="file_template_name" class="block text-sm font-medium text-gray-700 mb-2">Template Name</label>
-                            <input type="text"
-                                   id="file_template_name"
-                                   name="template_name"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                   placeholder="Auto-detected from file">
-                        </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox" id="file_auto_activate" name="auto_activate" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                            <label for="file_auto_activate" class="ml-2 text-sm text-gray-700">Activate template after import</label>
-                        </div>
-                        <div class="mt-2 flex items-center">
-                            <input type="checkbox" id="file_homepage" name="homepage" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                            <label for="file_homepage" class="ml-2 text-sm text-gray-700">Set as Homepage (if activated)</label>
-                        </div>
-
-                        <div class="flex">
-                            <button type="submit" id="fileImportBtn" class="btn btn-primary flex-1 bg-purple-600 hover:bg-purple-700">
-                                <i class="fas fa-upload mr-2"></i>Import Template
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- File Analysis Results -->
-                    <div id="fileAnalysisResults" class="hidden mt-6 p-4 bg-purple-50 rounded-lg">
-                        <h4 class="font-semibold text-gray-900 mb-3">File Analysis</h4>
-                        <div id="fileAnalysisContent"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Discover Templates -->
-            <div class="bg-white rounded-lg shadow-sm border">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <div class="bg-green-100 p-3 rounded-lg mr-4">
-                            <i class="fab fa-github text-green-600 text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Discover Templates</h3>
-                            <p class="text-sm text-gray-600">Browse curated templates from GitHub and other sources</p>
-                        </div>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label for="source_select" class="block text-sm font-medium text-gray-700 mb-2">Source</label>
-                            <select id="source_select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="all">All Sources</option>
-                                <option value="github_school_templates">GitHub School Templates</option>
-                                <option value="github_education_themes">Education Themes</option>
-                                <option value="free_css_school">Free CSS Templates</option>
-                            </select>
-                        </div>
-
-                        <button type="button" id="discoverBtn" class="btn btn-primary w-full">
-                            <i class="fas fa-search mr-2"></i>Discover Templates
-                        </button>
-                    </div>
-
-                    <!-- Discovery Results -->
-                    <div id="discoveryResults" class="hidden mt-6">
-                        <h4 class="font-semibold text-gray-900 mb-3">Found Templates</h4>
-                        <div id="discoveryContent" class="space-y-3 max-h-96 overflow-y-auto"></div>
-                    </div>
-                </div>
-            </div>
-        </div>        <!-- Import Progress -->
+        <!-- Import Progress -->
         <div id="importProgress" class="hidden bg-white rounded-lg shadow-sm border p-6 mb-8">
             <div class="flex items-center mb-4">
                 <div class="bg-blue-100 p-3 rounded-lg mr-4">
@@ -265,1026 +175,174 @@
                 </div>
             </div>
         </div>
-        </div>
 
-        <!-- Complete Project Import Mode -->
-        <div id="complete-import-content" class="import-mode-content hidden">
-            <!-- Complete Project Import Methods -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <!-- GitHub Project Import -->
-                <div class="bg-white rounded-lg shadow-sm border">
-                    <div class="p-6">
-                        <div class="flex items-center mb-4">
-                            <div class="bg-green-100 p-3 rounded-lg mr-4">
-                                <i class="fab fa-github text-green-600 text-xl"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Complete GitHub Project</h3>
-                                <p class="text-sm text-gray-600">Import entire project with all files preserved</p>
-                            </div>
-                        </div>
+        <!-- Success/Error Messages -->
+        <div id="alertContainer"></div>
 
-                        <form id="githubCompleteProjectForm" class="space-y-4">
-                            <div>
-                                <label for="github_complete_url" class="block text-sm font-medium text-gray-700 mb-2">
-                                    GitHub Repository URL
-                                </label>
-                                <input type="text" id="github_complete_url" name="url"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                       placeholder="https://github.com/user/repo">
-                            </div>
-                            <div>
-                                <label for="complete_project_name" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Project Name
-                                </label>
-                                <input type="text" id="complete_project_name" name="name"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                       placeholder="Enter project name">
-                            </div>
-                            <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
-                                Import Complete Project
-                            </button>
-                        </form>
-
-                        <div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded text-xs leading-relaxed">
-                            <h4 class="font-semibold text-gray-800 mb-2">📁 Template Laravel Blade - Struktur ZIP</h4>
-                            <p class="mb-2">Untuk template sekolah siap pakai dengan Laravel Blade views:</p>
-                            <pre class="bg-white border rounded p-3 overflow-x-auto text-[10px] mb-3">template-sekolah.zip
-├─ views/
-│   ├─ layouts/
-│   │   └─ app.blade.php           ← Layout utama
-│   ├─ home.blade.php              ← Halaman beranda
-│   ├─ profil.blade.php            ← Halaman profil sekolah
-│   ├─ fasilitas.blade.php         ← Halaman fasilitas
-│   ├─ guru.blade.php              ← Halaman guru/staff
-│   ├─ prestasi.blade.php          ← Halaman prestasi
-│   ├─ galeri.blade.php            ← Halaman galeri
-│   └─ kontak.blade.php            ← Halaman kontak
-└─ assets/ (optional)
-    ├─ css/
-    ├─ js/
-    └─ images/</pre>
-                            <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
-                                <p class="text-blue-800 text-xs mb-2"><strong>🎯 Keunggulan Template Blade:</strong></p>
-                                <ul class="list-disc ml-5 space-y-1 text-blue-700 text-xs">
-                                    <li>File <code>.blade.php</code> otomatis terdeteksi</li>
-                                    <li>Langsung bisa di-<strong>switch</strong> antar template</li>
-                                    <li>Support <strong>@extends, @section, @include</strong></li>
-                                    <li>Bisa pakai data dinamis dari database</li>
-                                    <li>Struktur Laravel native - mudah dikustomisasi</li>
-                                </ul>
-                            </div>
-                            <p class="text-xs text-gray-600"><strong>✨ Tips:</strong> Pastikan ada file <code>layouts/app.blade.php</code> sebagai layout utama, dan <code>home.blade.php</code> untuk halaman beranda.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ZIP Project Import -->
-                <div class="bg-white rounded-lg shadow-sm border">
-                    <div class="p-6">
-                        <div class="flex items-center mb-4">
-                            <div class="bg-orange-100 p-3 rounded-lg mr-4">
-                                <i class="fas fa-file-archive text-orange-600 text-xl"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">ZIP Project Upload</h3>
-                                <p class="text-sm text-gray-600">Upload complete project as ZIP file</p>
-                            </div>
-                        </div>
-
-                        <form id="zipCompleteProjectForm" class="space-y-4" enctype="multipart/form-data">
-                            <div>
-                                <label for="zip_complete_file" class="block text-sm font-medium text-gray-700 mb-2">
-                                    ZIP File
-                                </label>
-                                <input type="file" id="zip_complete_file" name="file" accept=".zip"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label for="zip_project_name" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Project Name
-                                </label>
-                                <input type="text" id="zip_project_name" name="name"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                       placeholder="Enter project name">
-                            </div>
-                            <button type="submit" class="w-full bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition-colors">
-                                Upload Complete Project
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Complete Project Results -->
-            <div id="completeProjectResults" class="hidden">
-                <!-- Results will be populated here -->
-            </div>
-        </div>
-
-        <!-- Recent Imports -->
-        @if(count($recent_imports) > 0)
-        <div class="bg-white rounded-lg shadow-sm border">
-            <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Imports</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($recent_imports as $template)
-                    <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div class="aspect-w-16 aspect-h-9 mb-3">
-                            <img src="{{ $template->preview_image_url }}"
-                                 alt="{{ $template->name }}"
-                                 class="w-full h-32 object-cover rounded">
-                        </div>
-                        <h4 class="font-medium text-gray-900 mb-1">{{ $template->name }}</h4>
-                        <p class="text-sm text-gray-600 mb-2">{{ $template->created_at->format('M d, Y') }}</p>
-                        <div class="flex items-center justify-between">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $template->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                {{ $template->is_active ? 'Active' : 'Inactive' }}
-                            </span>
-                            <a href="{{ route('admin.templates.my-templates.edit', $template->id) }}" class="text-blue-600 hover:text-blue-800 text-sm">
-                                Edit
-                            </a>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-        @endif
-
-        <!-- Import Statistics -->
-        <div class="mt-8 grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div class="bg-white rounded-lg shadow-sm border p-6">
-                <div class="flex items-center">
-                    <div class="bg-blue-100 p-3 rounded-lg mr-4">
-                        <i class="fas fa-download text-blue-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Total Imports</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ $import_stats['total_imports'] }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border p-6">
-                <div class="flex items-center">
-                    <div class="bg-green-100 p-3 rounded-lg mr-4">
-                        <i class="fas fa-check text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Active Templates</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ $import_stats['active_imports'] }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border p-6">
-                <div class="flex items-center">
-                    <div class="bg-purple-100 p-3 rounded-lg mr-4">
-                        <i class="fas fa-magic text-purple-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Auto-Translated</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ $import_stats['successful_imports'] }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border p-6">
-                <div class="flex items-center">
-                    <div class="bg-orange-100 p-3 rounded-lg mr-4">
-                        <i class="fas fa-clock text-orange-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Last Import</p>
-                        <p class="text-sm font-semibold text-gray-900">
-                            {{ $import_stats['last_import'] ? $import_stats['last_import']->diffForHumans() : 'Never' }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
-<!-- Success Modal -->
-<div id="successModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3 text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <i class="fas fa-check text-green-600 text-xl"></i>
-            </div>
-            <h3 class="text-lg font-medium text-gray-900" id="successTitle">Template Imported Successfully!</h3>
-            <div class="mt-2 px-7 py-3">
-                <p class="text-sm text-gray-500" id="successMessage">Your template has been imported and is ready to use.</p>
-            </div>
-            <div class="items-center px-4 py-3">
-                <button id="closeSuccessModal" class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300">
-                    OK
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@endsection
-
-<script>
-// Silent test to verify JavaScript is working
-console.log('=== SMART IMPORT JS LOADED SUCCESSFULLY ===');
-</script>
-
-@section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded - Smart Import initialized');
-
-    const urlImportForm = document.getElementById('urlImportForm');
-    const analyzeBtn = document.getElementById('analyzeBtn');
+    const templateFileInput = document.getElementById('template_file');
+    const fileInfo = document.getElementById('file-info');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const templateImportForm = document.getElementById('templateImportForm');
     const importBtn = document.getElementById('importBtn');
-    const discoverBtn = document.getElementById('discoverBtn');
-    const sourceSelect = document.getElementById('source_select');
-    const analysisResults = document.getElementById('analysisResults');
-    const discoveryResults = document.getElementById('discoveryResults');
+    const importBtnText = document.getElementById('importBtnText');
     const importProgress = document.getElementById('importProgress');
-    const successModal = document.getElementById('successModal');
+    const alertContainer = document.getElementById('alertContainer');
 
-    console.log('Elements found:', {
-        analyzeBtn: !!analyzeBtn,
-        importBtn: !!importBtn,
-        urlImportForm: !!urlImportForm,
-        analysisResults: !!analysisResults
-    });
-
-    if (!analyzeBtn) {
-        console.error('CRITICAL: analyzeBtn element not found!');
-        return;
-    }
-
-    // File import elements
-    const fileImportForm = document.getElementById('fileImportForm');
-    const fileImportBtn = document.getElementById('fileImportBtn');
-    const fileAnalysisResults = document.getElementById('fileAnalysisResults');
-
-    // Analyze URL
-    analyzeBtn.addEventListener('click', async function() {
-        console.log('Analyze button clicked!');
-        const url = document.getElementById('template_url').value;
-        console.log('URL to analyze:', url);
-
-        if (!url) {
-            console.log('No URL provided');
-            try {
-                showErrorNotification('Please enter a URL to analyze');
-            } catch (e) {
-                alert('Please enter a URL to analyze');
-            }
-            return;
-        }
-
-        try {
-            console.log('Starting analysis...');
-            analyzeBtn.disabled = true;
-            analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
-
-            const response = await fetch('{{ route("admin.templates.smart-import.analyze") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ url: url })
-            });
-
-            console.log('Response received:', response.status, response.statusText);
-
-            let result;
-            const contentType = response.headers.get('content-type') || '';
-            console.log('Content-Type:', contentType);
-
-            if (contentType.includes('application/json')) {
-                result = await response.json();
-                console.log('Analysis result:', result);
-            } else {
-                const text = await response.text();
-                console.error('Non-JSON analyze response snippet:', text.substring(0, 300));
-                throw new Error('Server returned non-JSON response (possible auth redirect)');
-            }
-
-            if (result.success) {
-                console.log('Analysis successful');
-                showAnalysisResults(result.analysis);
-                try {
-                    showSuccessNotification('Analysis successful', result.analysis.title || 'Template');
-                } catch (e) {
-                    alert('Analysis successful: ' + (result.analysis.title || 'Template'));
-                }
-            } else {
-                console.log('Analysis failed:', result.error, result.code);
-                const code = result.code ? '[' + result.code + '] ' : '';
-                const errorMsg = code + (result.error || 'Analysis failed');
-                try {
-                    showErrorNotification(errorMsg);
-                } catch (e) {
-                    alert('Analysis failed: ' + errorMsg);
-                }
-            }
-        } catch (error) {
-            console.error('Analysis error:', error);
-            try {
-                showErrorNotification('Analysis failed: ' + error.message);
-            } catch (e) {
-                alert('Analysis failed: ' + error.message);
-            }
-        } finally {
-            console.log('Analysis complete, restoring button');
-            analyzeBtn.disabled = false;
-            analyzeBtn.innerHTML = '<i class="fas fa-search mr-2"></i>Analyze First';
-        }
-    });
-
-    console.log('Analyze button event listener attached successfully');
-
-    // Import from URL
-    urlImportForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const formData = new FormData(urlImportForm);
-        const data = Object.fromEntries(formData.entries());
-        data.auto_activate = document.getElementById('auto_activate').checked;
-
-        try {
-            showImportProgress();
-
-            const response = await fetch('{{ route("admin.templates.smart-import.import-url") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-
-            hideImportProgress();
-
-            if (result.success) {
-                showSuccessModal(result.message, result.template.name);
-                // Optional: redirect to edit page
-                if (result.redirect) {
-                    setTimeout(() => {
-                        window.location.href = result.redirect;
-                    }, 2000);
-                }
-            } else {
-                alert('Import failed: ' + result.error + '\\n\\nNeed help? Check Import Guide: ' + window.location.origin + '/admin/templates/import-guide');
-            }
-        } catch (error) {
-            hideImportProgress();
-            alert('Import failed: ' + error.message);
-        }
-    });
-
-    // File Import with comprehensive error handling
-    fileImportForm.addEventListener('submit', async function(e) {
-        e.preventDefault(); // PREVENT default form submission
-
-        console.log('Form submit intercepted - using AJAX instead');
-
-        // Validate file selection
-        const fileInput = document.getElementById('template_file');
-        if (!fileInput.files.length) {
-            showErrorNotification('Silakan pilih file untuk diimpor');
-            return;
-        }        const file = fileInput.files[0];
-        console.log('Importing file:', file.name, 'Size:', file.size, 'Type:', file.type);
-
-    const formData = new FormData(fileImportForm);
-    // If homepage checked but auto_activate not checked, homepage flag will be ignored server-side.
-    const homepageRequested = formData.get('homepage') !== null;
-
-        // Show loading state
-        showLoadingNotification('Mengimpor template...');
-
-        try {
-            fileImportBtn.disabled = true;
-            fileImportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengimpor...';
-            fileAnalysisResults.classList.add('hidden');
-
-            const response = await fetch('{{ route("admin.templates.smart-import.import-file") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: formData
-            });
-
-            console.log('Response status:', response.status);
-            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            let result;
-            const contentType = response.headers.get('content-type') || '';
-            try {
-                if (contentType.includes('application/json')) {
-                    result = await response.json();
-                } else {
-                    // Fallback: try to parse as JSON anyway
-                    const raw = await response.text();
-                    try {
-                        result = JSON.parse(raw);
-                        console.warn('Parsed JSON from non-standard content-type:', contentType);
-                    } catch (parseErr) {
-                        console.error('Raw non-JSON response (first 500 chars):', raw.substring(0, 500));
-                        throw new Error('Server mengembalikan response yang tidak valid');
-                    }
-                }
-            } catch (e2) {
-                throw e2;
-            }
-            console.log('=== FULL IMPORT RESULT ===');
-            console.log('Success:', result.success);
-            console.log('Message:', result.message);
-            console.log('Template:', result.template);
-            console.log('Error:', result.error);
-            console.log('Complete result:', result);
-
-            if (result.success) {
-                console.log('SUCCESS BRANCH - Calling hideLoadingNotification...');
-                hideLoadingNotification();
-
-                console.log('SUCCESS BRANCH - Calling showFileAnalysisResults...');
-                showFileAnalysisResults(result);
-
-                console.log('SUCCESS BRANCH - Calling showSuccessNotification...');
-                showSuccessNotification(
-                    result.message || 'Template berhasil diimpor!',
-                    result.template.name
-                );
-
-                console.log('SUCCESS BRANCH - Form reset...');
-                // Clear form
-                // Potential homepage activation follow-up
-                const maybeRedirect = async () => {
-                    if (homepageRequested && result.template && result.template.id && result.template.is_active) {
-                        try {
-                            await fetch(`/admin/templates/my-templates/${result.template.id}/activate-homepage`, {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                    'Accept': 'application/json'
-                                }
-                            });
-                        } catch (err) {
-                            console.warn('Homepage activation endpoint failed', err);
-                        }
-                    }
-                    if (result.redirect) {
-                        window.location.href = result.redirect;
-                    } else if (result.template.is_active) {
-                        if (confirm('Template telah aktif! Lihat homepage?')) {
-                            window.open('/', '_blank');
-                        }
-                    }
-                };
-                fileImportForm.reset();
-                setTimeout(maybeRedirect, 1800);
-            } else {
-                console.log('ERROR BRANCH - Response failed');
-                hideLoadingNotification();
-                const errorMsg = result.error || result.message || 'Import gagal';
-                console.error('Import failed:', result);
-                console.log('ERROR BRANCH - Calling showErrorNotification with:', errorMsg);
-                showErrorNotification(errorMsg);
-                showFileError(errorMsg);
-            }
-        } catch (error) {
-            console.log('CATCH BRANCH - Exception occurred');
-            hideLoadingNotification();
-            console.error('Import error:', error);
-            const errorMsg = `Import gagal: ${error.message}`;
-            console.log('CATCH BRANCH - Calling showErrorNotification with:', errorMsg);
-            showErrorNotification(errorMsg);
-            showFileError(errorMsg);
-
-            // Fallback: submit form normally if AJAX fails completely
-            if (error.message.includes('fetch')) {
-                console.log('AJAX failed, falling back to normal form submit');
-                showErrorNotification('Menggunakan fallback method...');
-                setTimeout(() => {
-                    fileImportForm.submit();
-                }, 1000);
-            }
-        } finally {
-            fileImportBtn.disabled = false;
-            fileImportBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Import Template';
-        }
-    });
-
-    // Removed test notification button and handlers
-
-    // Notification System
-    function showSuccessNotification(message, templateName) {
-        console.log('showSuccessNotification called with:', message, templateName);
-        // Create notification
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-md';
-        notification.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-check-circle mr-3 text-xl"></i>
-                <div>
-                    <div class="font-semibold">Berhasil!</div>
-                    <div class="text-sm">${message}</div>
-                    ${templateName ? `<div class="text-sm opacity-90">Template: ${templateName}</div>` : ''}
-                </div>
-                <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        document.body.appendChild(notification);
-        console.log('Success notification added to DOM');
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.remove();
-                console.log('Success notification auto-removed');
-            }
-        }, 5000);
-    }
-
-    function showErrorNotification(message) {
-        console.log('showErrorNotification called with:', message);
-        // Create notification
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-md';
-        notification.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-exclamation-circle mr-3 text-xl"></i>
-                <div>
-                    <div class="font-semibold">Error!</div>
-                    <div class="text-sm">${message}</div>
-                </div>
-                <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        document.body.appendChild(notification);
-        console.log('Error notification added to DOM');
-
-        // Auto remove after 8 seconds
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.remove();
-                console.log('Error notification auto-removed');
-            }
-        }, 8000);
-    }
-
-    function showLoadingNotification(message) {
-        console.log('showLoadingNotification called with:', message);
-        // Remove existing loading notification
-        const existing = document.getElementById('loadingNotification');
-        if (existing) existing.remove();
-
-        // Create loading notification
-        const notification = document.createElement('div');
-        notification.id = 'loadingNotification';
-        notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-md';
-        notification.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-spinner fa-spin mr-3 text-xl"></i>
-                <div>
-                    <div class="font-semibold">Processing...</div>
-                    <div class="text-sm">${message}</div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(notification);
-        console.log('Loading notification added to DOM');
-    }
-
-    function hideLoadingNotification() {
-        console.log('hideLoadingNotification called');
-        const notification = document.getElementById('loadingNotification');
-        if (notification) {
-            notification.remove();
-            console.log('Loading notification removed');
-        } else {
-            console.log('No loading notification found to remove');
-        }
-    }    // File change handler for auto-detection
-    document.getElementById('template_file').addEventListener('change', function(e) {
+    // File input change handler
+    templateFileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            const nameField = document.getElementById('file_template_name');
-            if (!nameField.value) {
-                // Auto-generate name from filename
-                const name = file.name.replace(/\.(json|zip|html|htm)$/i, '').replace(/[-_]/g, ' ');
-                nameField.value = name.charAt(0).toUpperCase() + name.slice(1);
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.classList.remove('hidden');
+
+            // Auto-fill template name if empty
+            const templateNameInput = document.getElementById('template_name');
+            if (!templateNameInput.value) {
+                const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+                templateNameInput.value = nameWithoutExt.replace(/[-_]/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase());
             }
+        } else {
+            fileInfo.classList.add('hidden');
         }
     });
 
-    // Discover templates
-    discoverBtn.addEventListener('click', async function() {
-        const source = sourceSelect.value;
+    // Form submit handler
+    templateImportForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(templateImportForm);
+
+        // Show progress
+        showProgress();
+        updateProgress(10, 'Starting upload...');
 
         try {
-            discoverBtn.disabled = true;
-            discoverBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Discovering...';
-
-            const response = await fetch('{{ route("admin.templates.smart-import.discover") }}', {
+            const response = await fetch('{{ route("admin.templates.smart-import.import-file") }}', {
                 method: 'POST',
+                body: formData,
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ source: source, limit: 10 })
+                }
             });
+
+            updateProgress(50, 'Processing template...');
 
             const result = await response.json();
 
             if (result.success) {
-                showDiscoveryResults(result.templates);
+                updateProgress(100, 'Import completed successfully!');
+
+                setTimeout(() => {
+                    showAlert('success', 'Template imported successfully! ' + result.message);
+                    hideProgress();
+
+                    // Redirect to My Templates or template detail
+                    if (result.redirect) {
+                        window.location.href = result.redirect;
+                    } else {
+                        window.location.href = '{{ route("admin.templates.my-templates.index") }}';
+                    }
+                }, 1000);
             } else {
-                alert('Discovery failed: ' + result.error);
+                hideProgress();
+                showAlert('error', 'Import failed: ' + result.error);
             }
+
         } catch (error) {
-            alert('Discovery failed: ' + error.message);
-        } finally {
-            discoverBtn.disabled = false;
-            discoverBtn.innerHTML = '<i class="fas fa-search mr-2"></i>Discover Templates';
+            hideProgress();
+            showAlert('error', 'Import failed: ' + error.message);
         }
     });
 
     // Helper functions
-    function showAnalysisResults(analysis) {
-        const content = document.getElementById('analysisContent');
-        content.innerHTML = `
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <h5 class="font-medium text-gray-900 mb-2">Template Info</h5>
-                    <p class="text-sm text-gray-600"><strong>Title:</strong> ${analysis.title || 'Unknown'}</p>
-                    <p class="text-sm text-gray-600"><strong>Framework:</strong> ${analysis.structure.framework || 'Unknown'}</p>
-                </div>
-                <div>
-                    <h5 class="font-medium text-gray-900 mb-2">Language Detection</h5>
-                    <p class="text-sm text-gray-600"><strong>Detected:</strong> ${analysis.language.detected}</p>
-                    <p class="text-sm text-gray-600"><strong>Confidence:</strong> ${Math.round(analysis.language.confidence * 100)}%</p>
-                    ${analysis.language.needs_translation ? '<p class="text-sm text-amber-600"><strong>Translation:</strong> Will be auto-translated to Indonesian</p>' : '<p class="text-sm text-green-600"><strong>Translation:</strong> No translation needed</p>'}
-                </div>
-            </div>
-            <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p class="text-sm text-blue-700">✓ Template is ready for import with automatic conversion and translation</p>
-            </div>
-        `;
-        analysisResults.classList.remove('hidden');
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    function showDiscoveryResults(templates) {
-        const content = document.getElementById('discoveryContent');
-        content.innerHTML = templates.map(template => `
-            <div class="border rounded-lg p-3 hover:shadow-md transition-shadow">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <h5 class="font-medium text-gray-900">${template.name}</h5>
-                        <p class="text-sm text-gray-600 mt-1">${template.description}</p>
-                        <div class="flex items-center mt-2 space-x-2">
-                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">${template.author}</span>
-                            ${template.features && template.features.slice(0, 2).map(feature =>
-                                `<span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">${feature}</span>`
-                            ).join('')}
-                        </div>
-                    </div>
-                    <button onclick="installTemplate('${template.external_id}', ${JSON.stringify(template).replace(/"/g, '&quot;')})"
-                            class="ml-3 px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">
-                        Install
-                    </button>
-                </div>
-            </div>
-        `).join('');
-        discoveryResults.classList.remove('hidden');
-    }
-
-    function showImportProgress() {
+    function showProgress() {
         importProgress.classList.remove('hidden');
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += Math.random() * 20;
-            if (progress >= 100) {
-                progress = 100;
-                clearInterval(interval);
-            }
-            document.getElementById('progressBar').style.width = progress + '%';
-            document.getElementById('progressPercentage').textContent = Math.round(progress) + '%';
-
-            // Update progress text based on percentage
-            if (progress < 25) {
-                document.getElementById('progressText').textContent = 'Analyzing template structure...';
-            } else if (progress < 50) {
-                document.getElementById('progressText').textContent = 'Detecting language and extracting content...';
-            } else if (progress < 75) {
-                document.getElementById('progressText').textContent = 'Converting to CMS format...';
-            } else if (progress < 95) {
-                document.getElementById('progressText').textContent = 'Translating content to Indonesian...';
-            } else {
-                document.getElementById('progressText').textContent = 'Finalizing template...';
-            }
-        }, 500);
+        importBtn.disabled = true;
+        importBtnText.textContent = 'Importing...';
     }
 
-    function hideImportProgress() {
+    function hideProgress() {
         importProgress.classList.add('hidden');
+        importBtn.disabled = false;
+        importBtnText.textContent = 'Import Template';
     }
 
-    function showSuccessModal(message, templateName) {
-        document.getElementById('successTitle').textContent = 'Template "' + templateName + '" Imported!';
-        document.getElementById('successMessage').textContent = message;
-        successModal.classList.remove('hidden');
+    function updateProgress(percentage, text) {
+        document.getElementById('progressBar').style.width = percentage + '%';
+        document.getElementById('progressPercentage').textContent = percentage + '%';
+        document.getElementById('progressText').textContent = text;
     }
 
-    function showFileAnalysisResults(result) {
-        const content = document.getElementById('fileAnalysisContent');
-        content.innerHTML = `
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="font-medium text-gray-900">Template Name:</span>
-                    <span class="text-gray-600">${result.template.name}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="font-medium text-gray-900">Status:</span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${result.template.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                        ${result.template.is_active ? 'Active' : 'Imported'}
-                    </span>
-                </div>
-                ${result.stats ? `
-                <div class="flex items-center justify-between">
-                    <span class="font-medium text-gray-900">Sections:</span>
-                    <span class="text-gray-600">${result.stats.sections_created || 0}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="font-medium text-gray-900">Blocks:</span>
-                    <span class="text-gray-600">${result.stats.blocks_created || 0}</span>
-                </div>
-                ` : ''}
-                <div class="pt-3 border-t border-purple-200">
-                    <p class="text-sm text-green-600">✓ Template successfully imported and ready to use</p>
+    function showAlert(type, message) {
+        const alertClass = type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800';
+        const iconClass = type === 'success' ? 'fas fa-check-circle text-green-600' : 'fas fa-exclamation-circle text-red-600';
+
+        alertContainer.innerHTML = `
+            <div class="mb-6 p-4 border rounded-lg ${alertClass}">
+                <div class="flex items-center">
+                    <i class="${iconClass} mr-3"></i>
+                    <span>${message}</span>
                 </div>
             </div>
         `;
-        fileAnalysisResults.classList.remove('hidden');
     }
 
-    function showFileError(errorMessage) {
-        const content = document.getElementById('fileAnalysisContent');
-        content.innerHTML = `
-            <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div class="flex items-start">
-                    <span class="text-red-600 mr-2">❌</span>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium text-red-800">Import Failed</p>
-                        <p class="text-sm text-red-600 mt-1">${errorMessage}</p>
-                        <div class="mt-2 text-xs text-red-600">
-                            <p>• Pastikan file JSON, ZIP, atau HTML valid</p>
-                            <p>• Ukuran file maksimal 10MB</p>
-                            <p>• File JSON harus berisi struktur template yang benar</p>
-                            <p>• File HTML akan dikonversi otomatis ke format CMS</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        fileAnalysisResults.classList.remove('hidden');
-    }
+    // Drag and drop functionality
+    const dropZone = templateFileInput.parentElement;
 
-    // Close success modal
-    document.getElementById('closeSuccessModal').addEventListener('click', function() {
-        successModal.classList.add('hidden');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
     });
 
-    // Global function for template installation
-    window.installTemplate = async function(externalId, templateData) {
-        try {
-            const response = await fetch('{{ route("admin.templates.smart-import.install-external") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    external_id: externalId,
-                    template_data: templateData,
-                    auto_activate: false
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showSuccessModal(result.message, result.template.name);
-                if (result.redirect) {
-                    setTimeout(() => {
-                        window.location.href = result.redirect;
-                    }, 2000);
-                }
-            } else {
-                alert('Installation failed: ' + result.error);
-            }
-        } catch (error) {
-            alert('Installation failed: ' + error.message);
-        }
-    };
-
-    // Import Mode Switching
-    const modeTabs = document.querySelectorAll('.import-mode-tab');
-    const modeContents = document.querySelectorAll('.import-mode-content');
-    const modeDescriptions = document.querySelectorAll('.import-mode-description');
-
-    modeTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const mode = this.dataset.mode;
-
-            // Update tab styles
-            modeTabs.forEach(t => {
-                t.classList.remove('active', 'border-blue-500', 'text-blue-600');
-                t.classList.add('border-transparent', 'text-gray-500');
-            });
-            this.classList.add('active', 'border-blue-500', 'text-blue-600');
-            this.classList.remove('border-transparent', 'text-gray-500');
-
-            // Update content visibility
-            modeContents.forEach(content => content.classList.add('hidden'));
-            modeDescriptions.forEach(desc => desc.classList.add('hidden'));
-
-            document.getElementById(mode + '-import-content').classList.remove('hidden');
-            document.getElementById(mode + '-mode-description').classList.remove('hidden');
-        });
-    });
-
-    // Complete Project Import handlers
-    document.getElementById('githubCompleteProjectForm')?.addEventListener('submit', async function(e) {
+    function preventDefaults(e) {
         e.preventDefault();
+        e.stopPropagation();
+    }
 
-        const formData = new FormData(this);
-        showCompleteProjectLoading();
-
-        try {
-            const response = await fetch('{{ route('admin.templates.smart-import.complete-github') }}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
-
-            const result = await response.json();
-            hideCompleteProjectLoading();
-
-            if (result.success) {
-                showCompleteProjectResults(result);
-                this.reset();
-            } else {
-                alert('Import failed: ' + result.message);
-            }
-        } catch (error) {
-            hideCompleteProjectLoading();
-            alert('Import failed: ' + error.message);
-        }
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
     });
 
-    document.getElementById('zipCompleteProjectForm')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const formData = new FormData(this);
-        showCompleteProjectLoading();
-
-        try {
-            const response = await fetch('{{ route('admin.templates.smart-import.complete-zip') }}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
-
-            const result = await response.json();
-            hideCompleteProjectLoading();
-
-            if (result.success) {
-                showCompleteProjectResults(result);
-                this.reset();
-            } else {
-                alert('Import failed: ' + result.message);
-            }
-        } catch (error) {
-            hideCompleteProjectLoading();
-            alert('Import failed: ' + error.message);
-        }
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
     });
 
-    // Complete project utility functions
-    function showCompleteProjectLoading() {
-        const modal = document.createElement('div');
-        modal.id = 'completeProjectModal';
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-        modal.innerHTML = `
-            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                <div class="text-center">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-                    <h3 class="text-lg font-medium mb-2">Importing Complete Project...</h3>
-                    <p class="text-gray-600">Processing all project files and preserving structure. This may take several minutes.</p>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
+    function highlight(e) {
+        dropZone.classList.add('border-blue-400', 'bg-blue-50');
     }
 
-    function hideCompleteProjectLoading() {
-        const modal = document.getElementById('completeProjectModal');
-        if (modal) {
-            modal.remove();
+    function unhighlight(e) {
+        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+    }
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        if (files.length > 0) {
+            templateFileInput.files = files;
+            templateFileInput.dispatchEvent(new Event('change'));
         }
     }
-
-    function showCompleteProjectResults(result) {
-        const resultsDiv = document.getElementById('completeProjectResults');
-        resultsDiv.className = 'bg-white rounded-lg shadow-sm border p-6';
-        resultsDiv.innerHTML = `
-            <div class="flex items-center mb-4">
-                <div class="bg-green-100 p-3 rounded-lg mr-4">
-                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Project Import Complete</h3>
-                    <p class="text-sm text-gray-600">All files have been imported and analyzed</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <div class="text-2xl font-bold text-blue-600">${result.stats?.files_imported || 0}</div>
-                    <div class="text-sm text-blue-700">Files Imported</div>
-                </div>
-                <div class="bg-green-50 p-4 rounded-lg">
-                    <div class="text-2xl font-bold text-green-600">${result.stats?.templates_created || 0}</div>
-                    <div class="text-sm text-green-700">Templates Created</div>
-                </div>
-                <div class="bg-purple-50 p-4 rounded-lg">
-                    <div class="text-2xl font-bold text-purple-600">${result.stats?.assets_processed || 0}</div>
-                    <div class="text-sm text-purple-700">Assets Processed</div>
-                </div>
-            </div>
-
-            ${result.project_id ? `
-                <div class="flex space-x-3">
-                    <button onclick="activateCompleteProject(${result.project_id})"
-                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-                        Activate Project
-                    </button>
-                    <button onclick="viewProjectDetails(${result.project_id})"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                        View Details
-                    </button>
-                </div>
-            ` : ''}
-        `;
-    }
-
-    // Global functions for complete project actions
-    window.activateCompleteProject = async function(projectId) {
-        try {
-            const response = await fetch(`/admin/template-system/smart-import/activate-complete/${projectId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showSuccessModal(result.message, 'Project Activated');
-                // Reload the page to reflect changes
-                setTimeout(() => window.location.reload(), 2000);
-            } else {
-                alert('Failed to activate project: ' + result.message);
-            }
-        } catch (error) {
-            alert('Failed to activate project: ' + error.message);
-        }
-    };
-
-    window.viewProjectDetails = function(projectId) {
-        window.open(`/admin/template-system/smart-import/activate-complete/${projectId}`, '_blank');
-    };
 });
 </script>
+
 @endsection
