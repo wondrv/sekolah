@@ -22,123 +22,332 @@ use Illuminate\Support\Facades\Log;
 class PureCMSController extends Controller
 {
     /**
-     * Handle all CMS page requests dynamically
+     * Handle all CMS page requests dynamically - UNIVERSAL DATABASE-DRIVEN SYSTEM
      */
     public function handleRequest(Request $request, $path = '/')
     {
-        // First, check for active UserTemplate with blade_views type (imported templates)
-        if ($path === '/' || $path === 'home') {
-            $activeBladeTemplate = UserTemplate::where('is_active', true)
-                ->where('template_type', 'blade_views')
-                ->first();
+        // Log for debugging
+        Log::info('PureCMSController called', ['path' => $path]);
 
-            if ($activeBladeTemplate) {
-                return $this->renderBladeTemplate($activeBladeTemplate);
-            } else {
-                // No active template, clean up any temporary template files
-                $this->cleanUpTemporaryTemplateFiles();
-            }
-        }
+        // Check for active UserTemplate with blade_views type (imported templates)
+        $activeBladeTemplate = UserTemplate::where('is_active', true)
+            ->where('template_type', 'blade_views')
+            ->first();
 
-        // Determine route pattern
-        $routePattern = $this->determineRoutePattern($request, $path);
+        Log::info('Active template check', ['found' => $activeBladeTemplate ? 'YES' : 'NO']);
 
-        // Find active template assignment for this route
-        $assignment = $this->findTemplateAssignment($routePattern, $path);
-
-        if (!$assignment) {
-            // No template found, use default fallback
+        if ($activeBladeTemplate) {
+            // Determine which view to render based on path
+            $viewName = $this->getViewNameFromPath($path);
+            Log::info('Rendering view', ['view_name' => $viewName, 'path' => $path]);
+            return $this->renderBladeTemplateForPath($activeBladeTemplate, $viewName, $path);
+        } else {
+            // No active template, use fallback
+            Log::info('Using fallback template');
             return $this->renderDefaultTemplate($request, $path);
         }
-
-        // Get template data
-        $template = $assignment->template;
-
-        // Prepare context data for template
-        $context = $this->prepareTemplateContext($request, $path, $routePattern);
-
-        // Render template
-        return $this->renderTemplate($template, $context);
     }
 
     /**
-     * Render blade template from UserTemplate (imported templates)
+     * Get view name from URL path
+     */
+    protected function getViewNameFromPath($path)
+    {
+        // Clean and normalize path
+        $path = trim($path, '/');
+
+        // Map paths to view names
+        $pathMap = [
+            '' => 'home',
+            'home' => 'home',
+            'tentang' => 'tentang',
+            'program' => 'program',
+            'berita' => 'berita',
+            'galeri' => 'galeri',
+            'kontak' => 'kontak',
+            'ppdb' => 'ppdb'
+        ];
+
+        return $pathMap[$path] ?? 'home';
+    }
+
+    /**
+     * Render blade template for specific path/view
+     */
+    protected function renderBladeTemplateForPath(UserTemplate $template, $viewName, $path)
+    {
+        $templateFiles = $template->template_files;
+
+        try {
+            // Get the specific view file and layout
+            $viewFileName = "resources/views/{$viewName}.blade.php";
+            $layoutFileName = "resources/views/layouts/main.blade.php";
+
+            $viewFile = $templateFiles[$viewFileName] ?? null;
+            $layoutFile = $templateFiles[$layoutFileName] ?? null;
+
+            if (!$viewFile || !$layoutFile) {
+                // If specific view not found, try home as fallback
+                if ($viewName !== 'home') {
+                    $homeFileName = "resources/views/home.blade.php";
+                    $viewFile = $templateFiles[$homeFileName] ?? null;
+                }
+
+                if (!$viewFile || !$layoutFile) {
+                    return response("Template view '{$viewName}' not found", 404);
+                }
+            }
+
+            // Decode content
+            $viewContent = is_array($viewFile) && isset($viewFile['content'])
+                ? base64_decode($viewFile['content'])
+                : $viewFile;
+
+            $layoutContent = is_array($layoutFile) && isset($layoutFile['content'])
+                ? base64_decode($layoutFile['content'])
+                : $layoutFile;
+
+            // Render content dynamically
+            return $this->renderTemplateContentDynamically($viewContent, $layoutContent, $template);
+
+        } catch (\Exception $e) {
+            Log::error('Error rendering dynamic template for path', [
+                'template_id' => $template->id,
+                'path' => $path,
+                'view_name' => $viewName,
+                'error' => $e->getMessage()
+            ]);
+
+            // Fallback to 404 or error page
+            return response("Error rendering template: " . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Render blade template from UserTemplate (imported templates) - Dynamic Database-Driven
      */
     protected function renderBladeTemplate(UserTemplate $template)
     {
         $templateFiles = $template->template_files;
 
         try {
-            // Install controllers and routes if this is a full Laravel template
-            $this->installFullLaravelComponents($template);
+            // Get home view content from database
+            $homeViewFile = null;
+            $layoutViewFile = null;
 
-            // Create temporary view files for all template files
-            $tempFiles = [];
             foreach ($templateFiles as $filename => $fileData) {
-                $content = is_array($fileData) && isset($fileData['content'])
-                    ? $fileData['content']
-                    : $fileData;
-
-                // Decode base64 content if it's encoded
-                if (base64_decode($content, true) !== false) {
-                    $content = base64_decode($content);
-                }
-
-                // Create subdirectory if needed (for layouts/app.blade.php)
-                $viewPath = resource_path('views/' . $filename);
-                $directory = dirname($viewPath);
-                if (!file_exists($directory)) {
-                    mkdir($directory, 0755, true);
-                }
-
-                // Write temporary file
-                file_put_contents($viewPath, $content);
-                $tempFiles[] = $viewPath;
-            }
-
-            // Clear view cache to ensure fresh compilation
-            Artisan::call('view:clear');
-
-            // Find and render main view
-            $mainView = 'home'; // home.blade.php -> 'home'
-            if (isset($templateFiles['home.blade.php'])) {
-                $result = view($mainView, [
-                    'template' => $template,
-                    'settings' => \App\Models\Setting::all()->pluck('value', 'key')->toArray()
-                ]);
-
-                return $result;
-            }
-
-            // If no home.blade.php, try to find any main view file
-            foreach ($templateFiles as $filename => $fileData) {
-                if (str_contains($filename, 'home') || str_contains($filename, 'index')) {
-                    $viewName = str_replace('.blade.php', '', $filename);
-                    return view($viewName, [
-                        'template' => $template,
-                        'settings' => \App\Models\Setting::all()->pluck('value', 'key')->toArray()
-                    ]);
+                if ($filename === 'resources/views/home.blade.php') {
+                    $homeViewFile = $fileData;
+                } elseif ($filename === 'resources/views/layouts/main.blade.php') {
+                    $layoutViewFile = $fileData;
                 }
             }
+
+            if (!$homeViewFile) {
+                throw new \Exception('Home view not found in template');
+            }
+
+            // Decode content
+            $homeContent = is_array($homeViewFile) && isset($homeViewFile['content'])
+                ? base64_decode($homeViewFile['content'])
+                : $homeViewFile;
+
+            $layoutContent = null;
+            if ($layoutViewFile) {
+                $layoutContent = is_array($layoutViewFile) && isset($layoutViewFile['content'])
+                    ? base64_decode($layoutViewFile['content'])
+                    : $layoutViewFile;
+            }
+
+            // Render content dynamically without file system
+            return $this->renderTemplateContentDynamically($homeContent, $layoutContent, $template);
 
         } catch (\Exception $e) {
-            // Log error and fall back
-            Log::error('Error rendering blade template', [
+            Log::error('Error rendering dynamic template', [
                 'template_id' => $template->id,
                 'error' => $e->getMessage()
             ]);
-        } finally {
-            // Clean up temporary files (optional - could keep them for caching)
-            // foreach ($tempFiles ?? [] as $tempFile) {
-            //     if (file_exists($tempFile)) {
-            //         unlink($tempFile);
-            //     }
-            // }
+
+            // Fallback to default template
+            return $this->renderDefaultTemplate(request(), '/');
+        }
+    }
+
+    /**
+     * Render template content dynamically from database without file system
+     */
+    protected function renderTemplateContentDynamically($homeContent, $layoutContent, UserTemplate $template)
+    {
+        try {
+            // Simple approach: use layout as base and inject content
+            if ($layoutContent && str_contains($homeContent, "@extends('layouts.main')")) {
+                // Extract content section
+                $contentPattern = "/@section\\s*\\(\\s*['\"]content['\"]\\s*\\)(.*?)@endsection/s";
+                preg_match($contentPattern, $homeContent, $contentMatches);
+                $contentSection = $contentMatches[1] ?? '';
+
+                // Extract title section
+                $titlePattern = "/@section\\s*\\(\\s*['\"]title['\"]\\s*,\\s*['\"]([^'\"]*)['\"]\\s*\\)/";
+                preg_match($titlePattern, $homeContent, $titleMatches);
+                $title = $titleMatches[1] ?? 'Home';
+
+                // Replace in layout
+                $finalContent = str_replace('@yield(\'content\')', trim($contentSection), $layoutContent);
+
+                // Handle multiple title patterns
+                $titleReplacements = [
+                    '@yield(\'title\', \'SMA HARAPAN NUSANTARA\')',
+                    '@yield(\'title\', \'MA Cendekia Nusantara\')',
+                    '@yield(\'title\', "SMA HARAPAN NUSANTARA")',
+                    '@yield(\'title\', "MA Cendekia Nusantara")',
+                    '@yield(\'title\')',
+                    '@yield("title")'
+                ];
+
+                foreach ($titleReplacements as $pattern) {
+                    $finalContent = str_replace($pattern, $title, $finalContent);
+                }
+            } else {
+                // Use content as-is
+                $finalContent = $homeContent;
+            }
+
+            // Process template variables - COMPREHENSIVE PARSING
+            $baseUrl = request()->getSchemeAndHttpHost();
+
+            // Replace all route() helpers with actual URLs - Multiple variations
+            $routeMap = [
+                'home' => '/',
+                'tentang' => '/tentang',
+                'program' => '/program',
+                'berita' => '/berita',
+                'galeri' => '/galeri',
+                'kontak' => '/kontak',
+                'ppdb' => '/ppdb'
+            ];
+
+            // Parse {{ route('name') }} patterns with regex for better matching
+            foreach ($routeMap as $routeName => $path) {
+                $patterns = [
+                    "/\\{\\{\\s*route\\s*\\(\\s*['\"]" . $routeName . "['\"]\\s*\\)\\s*\\}\\}/",
+                    "/\\{\\{route\\s*\\(\\s*['\"]" . $routeName . "['\"]\\s*\\)\\}\\}/"
+                ];
+
+                foreach ($patterns as $pattern) {
+                    $finalContent = preg_replace($pattern, $baseUrl . $path, $finalContent);
+                }
+            }
+
+            // Parse href="/path" patterns and make them absolute
+            foreach ($routeMap as $routeName => $path) {
+                if ($path !== '/') { // Skip home route
+                    $finalContent = str_replace("href=\"{$path}\"", "href=\"{$baseUrl}{$path}\"", $finalContent);
+                    $finalContent = str_replace("href='{$path}'", "href='{$baseUrl}{$path}'", $finalContent);
+                }
+            }
+
+            // Parse other Laravel helpers with regex
+            $finalContent = preg_replace('/\\{\\{\\s*url\\s*\\(\\s*[\'"]\/[\'"]\\s*\\)\\s*\\}\\}/', $baseUrl, $finalContent);
+            $finalContent = preg_replace('/\\{\\{\\s*date\\s*\\(\\s*[\'"]Y[\'"]\\s*\\)\\s*\\}\\}/', date('Y'), $finalContent);
+
+            // Fix any remaining encoded URLs in href attributes
+            $finalContent = preg_replace_callback('/href="([^"]*%7B%7B[^"]*%7D%7D[^"]*)"/', function($matches) {
+                return 'href="' . urldecode($matches[1]) . '"';
+            }, $finalContent);
+
+            // Create a response with the processed content
+            return response($finalContent)->header('Content-Type', 'text/html');
+
+        } catch (\Exception $e) {
+            Log::error('Error in dynamic template rendering', [
+                'template_id' => $template->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Return simple HTML response
+            return response('<h1>Template Error</h1><p>Unable to render template: ' . $e->getMessage() . '</p>');
+        }
+    }    /**
+     * Combine layout and content sections
+     */
+    protected function combineLayoutAndContent($layoutContent, $homeContent)
+    {
+        // Extract sections from home content
+        $sections = $this->extractBladeSection($homeContent);
+
+        // Replace placeholders in layout
+        $finalContent = $layoutContent;
+
+        foreach ($sections as $sectionName => $sectionContent) {
+            $placeholder = "@yield('{$sectionName}')";
+            $finalContent = str_replace($placeholder, $sectionContent, $finalContent);
         }
 
-        // Fallback to default template if rendering failed
-        return $this->renderDefaultTemplate(request(), '/');
-    }    /**
+        return $finalContent;
+    }
+
+    /**
+     * Extract Blade @section content
+     */
+    protected function extractBladeSection($content)
+    {
+        $sections = [];
+
+        // Extract @section('title', 'value') pattern
+        preg_match_all("/@section\\(['\"]([^'\"]+)['\"]\\s*,\\s*['\"]([^'\"]*)['\"]\\)/", $content, $titleMatches, PREG_SET_ORDER);
+        foreach ($titleMatches as $match) {
+            $sections[$match[1]] = $match[2];
+        }
+
+        // Extract @section('name') ... @endsection pattern
+        preg_match_all("/@section\\(['\"]([^'\"]+)['\"]\\)(.*?)@endsection/s", $content, $blockMatches, PREG_SET_ORDER);
+        foreach ($blockMatches as $match) {
+            $sections[$match[1]] = trim($match[2]);
+        }
+
+        return $sections;
+    }
+
+    /**
+     * Process template variables and URLs
+     */
+    protected function processTemplateVariables($content, UserTemplate $template)
+    {
+        // Replace Laravel helpers with actual values
+        $baseUrl = request()->getSchemeAndHttpHost();
+
+        // Replace asset() helper
+        $content = preg_replace_callback('/asset\\([\'"]([^\'"]+)[\'"]\\)/', function($matches) use ($baseUrl) {
+            return $baseUrl . '/assets/' . $matches[1];
+        }, $content);
+
+        // Replace route() helper with direct URLs
+        $content = preg_replace_callback('/route\\([\'"]([^\'"]+)[\'"]\\)/', function($matches) use ($baseUrl) {
+            $routeMap = [
+                'home' => '/',
+                'tentang' => '/tentang',
+                'program' => '/program',
+                'berita' => '/berita',
+                'galeri' => '/galeri',
+                'kontak' => '/kontak',
+                'ppdb' => '/ppdb'
+            ];
+
+            $routeName = $matches[1];
+            $path = $routeMap[$routeName] ?? '/' . $routeName;
+            return $baseUrl . $path;
+        }, $content);
+
+        // Replace {{ url('/path') }} with actual URLs
+        $content = preg_replace_callback('/\\{\\{\\s*url\\([\'"]([^\'"]*)[\'"]\\)\\s*\\}\\}/', function($matches) use ($baseUrl) {
+            return $baseUrl . $matches[1];
+        }, $content);
+
+        return $content;
+    }
+
+    /**
      * Determine route pattern from request
      */
     protected function determineRoutePattern(Request $request, $path)
@@ -544,11 +753,6 @@ class PureCMSController extends Controller
     {
         // Fallback to basic page rendering
         if ($path === '/' || $path === 'home') {
-            // Use existing home view or create simple fallback
-            if (view()->exists('home')) {
-                return view('home');
-            }
-
             // Create simple fallback response
             return response()->view('templates.fallback-home', [
                 'site_title' => setting('site_title', 'School CMS'),
@@ -556,14 +760,16 @@ class PureCMSController extends Controller
             ]);
         }
 
-        // Try to find page
-        $page = Page::where('slug', $path)->published()->first();
-        if ($page) {
-            return view('pages.show', compact('page'));
-        }
+        // For other routes, show a helpful message instead of 404
+        $message = "
+        <h1>No Active Template Found</h1>
+        <p>Path: <strong>/{$path}</strong></p>
+        <p>Please import and activate a template from the admin panel.</p>
+        <p><a href='/admin/template-system/gallery'>Browse Templates</a></p>
+        <p><a href='/admin/dashboard'>Admin Dashboard</a></p>
+        ";
 
-        // 404
-        abort(404);
+        return response($message, 404)->header('Content-Type', 'text/html');
     }
 
     /**
@@ -594,7 +800,9 @@ class PureCMSController extends Controller
                     // If it contains template-specific markers, it's safe to delete
                     if (str_contains($content, 'SD Negeri Contoh') ||
                         str_contains($content, 'Selamat Datang di SD') ||
-                        str_contains($content, '@extends(\'layouts.app\')')) {
+                        str_contains($content, 'SMA Harapan Nusantara') ||
+                        str_contains($content, '@extends(\'layouts.app\')') ||
+                        str_contains($content, '@extends(\'layouts.main\')')) {
                         unlink($viewPath);
                         Log::info("Cleaned up temporary template file: {$filename}");
                     }
@@ -726,8 +934,7 @@ class PureCMSController extends Controller
             $templateRoutesFile = base_path('routes/template.php');
 
             // Add route content with proper formatting
-            $routeContent = "\n\n// Routes from template: {$filename}\n";
-            $routeContent .= "// Installed on: " . now()->format('Y-m-d H:i:s') . "\n";
+            $routeContent = "\n\n";
             $routeContent .= $content . "\n";
 
             file_put_contents($templateRoutesFile, $routeContent, FILE_APPEND | LOCK_EX);

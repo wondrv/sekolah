@@ -92,63 +92,125 @@
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">📁 Struktur ZIP yang Didukung</h3>
 
                 <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Laravel Blade Structure -->
+                    <!-- Laravel Blade Structure with Full Path -->
                     <div class="bg-blue-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-blue-900 mb-3">🔧 Laravel Blade Views</h4>
+                        <h4 class="font-semibold text-blue-900 mb-3">🔧 Laravel Blade Views (Recommended)</h4>
                         <pre class="text-xs bg-white p-3 rounded border overflow-x-auto">template.zip
-├── views/
-│   ├── layouts/
-│   │   └── main.blade.php     ← Layout utama
-│   ├── home.blade.php         ← Homepage
-│   ├── tentang.blade.php      ← About page
-│   ├── program.blade.php      ← Programs
-│   ├── berita.blade.php       ← News
-│   ├── galeri.blade.php       ← Gallery
-│   ├── kontak.blade.php       ← Contact
-│   └── ppdb.blade.php         ← Admission</pre>
-                        <p class="text-xs text-blue-800 mt-2">Perfect untuk template sekolah dengan struktur Laravel Blade views</p>
+├── resources/
+│   └── views/
+│       ├── layouts/
+│       │   └── main.blade.php     ← Layout utama
+│       ├── home.blade.php         ← Homepage
+│       ├── tentang.blade.php      ← About page
+│       ├── program.blade.php      ← Programs page
+│       ├── berita.blade.php       ← News page
+│       ├── galeri.blade.php       ← Gallery page
+│       ├── kontak.blade.php       ← Contact page
+│       └── ppdb.blade.php         ← Admission page
+├── app/Http/Controllers/
+│   └── [Name]/
+│       └── SchoolController.php   ← Optional controller
+├── routes/
+│   └── web.php                    ← Optional routes
+└── public/
+    ├── css/
+    ├── js/
+    └── images/</pre>
+                        <p class="text-xs text-blue-800 mt-2">✅ <strong>Database-Driven:</strong> Template langsung dari database, real-time switching</p>
                     </div>
 
-                    <!-- PHP Template Structure -->
+                    <!-- Simplified Blade Structure -->
                     <div class="bg-green-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-green-900 mb-3">� PHP Template Files</h4>
+                        <h4 class="font-semibold text-green-900 mb-3">📝 Simplified Blade Structure</h4>
                         <pre class="text-xs bg-white p-3 rounded border overflow-x-auto">template.zip
-├── index.php              ← Main homepage file
-├── about.php              ← About page
-├── contact.php            ← Contact page
-├── includes/
-│   ├── header.php         ← Header include
-│   └── footer.php         ← Footer include
-├── css/
-│   └── style.css
-└── js/
-    └── script.js</pre>
-                        <p class="text-xs text-green-800 mt-2">Untuk template PHP tradisional dengan include files</p>
+├── views/                         ← Alternate structure
+│   ├── layouts/
+│   │   └── main.blade.php
+│   ├── home.blade.php
+│   ├── tentang.blade.php
+│   ├── program.blade.php
+│   ├── berita.blade.php
+│   ├── galeri.blade.php
+│   ├── kontak.blade.php
+│   └── ppdb.blade.php
+├── assets/                        ← Optional assets
+│   ├── css/
+│   ├── js/
+│   └── images/
+└── readme.txt                     ← Optional documentation</pre>
+                        <p class="text-xs text-green-800 mt-2">✅ <strong>Auto-detected:</strong> Sistem otomatis detect path dan convert ke format database</p>
+                    </div>
+                </div>
+
+                <!-- Advanced Features -->
+                <div class="mt-6 grid md:grid-cols-2 gap-6">
+                    <!-- Full Laravel Template -->
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-purple-900 mb-3">🚀 Full Laravel Template</h4>
+                        <pre class="text-xs bg-white p-3 rounded border overflow-x-auto">template.zip
+├── resources/views/               ← Blade views
+├── app/Http/Controllers/          ← Controllers
+├── routes/web.php                 ← Routes definition
+├── public/                        ← Assets (CSS, JS, images)
+├── database/migrations/           ← Optional migrations
+└── composer.json                  ← Optional dependencies</pre>
+                        <p class="text-xs text-purple-800 mt-2">⚡ <strong>Complete System:</strong> Views + Controllers + Routes, auto-installed</p>
+                    </div>
+
+                    <!-- Theme with Multiple Layouts -->
+                    <div class="bg-orange-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-orange-900 mb-3">🎨 Multi-Layout Theme</h4>
+                        <pre class="text-xs bg-white p-3 rounded border overflow-x-auto">template.zip
+├── resources/views/
+│   ├── layouts/
+│   │   ├── main.blade.php         ← Primary layout
+│   │   ├── admin.blade.php        ← Admin layout
+│   │   └── guest.blade.php        ← Guest layout
+│   ├── components/                ← Blade components
+│   │   ├── header.blade.php
+│   │   └── footer.blade.php
+│   └── pages/
+│       ├── home.blade.php
+│       └── ...</pre>
+                        <p class="text-xs text-orange-800 mt-2">🎯 <strong>Advanced:</strong> Multiple layouts, components, organized structure</p>
+                    </div>
+                </div>
+
+                <!-- System Features -->
+                <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 mb-3">🔥 Fitur Sistem Terbaru:</h4>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <h5 class="font-medium text-blue-900 mb-2">📊 Database-Driven Rendering:</h5>
+                            <ul class="text-blue-800 space-y-1 text-xs">
+                                <li>• Template disimpan di database, bukan file sistem</li>
+                                <li>• Real-time template switching tanpa restart</li>
+                                <li>• Laravel syntax parsing (route helpers, @@yield, dll)</li>
+                                <li>• Auto-generated absolute URLs</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-medium text-green-900 mb-2">⚡ Universal Dynamic Routing:</h5>
+                            <ul class="text-green-800 space-y-1 text-xs">
+                                <li>• Semua route (/, /tentang, /program, dll) dinamis</li>
+                                <li>• Template view auto-detected berdasarkan path</li>
+                                <li>• Fallback system untuk missing views</li>
+                                <li>• Support multiple template types</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
                 <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <h4 class="font-semibold text-yellow-900 mb-2">💡 Tips Upload:</h4>
+                    <h4 class="font-semibold text-yellow-900 mb-2">💡 Tips Upload & Switching:</h4>
                     <ul class="text-sm text-yellow-800 space-y-1">
-                        <li>• Sistem akan otomatis mendeteksi tipe template dari struktur ZIP</li>
-                        <li>• File .blade.php akan diproses sebagai Laravel Blade views (prioritas utama)</li>
-                        <li>• File .php akan diproses sebagai PHP template files</li>
-                        <li>• Template name akan auto-generate jika tidak diisi</li>
-                        <li>• Struktur views/ folder akan dideteksi otomatis</li>
+                        <li>• <strong>Auto-Detection:</strong> Sistem otomatis deteksi struktur dan convert ke database format</li>
+                        <li>• <strong>Real-time Switch:</strong> Set template sebagai "Active" → langsung applied ke semua halaman</li>
+                        <li>• <strong>Laravel Syntax:</strong> Route helpers, @@yield('title'), dll otomatis di-parse</li>
+                        <li>• <strong>Clean URLs:</strong> /tentang, /program, /ppdb → URL normal tanpa encoding</li>
+                        <li>• <strong>Template Fallback:</strong> Jika view tidak ditemukan, otomatis gunakan home.blade.php</li>
+                        <li>• <strong>Asset Support:</strong> CSS, JS, images otomatis tersedia di /template-assets/</li>
                     </ul>
-                </div>
-
-                <!-- Upload Instructions -->
-                <div class="mt-6 border-t pt-6">
-                    <h4 class="font-semibold text-gray-900 mb-3">📝 Petunjuk Upload</h4>
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <ul class="text-sm text-blue-800 space-y-1">
-                            <li>• Mendukung file ZIP, JSON, dan HTML (maksimal 10MB)</li>
-                            <li>• ZIP file dapat berisi struktur template kompleks</li>
-                            <li>• JSON file untuk konfigurasi template sederhana</li>
-                            <li>• HTML file akan dikonversi menjadi template CMS</li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>
