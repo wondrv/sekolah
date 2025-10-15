@@ -64,43 +64,6 @@
 
 <!-- Quick Management Cards -->
 <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-    <!-- Quick Template Import -->
-    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg shadow-sm p-6 border border-purple-200">
-        <div class="flex items-center mb-4">
-            <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                <span class="text-white text-lg">🤖</span>
-            </div>
-            <h3 class="ml-3 text-lg font-semibold text-gray-900">Quick Import Template</h3>
-        </div>
-        <p class="text-gray-600 text-sm mb-4">Import template dari URL manapun dengan deteksi bahasa otomatis</p>
-
-        <form id="quickImportForm" class="space-y-3">
-            @csrf
-            <div>
-                <input type="url"
-                       id="quickImportUrl"
-                       name="url"
-                       class="w-full px-3 py-2 text-sm border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                       placeholder="https://example.com/school-template"
-                       required>
-            </div>
-            <div class="flex items-center">
-                <input type="checkbox" id="quickAutoActivate" name="auto_activate" checked class="rounded border-purple-300 text-purple-600 focus:ring-purple-500">
-                <label for="quickAutoActivate" class="ml-2 text-xs text-gray-700">Langsung aktifkan di homepage</label>
-            </div>
-            <button type="submit" id="quickImportBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
-                <span id="quickImportBtnText">🚀 Import & Aktifkan</span>
-            </button>
-        </form>
-
-        <div id="quickImportResult" class="hidden mt-3"></div>
-
-        <div class="mt-4 pt-3 border-t border-purple-200">
-            <a href="{{ route('admin.templates.smart-import.index') }}" class="text-xs text-purple-600 hover:text-purple-800 font-medium">
-                🎨 Lihat Smart Import Lengkap →
-            </a>
-        </div>
-    </div>
 
     <!-- Content Management -->
     <div class="bg-white rounded-lg shadow-sm p-6">
