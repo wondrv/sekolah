@@ -21,3 +21,46 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Database
+/database/*.sqlite
+/database/*.sqlite-journal
+*.sqlite
+*.sqlite-journal
+
+# IDE & Editor
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/storage/logs/*.log
+
+# Cache & Temp
+/bootstrap/cache/*.php
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/public/template-assets/*
+/public/css/app.css
+/public/js/app.js
+
+# Backup files
+*_backup.*
+*.bak
+*.old
+*.tmp
+
+# OS files
+.DS_Store
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Sensitive data
+*.pem
+*.key
+*.cert
+/config/secrets.php
